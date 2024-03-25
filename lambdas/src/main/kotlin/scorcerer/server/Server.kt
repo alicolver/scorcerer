@@ -1,40 +1,48 @@
 package scorcerer.server
 
-import com.amazonaws.serverless.proxy.jersey.JerseyLambdaContainerHandler
-import com.amazonaws.services.lambda.runtime.Context
-import com.amazonaws.services.lambda.runtime.RequestStreamHandler
-import org.glassfish.grizzly.http.server.HttpServer
-import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory
-import org.glassfish.jersey.server.ResourceConfig
-import java.io.InputStream
-import java.io.OutputStream
-import java.net.URI
+import org.http4k.routing.routes
+import org.http4k.server.SunHttp
+import org.http4k.server.asServer
+import org.http4k.serverless.ApiGatewayV2LambdaFunction
+import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.SchemaUtils
+import org.jetbrains.exposed.sql.transactions.transaction
+import scorcerer.server.db.Match
+import scorcerer.server.resources.createMatch
+import scorcerer.server.resources.leaderboard
 
 class Server {
-    private val serverUri: URI = URI.create("http://localhost:8080")
-
-    private val httpServer: HttpServer = GrizzlyHttpServerFactory.createHttpServer(
-        serverUri,
-        ResourceConfig().packages("scorcerer.server.resources")
-    )
-
     fun start() {
-        httpServer
+        httpServer.asServer(SunHttp(8000)).start().block()
+    }
+
+    init {
+        Database.connect(
+            "",
+            driver = "org.postgresql.Driver",
+            user = "postgres",
+            password = ""
+        )
+
+        transaction {
+            SchemaUtils.create(Match)
+        }
     }
 }
 
-fun main(args: Array<String>) {
+fun main() {
     Server().start()
 }
 
-class StreamLambdaHandler: RequestStreamHandler {
-    override fun handleRequest(input: InputStream?, output: OutputStream?, context: Context?) {
-        handler.proxyStream(input, output, context)
-    }
+private val httpServer = routes(leaderboard(), createMatch())
 
-    companion object {
-        private val config: ResourceConfig = ResourceConfig().packages("scorcerer.server.resources")
-
-        private val handler = JerseyLambdaContainerHandler.getAwsProxyHandler(config)
+class ApiLambdaHandler : ApiGatewayV2LambdaFunction(httpServer) {
+    init {
+        Database.connect(
+            "",
+            driver = "org.postgresql.Driver",
+            user = "postgres",
+            password = ""
+        )
     }
 }
