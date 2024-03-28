@@ -1,0 +1,8 @@
+import se.ansman.kotshi.JsonSerializable
+
+@JsonSerializable
+{{^discriminator}}data class{{/discriminator}} {{classname}}{{^discriminator}} (
+{{#allVars}}
+    {{#required}}{{>data_class_req_var}}{{/required}}{{^required}}{{>data_class_opt_var}}{{/required}}{{^-last}},{{/-last}}
+{{/allVars}}
+){{/discriminator}}
