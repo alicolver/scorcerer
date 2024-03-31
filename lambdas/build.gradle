@@ -76,8 +76,6 @@ dependencies {
     implementation("se.ansman.kotshi:api:$kotshiVersion")
     kapt("se.ansman.kotshi:compiler:$kotshiVersion")
     implementation("org.http4k:http4k-serverless-lambda")
-    implementation("org.jetbrains.exposed:exposed-core:0.48.0")
-    implementation("org.jetbrains.exposed:exposed-jdbc:0.48.0")
     implementation("org.postgresql:postgresql:42.7.3")
     implementation("org.slf4j:slf4j-simple:2.0.6")
     testImplementation("junit:junit:4.13.2")
