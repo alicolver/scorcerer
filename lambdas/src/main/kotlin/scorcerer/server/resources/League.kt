@@ -1,24 +1,24 @@
 package scorcerer.server.resources
 
 import org.openapitools.server.apis.LeagueApi
+import org.openapitools.server.models.CreateLeague200Response
+import org.openapitools.server.models.CreateLeagueRequest
 import org.openapitools.server.models.League
-import org.openapitools.server.models.LeaguePost200Response
-import org.openapitools.server.models.LeaguePostRequest
 
 class League : LeagueApi() {
-    override fun leagueLeagueIdGet(leagueId: String): League {
+    override fun createLeague(createLeagueRequest: CreateLeagueRequest): CreateLeague200Response {
         TODO("Not yet implemented")
     }
 
-    override fun leagueLeagueIdJoinPost(leagueId: String) {
+    override fun getLeague(leagueId: String): League {
         TODO("Not yet implemented")
     }
 
-    override fun leagueLeagueIdLeavePost(leagueId: String) {
+    override fun joinLeague(leagueId: String) {
         TODO("Not yet implemented")
     }
 
-    override fun leaguePost(leaguePostRequest: LeaguePostRequest): LeaguePost200Response {
+    override fun leaveLeague(leagueId: String) {
         TODO("Not yet implemented")
     }
 }

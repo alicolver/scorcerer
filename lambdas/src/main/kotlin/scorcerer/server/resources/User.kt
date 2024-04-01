@@ -1,23 +1,23 @@
 package scorcerer.server.resources
 
 import org.openapitools.server.apis.UserApi
-import org.openapitools.server.models.AuthLoginPostRequest
+import org.openapitools.server.models.GetUserPoints200Response
+import org.openapitools.server.models.LoginRequest
 import org.openapitools.server.models.Prediction
-import org.openapitools.server.models.UserUserIdPointsGet200Response
 
 class User : UserApi() {
-    override fun userPost(authLoginPostRequest: AuthLoginPostRequest) {
+    override fun getUserPoints(userId: String): GetUserPoints200Response {
         TODO("Not yet implemented")
     }
 
-    override fun userUserIdPointsGet(userId: String): UserUserIdPointsGet200Response {
-        TODO("Not yet implemented")
-    }
-
-    override fun userUserIdPredictionsGet(
+    override fun getUserPredictions(
         userId: String,
         leagueId: String?,
     ): List<Prediction> {
+        TODO("Not yet implemented")
+    }
+
+    override fun signup(loginRequest: LoginRequest) {
         TODO("Not yet implemented")
     }
 }
