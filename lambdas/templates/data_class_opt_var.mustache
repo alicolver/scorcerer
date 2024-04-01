@@ -1,1 +1,1 @@
-{{>modelMutable}} {{{name}}}: {{#isEnum}}{{classname}}.{{nameInPascalCase}}{{/isEnum}}{{^isEnum}}{{{dataType}}}{{/isEnum}}? = {{{defaultValue}}}{{^defaultValue}}null{{/defaultValue}}
+{{>modelMutable}} {{{name}}}: {{#isEnum}}{{{enumName}}}{{/isEnum}}{{^isEnum}}{{{dataType}}}{{/isEnum}}? = {{{defaultValue}}}{{^defaultValue}}null{{/defaultValue}}

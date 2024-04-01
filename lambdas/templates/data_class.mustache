@@ -6,3 +6,18 @@ import se.ansman.kotshi.JsonSerializable
     {{#required}}{{>data_class_req_var}}{{/required}}{{^required}}{{>data_class_opt_var}}{{/required}}{{^-last}},{{/-last}}
 {{/allVars}}
 ){{/discriminator}}
+
+{{#hasEnums}}
+{{#vars}}
+{{#isEnum}}
+@JsonSerializable
+enum class {{{enumName}}}(val value: {{^isContainer}}{{dataType}}{{/isContainer}}{{#isContainer}}kotlin.String{{/isContainer}}) {
+{{#allowableValues}}
+    {{#values}}
+    {{.}}("{{.}}"){{^-last}},{{/-last}}
+    {{/values}}
+{{/allowableValues}}
+}
+{{/isEnum}}
+{{/vars}}
+{{/hasEnums}}

@@ -1,6 +1,5 @@
 package scorcerer.server
 
-import org.http4k.core.RequestContexts
 import org.http4k.core.Response
 import org.http4k.core.Status
 import org.http4k.core.then
@@ -18,13 +17,12 @@ import scorcerer.server.resources.User
 
 data class ApiResponseError(
     val response: Response
-): Exception("API failed while executing request handler and provided error response")
+) : Exception("API failed while executing request handler and provided error response")
 
 class Server {
     fun start() {
         CatchAll(::handleError).then(httpServer).asServer(SunHttp(8000)).start().block()
     }
-
 }
 
 fun main() {
