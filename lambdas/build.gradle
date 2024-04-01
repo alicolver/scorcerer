@@ -107,6 +107,7 @@ task generateKotlinServer(type: GenerateTask){
             "fetchContract"
     ]
     configFile = "$rootDir/config.yaml"
+    inputs.dir("$rootDir/templates")
 }
 
 task fetchContract(type: Exec) {
@@ -115,6 +116,7 @@ task fetchContract(type: Exec) {
     doFirst {
         mkdir "$buildDir"
     }
+    outputs.file("$buildDir/contract.yaml")
 }
 
 tasks.withType(KaptGenerateStubsTask.class).configureEach {
