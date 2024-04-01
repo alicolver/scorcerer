@@ -1,0 +1,9 @@
+package org.openapitools.server.apis
+
+import org.http4k.routing.routes
+
+// Implementing this function ensures you are always implementing every endpoint in your contract
+fun allRoutes({{#apiInfo}}{{#apis}}{{classVarName}}: {{classFilename}}{{^-last}}, {{/-last}}{{/apis}}{{/apiInfo}}) = routes(
+    {{#apiInfo}}{{#apis}}{{classVarName}}.routes{{^-last}},
+    {{/-last}}{{/apis}}{{/apiInfo}}
+)

@@ -9,6 +9,7 @@ import org.http4k.routing.routes
 import org.http4k.server.SunHttp
 import org.http4k.server.asServer
 import org.http4k.serverless.ApiGatewayV2LambdaFunction
+import org.openapitools.server.apis.allRoutes
 import scorcerer.server.resources.Auth
 import scorcerer.server.resources.Leaderboard
 import scorcerer.server.resources.League
@@ -38,6 +39,7 @@ fun handleError(e: Throwable): Response {
             e.printStackTrace()
             Response(Status.INTERNAL_SERVER_ERROR).body(e.message.toString())
         }
+
         else -> {
             println(e.message)
             e.printStackTrace()
@@ -47,14 +49,15 @@ fun handleError(e: Throwable): Response {
 }
 
 private val httpServer = CatchAll(::handleError).then(
-    routes(
-        Auth().routes,
-        League().routes,
-        MatchResource().routes,
-        Leaderboard().routes,
-        Prediction().routes,
-        User().routes,
+    allRoutes(
+        Auth(),
+        Leaderboard(),
+        League(),
+        MatchResource(),
+        Prediction(),
+        User(),
     )
 )
 
+// Entrypoint for the lambda
 class ApiLambdaHandler : ApiGatewayV2LambdaFunction(httpServer)
