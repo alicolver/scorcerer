@@ -1,6 +1,6 @@
 files:
-  kotshi.kt:
+  Kotshi.kt:
       folder: src/main/kotlin/org/openapitools/server
   routes.mustache:
       folder: src/main/kotlin/org/openapitools/server/apis
-      destinationFilename: routes.kt
+      destinationFilename: Routes.kt

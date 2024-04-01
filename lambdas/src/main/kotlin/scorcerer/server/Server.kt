@@ -5,7 +5,6 @@ import org.http4k.core.Response
 import org.http4k.core.Status
 import org.http4k.core.then
 import org.http4k.filter.ServerFilters.CatchAll
-import org.http4k.routing.routes
 import org.http4k.server.SunHttp
 import org.http4k.server.asServer
 import org.http4k.serverless.ApiGatewayV2LambdaFunction
@@ -18,7 +17,7 @@ import scorcerer.server.resources.Prediction
 import scorcerer.server.resources.User
 
 data class ApiResponseError(
-    val response: Response
+    val response: Response,
 ) : Exception("API failed while executing request handler and provided error response")
 
 class Server {
@@ -48,16 +47,17 @@ fun handleError(e: Throwable): Response {
     }
 }
 
-private val httpServer = CatchAll(::handleError).then(
-    allRoutes(
-        Auth(),
-        Leaderboard(),
-        League(),
-        MatchResource(),
-        Prediction(),
-        User(),
+private val httpServer =
+    CatchAll(::handleError).then(
+        allRoutes(
+            Auth(),
+            Leaderboard(),
+            League(),
+            MatchResource(),
+            Prediction(),
+            User(),
+        ),
     )
-)
 
 // Entrypoint for the lambda
 class ApiLambdaHandler : ApiGatewayV2LambdaFunction(httpServer)

@@ -5,7 +5,7 @@ import org.openapitools.server.models.League
 import org.openapitools.server.models.LeaguePost200Response
 import org.openapitools.server.models.LeaguePostRequest
 
-class League: LeagueApi() {
+class League : LeagueApi() {
     override fun leagueLeagueIdGet(leagueId: String): League {
         TODO("Not yet implemented")
     }

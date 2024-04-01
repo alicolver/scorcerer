@@ -36,22 +36,23 @@ class AuthorizerLoader(
                 requestAdapter(
                     coreFilter
                         .then(addLambdaAuthorizerContext(authorizer, contexts))
-                        .then(app)(newRequest)
-                )
+                        .then(app)(newRequest),
+                ),
             )
         }
     }
 }
 
-private inline fun <reified T : Any> Moshi.asA(input: InputStream): T =
-    adapter(T::class.java).fromJson(input.source().buffer())!!
+private inline fun <reified T : Any> Moshi.asA(input: InputStream): T = adapter(T::class.java).fromJson(input.source().buffer())!!
 
-private inline fun <reified T> Moshi.asInputStream(a: T) =
-    adapter(T::class.java).toJson(a).byteInputStream()
+private inline fun <reified T> Moshi.asInputStream(a: T) = adapter(T::class.java).toJson(a).byteInputStream()
 
 const val LAMBDA_AUTHORIZER_KEY = "HTTP4K_LAMBDA_AUTHORIZER"
 
-internal fun addLambdaAuthorizerContext(authorizer: Authorizer?, contexts: RequestContexts) = Filter { next ->
+internal fun addLambdaAuthorizerContext(
+    authorizer: Authorizer?,
+    contexts: RequestContexts,
+) = Filter { next ->
     {
         if (authorizer != null) {
             contexts[it][LAMBDA_AUTHORIZER_KEY] = authorizer
@@ -62,21 +63,24 @@ internal fun addLambdaAuthorizerContext(authorizer: Authorizer?, contexts: Reque
 
 data class Authorizer(
     val claims: Map<String, String>,
-    val scopes: List<String>
+    val scopes: List<String>,
 )
 
 private fun Map<String, Any>.getAuthorizerContext(): Authorizer? {
-    val jwt = getNested("requestContext")?.getNested("authorizer")?.getNested("jwt")
-        ?: return null
+    val jwt =
+        getNested("requestContext")?.getNested("authorizer")?.getNested("jwt")
+            ?: return null
 
     return Authorizer(
         jwt.getStringNested("claims") ?: emptyMap(),
-        jwt.getStringList("scopes") ?: emptyList()
+        jwt.getStringList("scopes") ?: emptyList(),
     )
 }
 
 internal fun Map<String, Any>.getNested(name: String): Map<String, Map<String, Any>>? = get(name) as? Map<String, Map<String, Any>>
+
 internal fun Map<String, Any>.getStringNested(name: String): Map<String, String>? = get(name) as? Map<String, String>
+
 internal fun Map<String, Any>.getStringList(name: String): List<String>? = get(name) as? List<String>
 
 abstract class ApiGatewayV2AuthorizerLambdaFunction(input: AppLoaderWithContexts, contexts: RequestContexts) :

@@ -1,5 +1,6 @@
 import org.jetbrains.kotlin.gradle.internal.KaptGenerateStubsTask
 import org.openapitools.generator.gradle.plugin.tasks.GenerateTask
+import org.jlleitschuh.gradle.ktlint.tasks.KtLintFormatTask
 
 buildscript {
     ext.kotlin_version = "1.9.21"
@@ -20,13 +21,14 @@ buildscript {
 
 plugins {
     id "org.jetbrains.kotlin.kapt" version "1.9.23"
+    id "org.jlleitschuh.gradle.ktlint" version "12.1.0"
 }
 
 group "org.openapitools"
 version "1.0.0"
 
 wrapper {
-    gradleVersion = '6.9'
+    gradleVersion = '8.7'
     distributionUrl = "https://services.gradle.org/distributions/gradle-$gradleVersion-all.zip"
 }
 
@@ -40,7 +42,8 @@ mainClassName = "scorcerer.server.ServerKt"
 compileKotlin {
     kotlinOptions.jvmTarget = "11"
     dependsOn = [
-            "generateKotlinServer"
+            "generateKotlinServer",
+            "ktlintFormat"
     ]
 }
 
@@ -62,6 +65,13 @@ sourceSets {
         java {
             srcDir("${buildDir}/generated/src")
         }
+    }
+}
+
+ktlint {
+    filter {
+        include("${rootDir}/src/**/*.kt")
+        exclude { element -> element.file.toString().contains("generated") }
     }
 }
 
@@ -122,6 +132,14 @@ task fetchContract(type: Exec) {
 
 tasks.withType(KaptGenerateStubsTask.class).configureEach {
     dependsOn = [
-            "generateKotlinServer"
+        "generateKotlinServer"
     ]
+}
+
+tasks.withType(KtLintFormatTask.class).configureEach {
+    dependsOn = [
+        "generateKotlinServer"
+    ]
+    inputs.dir("$buildDir/generated/src")
+    inputs.dir("$rootDir/src")
 }
