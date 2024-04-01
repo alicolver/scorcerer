@@ -108,6 +108,7 @@ task generateKotlinServer(type: GenerateTask){
     ]
     configFile = "$rootDir/config.yaml"
     inputs.dir("$rootDir/templates")
+    inputs.file("$rootDir/config.yaml")
 }
 
 task fetchContract(type: Exec) {

@@ -1,5 +1,6 @@
 package scorcerer.server
 
+import com.squareup.moshi.JsonDataException
 import org.http4k.core.Response
 import org.http4k.core.Status
 import org.http4k.core.then
@@ -32,6 +33,11 @@ fun main() {
 fun handleError(e: Throwable): Response {
     return when (e) {
         is ApiResponseError -> e.response
+        is JsonDataException -> {
+            println(e.message)
+            e.printStackTrace()
+            Response(Status.INTERNAL_SERVER_ERROR).body(e.message.toString())
+        }
         else -> {
             println(e.message)
             e.printStackTrace()
