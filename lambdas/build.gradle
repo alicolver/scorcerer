@@ -84,7 +84,7 @@ dependencies {
     implementation("org.http4k:http4k-serverless-lambda")
     implementation("org.postgresql:postgresql:42.7.3")
     implementation("org.slf4j:slf4j-simple:2.0.6")
-    testImplementation("junit:junit:4.13.2")
+    testImplementation('org.jetbrains.kotlin:kotlin-test')
 }
 
 tasks.build {
@@ -138,4 +138,8 @@ tasks.withType(KtLintFormatTask.class).configureEach {
     ]
     inputs.dir("$buildDir/generated/src")
     inputs.dir("$rootDir/src")
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
