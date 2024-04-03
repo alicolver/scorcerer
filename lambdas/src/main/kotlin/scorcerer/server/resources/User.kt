@@ -10,10 +10,7 @@ class User : UserApi() {
         TODO("Not yet implemented")
     }
 
-    override fun getUserPredictions(
-        userId: String,
-        leagueId: String?,
-    ): List<Prediction> {
+    override fun getUserPredictions(userId: String, leagueId: String?): List<Prediction> {
         TODO("Not yet implemented")
     }
 

@@ -6,10 +6,7 @@ import org.openapitools.server.models.Prediction
 import org.openapitools.server.models.SetMatchScoreRequest
 
 class MatchResource : MatchApi() {
-    override fun getMatchPredictions(
-        matchId: String,
-        leagueId: String?,
-    ): List<Prediction> {
+    override fun getMatchPredictions(matchId: String, leagueId: String?): List<Prediction> {
         TODO("Not yet implemented")
     }
 
@@ -19,10 +16,7 @@ class MatchResource : MatchApi() {
         )
     }
 
-    override fun setMatchScore(
-        matchId: String,
-        setMatchScoreRequest: SetMatchScoreRequest,
-    ) {
+    override fun setMatchScore(matchId: String, setMatchScoreRequest: SetMatchScoreRequest) {
         TODO("Not yet implemented")
     }
 }

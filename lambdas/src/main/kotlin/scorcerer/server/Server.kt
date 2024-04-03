@@ -1,6 +1,7 @@
 package scorcerer.server
 
 import com.squareup.moshi.JsonDataException
+import org.http4k.core.Filter
 import org.http4k.core.Response
 import org.http4k.core.Status
 import org.http4k.core.then
@@ -16,48 +17,36 @@ import scorcerer.server.resources.MatchResource
 import scorcerer.server.resources.Prediction
 import scorcerer.server.resources.User
 
-data class ApiResponseError(
-    val response: Response,
-) : Exception("API failed while executing request handler and provided error response")
+data class ApiResponseError(val response: Response) : Exception("API failed while executing request handler and provided error response")
 
 class Server {
     fun start() {
-        CatchAll(::handleError).then(httpServer).asServer(SunHttp(8000)).start().block()
+        httpServer.asServer(SunHttp(8000)).start().block()
     }
 }
+
+val loggingFilter = Filter { next -> { req -> next(req).also { log.info("${req.method} ${req.uri} ${it.status}") } } }
 
 fun main() {
     Server().start()
 }
 
-fun handleError(e: Throwable): Response {
-    return when (e) {
+fun handleError(e: Throwable): Response =
+    when (e) {
         is ApiResponseError -> e.response
         is JsonDataException -> {
-            println(e.message)
-            e.printStackTrace()
-            Response(Status.INTERNAL_SERVER_ERROR).body(e.message.toString())
+            log.error(e.stackTraceToString())
+            Response(Status.BAD_REQUEST).body(e.message.toString())
         }
 
         else -> {
-            println(e.message)
-            e.printStackTrace()
+            log.error(e.stackTraceToString())
             Response(Status.INTERNAL_SERVER_ERROR).body("The API threw an error while processing the request")
         }
     }
-}
 
 private val httpServer =
-    CatchAll(::handleError).then(
-        allRoutes(
-            Auth(),
-            Leaderboard(),
-            League(),
-            MatchResource(),
-            Prediction(),
-            User(),
-        ),
-    )
+    loggingFilter.then(CatchAll(::handleError).then(allRoutes(Auth(), Leaderboard(), League(), MatchResource(), Prediction(), User())))
 
 // Entrypoint for the lambda
 class ApiLambdaHandler : ApiGatewayV2LambdaFunction(httpServer)
