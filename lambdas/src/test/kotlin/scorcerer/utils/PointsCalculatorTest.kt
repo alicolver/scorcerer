@@ -6,8 +6,6 @@ import scorcerer.utils.PointsCalculator
 import scorcerer.utils.Result
 
 internal class PointsCalculatorTest {
-    private val testPointsCalculator: PointsCalculator = PointsCalculator()
-
     data class TestInput(val prediction: Prediction, val result: Result)
 
     @TestFactory
@@ -20,7 +18,7 @@ internal class PointsCalculatorTest {
             TestInput(Prediction(1, 1, matchId = "test"), Result(0, 1)) to 0,
         ).map { (input, expected) ->
             DynamicTest.dynamicTest("test") {
-                Assertions.assertEquals(expected, testPointsCalculator.calculatePoints(input.prediction, input.result))
+                Assertions.assertEquals(expected, PointsCalculator.calculatePoints(input.prediction, input.result))
             }
         }
 }

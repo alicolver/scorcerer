@@ -4,7 +4,7 @@ import scorcerer.db.Prediction
 
 data class Result(val homeScore: Int, val awayScore: Int)
 
-class PointsCalculator {
+object PointsCalculator {
     fun calculatePoints(
         prediction: Prediction,
         result: Result,
