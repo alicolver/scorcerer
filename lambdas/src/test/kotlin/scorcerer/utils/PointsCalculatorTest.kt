@@ -1,4 +1,4 @@
-import org.junit.jupiter.api.Assertions
+import io.kotlintest.shouldBe
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.TestFactory
 import scorcerer.db.Prediction
@@ -18,7 +18,7 @@ internal class PointsCalculatorTest {
             TestInput(Prediction(1, 1, matchId = "test"), Result(0, 1)) to 0,
         ).map { (input, expected) ->
             DynamicTest.dynamicTest("test") {
-                Assertions.assertEquals(expected, PointsCalculator.calculatePoints(input.prediction, input.result))
+                PointsCalculator.calculatePoints(input.prediction, input.result) shouldBe expected
             }
         }
 }

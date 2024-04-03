@@ -84,7 +84,7 @@ dependencies {
     implementation("org.http4k:http4k-serverless-lambda")
     implementation("org.postgresql:postgresql:42.7.3")
     implementation("org.slf4j:slf4j-simple:2.0.6")
-    testImplementation('org.jetbrains.kotlin:kotlin-test')
+    testImplementation("io.kotlintest:kotlintest-core:3.4.2")
 }
 
 tasks.build {
