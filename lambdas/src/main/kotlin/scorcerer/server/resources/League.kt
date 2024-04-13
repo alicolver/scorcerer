@@ -6,19 +6,19 @@ import org.openapitools.server.models.CreateLeagueRequest
 import org.openapitools.server.models.League
 
 class League : LeagueApi() {
-    override fun createLeague(createLeagueRequest: CreateLeagueRequest): CreateLeague200Response {
+    override fun createLeague(requesterUserId: String, createLeagueRequest: CreateLeagueRequest): CreateLeague200Response {
         TODO("Not yet implemented")
     }
 
-    override fun getLeague(leagueId: String): League {
+    override fun getLeague(requesterUserId: String, leagueId: String): League {
         TODO("Not yet implemented")
     }
 
-    override fun joinLeague(leagueId: String) {
+    override fun joinLeague(requesterUserId: String, leagueId: String) {
         TODO("Not yet implemented")
     }
 
-    override fun leaveLeague(leagueId: String) {
+    override fun leaveLeague(requesterUserId: String, leagueId: String) {
         TODO("Not yet implemented")
     }
 }
