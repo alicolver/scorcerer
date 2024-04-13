@@ -13,6 +13,7 @@ class MatchResource : MatchApi() {
     override fun listMatches(filterType: String?): List<Match> {
         return listOf(
             Match("England", "France", "12345"),
+            Match("Scotland", "Germany", "12346"),
         )
     }
 
