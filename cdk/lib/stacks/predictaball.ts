@@ -1,6 +1,6 @@
 import { App, Duration, SecretValue, Stack, StackProps } from "aws-cdk-lib"
 import { Instance, InstanceClass, InstanceSize, InstanceType, MachineImage, Port, SubnetType, Vpc } from "aws-cdk-lib/aws-ec2"
-import { Credentials, DatabaseInstance, DatabaseInstanceEngine } from "aws-cdk-lib/aws-rds"
+import { Credentials, DatabaseInstance, DatabaseInstanceEngine, StorageType } from "aws-cdk-lib/aws-rds"
 import { dbPassword } from "../environment"
 import { Code, Function, Runtime } from "aws-cdk-lib/aws-lambda"
 import { LambdaRestApi } from "aws-cdk-lib/aws-apigateway"
@@ -22,6 +22,8 @@ export class Predictaball extends Stack {
       },
       port: dbPort,
       instanceType: InstanceType.of(InstanceClass.T3, InstanceSize.MICRO), // Free tier
+      storageType: StorageType.GP2, // Free tier
+      allocatedStorage: 20, // Free tier
       credentials: Credentials.fromPassword(dbUser, SecretValue.unsafePlainText(dbPassword)),
     })
 
