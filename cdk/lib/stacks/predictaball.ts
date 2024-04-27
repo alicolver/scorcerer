@@ -53,7 +53,8 @@ export class Predictaball extends Stack {
         DB_NAME: "postgres",
         DB_PORT: db.dbInstanceEndpointPort
       },
-      vpc: vpc
+      vpc: vpc,
+      allowPublicSubnet: true
     })
 
     db.connections.allowFrom(apiHandler, Port.tcp(dbPort))
