@@ -1,6 +1,6 @@
 import io.kotlintest.shouldBe
-import org.junit.jupiter.api.DynamicTest
-import org.junit.jupiter.api.TestFactory
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
 import scorcerer.db.Prediction
 import scorcerer.utils.PointsCalculator
 import scorcerer.utils.Result
@@ -8,17 +8,17 @@ import scorcerer.utils.Result
 internal class PointsCalculatorTest {
     data class TestInput(val prediction: Prediction, val result: Result)
 
-    @TestFactory
-    fun testCalculatePoints() =
-        listOf(
-            TestInput(Prediction(1, 1, "test"), Result(1, 1)) to 5,
-            TestInput(Prediction(2, 1, "test"), Result(3, 1)) to 2,
-            TestInput(Prediction(2, 5, "test"), Result(1, 3)) to 2,
-            TestInput(Prediction(1, 1, "test"), Result(2, 2)) to 2,
-            TestInput(Prediction(1, 1, "test"), Result(0, 1)) to 0,
-        ).map { (input, expected) ->
-            DynamicTest.dynamicTest("test") {
-                PointsCalculator.calculatePoints(input.prediction, input.result) shouldBe expected
-            }
-        }
+    @ParameterizedTest
+    @CsvSource("1, 1, 1, 1, 5", "2, 1, 3, 1, 2", "2, 5, 1, 3, 2", "1, 1, 2, 2, 2", "1, 1, 0, 1, 0")
+    fun testCalculatePoints(
+        predictedHomeScore: Int,
+        predictedAwayScore: Int,
+        homeScore: Int,
+        awayScore: Int,
+        expectedPoints: Int,
+    ) {
+        val prediction = Prediction(predictedHomeScore, predictedAwayScore, "test")
+        val result = Result(homeScore, awayScore)
+        PointsCalculator.calculatePoints(prediction, result) shouldBe expectedPoints
+    }
 }
