@@ -1,0 +1,36 @@
+on: [push]
+
+concurrency:
+  group: ${{ github.ref }}
+
+jobs:
+  aws_cdk:
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
+      - name: Run build with Gradle Wrapper
+        working-directory: ./lambdas
+        run: ./gradlew build
+      - name: cdk synth
+        working-directory: ./cdk
+        uses: youyo/aws-cdk-github-actions@v2
+        with:
+          cdk_subcommand: "synth"
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: "eu-west-2"
+      - name: cdk deploy
+        working-directory: ./cdk
+        if: github.ref == 'refs/heads/release'
+        uses: youyo/aws-cdk-github-actions@v2
+        with:
+          cdk_subcommand: "deploy"
+          cdk_args: "--require-approval never"
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: "eu-west-2"
