@@ -4,16 +4,16 @@ import org.ktorm.schema.Table
 import org.ktorm.schema.*
 
 /*
-create user team(
+create table member(
     id varchar(30) primary key,
     name varchar(30) not null,
     flag_uri varchar(60) not null,
-    fixed_points integer CHECK (fixed_points >= 0) not null
-    live_points integer  CHECK (live_points >= 0) not null
+    fixed_points integer CHECK (fixed_points >= 0) not null,
+    live_points integer CHECK (live_points >= 0) not null
 );
  */
 
-object UserTable : Table<Nothing>("user") {
+object MemberTable : Table<Nothing>("user") {
     val id = varchar("id")
     val name = varchar("name")
     val fixedPoints = int("fixed_points")

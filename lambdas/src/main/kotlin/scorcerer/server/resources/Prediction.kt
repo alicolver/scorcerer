@@ -18,7 +18,8 @@ class Prediction(private val database: Database) : PredictionApi() {
                 set(it.homeScore, createPredictionRequest.homeScore)
                 set(it.awayScore, createPredictionRequest.awayScore)
                 set(it.matchId, createPredictionRequest.matchId.toInt())
-                set(it.userId, requesterUserId)
+//                TODO: regenerate API spec with correct types
+//                set(it.memberId, requesterUserId)
             }
         } catch (e: PSQLException) {
             if (e.message?.contains("duplicate key") == true) {
