@@ -49,17 +49,15 @@ private inline fun <reified T> Moshi.asInputStream(a: T) = adapter(T::class.java
 
 const val LAMBDA_AUTHORIZER_KEY = "HTTP4K_LAMBDA_AUTHORIZER"
 
-internal fun addLambdaAuthorizerContext(
-    authorizer: Authorizer?,
-    contexts: RequestContexts,
-) = Filter { next ->
-    {
-        if (authorizer != null) {
-            contexts[it][LAMBDA_AUTHORIZER_KEY] = authorizer
+internal fun addLambdaAuthorizerContext(authorizer: Authorizer?, contexts: RequestContexts) =
+    Filter { next ->
+        {
+            if (authorizer != null) {
+                contexts[it][LAMBDA_AUTHORIZER_KEY] = authorizer
+            }
+            next(it)
         }
-        next(it)
     }
-}
 
 data class Authorizer(
     val claims: Map<String, String>,

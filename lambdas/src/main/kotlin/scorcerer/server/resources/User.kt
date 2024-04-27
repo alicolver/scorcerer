@@ -6,14 +6,11 @@ import org.openapitools.server.models.LoginRequest
 import org.openapitools.server.models.Prediction
 
 class User : UserApi() {
-    override fun getUserPoints(userId: String): GetUserPoints200Response {
+    override fun getUserPoints(requesterUserId: String, userId: String): GetUserPoints200Response {
         TODO("Not yet implemented")
     }
 
-    override fun getUserPredictions(
-        userId: String,
-        leagueId: String?,
-    ): List<Prediction> {
+    override fun getUserPredictions(requesterUserId: String, userId: String, leagueId: String?): List<Prediction> {
         TODO("Not yet implemented")
     }
 

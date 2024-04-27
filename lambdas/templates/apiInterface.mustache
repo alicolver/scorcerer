@@ -1,9 +1,13 @@
 val {{nickname}}Handler: RoutingHttpHandler = "{{path}}" bind Method.{{httpMethod}} to { req ->
+        {{#hasAuthMethods}}
+        // We only do this if the endpoint requires auth. Later this will be extracted from cognito
+        val requesterUserId = req.header("user-id")!!
+        {{/hasAuthMethods}}
         {{#allParams}}{{#isPathParam}}val {{paramName}}: {{{dataType}}}{{^required}}?{{/required}} = req.path("{{paramName}}"){{#required}}!!{{/required}}{{/isPathParam}}{{/allParams}}
         {{#allParams}}{{#isQueryParam}}val {{paramName}}: {{{dataType}}}{{^required}}?{{/required}} = req.query("{{paramName}}"){{#required}}!!{{/required}}{{/isQueryParam}}{{/allParams}}
         {{#allParams}}{{#isBodyParam}}val {{paramName}}: {{{dataType}}} = kotshiJson.asA<{{dataType}}>(req.bodyString()){{/isBodyParam}}{{/allParams}}
-        {{#returnType}}val response: {{{returnType}}} = {{/returnType}}{{nickname}}({{#allParams}}{{paramName}}{{^-last}}, {{/-last}}{{/allParams}})
+        {{#returnType}}val response: {{{returnType}}} = {{/returnType}}{{nickname}}({{#hasAuthMethods}}requesterUserId{{#allParams.0}},{{/allParams.0}}{{/hasAuthMethods}}{{#allParams}}{{paramName}}{{^-last}}, {{/-last}}{{/allParams}})
         Response(Status.OK){{#returnType}}.body(response.toJson()){{/returnType}}
     }
 
-    abstract fun {{nickname}}({{#allParams}}{{>queryParams}}{{>pathParams}}{{>headerParams}}{{>bodyParams}}{{>formParams}}{{^-last}},{{/-last}}{{/allParams}}){{#returnResponse}}: {{#useMutiny}}io.smallrye.mutiny.Uni<{{/useMutiny}}Response{{#useMutiny}}>{{/useMutiny}}{{/returnResponse}}{{^returnResponse}}{{#returnType}}: {{#useMutiny}}io.smallrye.mutiny.Uni<{{/useMutiny}}{{{returnType}}}{{#useMutiny}}>{{/useMutiny}}{{/returnType}}{{/returnResponse}}{{^returnResponse}}{{^returnType}}{{#useMutiny}}: io.smallrye.mutiny.Uni<Void>{{/useMutiny}}{{/returnType}}{{/returnResponse}}
+    abstract fun {{nickname}}({{#hasAuthMethods}}requesterUserId: String{{#allParams.0}},{{/allParams.0}}{{/hasAuthMethods}}{{#allParams}}{{>queryParams}}{{>pathParams}}{{>headerParams}}{{>bodyParams}}{{>formParams}}{{^-last}},{{/-last}}{{/allParams}}){{#returnResponse}}: {{#useMutiny}}io.smallrye.mutiny.Uni<{{/useMutiny}}Response{{#useMutiny}}>{{/useMutiny}}{{/returnResponse}}{{^returnResponse}}{{#returnType}}: {{#useMutiny}}io.smallrye.mutiny.Uni<{{/useMutiny}}{{{returnType}}}{{#useMutiny}}>{{/useMutiny}}{{/returnType}}{{/returnResponse}}{{^returnResponse}}{{^returnType}}{{#useMutiny}}: io.smallrye.mutiny.Uni<Void>{{/useMutiny}}{{/returnType}}{{/returnResponse}}
