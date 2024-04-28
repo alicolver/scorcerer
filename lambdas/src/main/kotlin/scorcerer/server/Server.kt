@@ -29,6 +29,8 @@ class Server {
 val loggingFilter = Filter { next -> { req -> next(req).also { log.info("${req.method} ${req.uri} ${it.status}") } } }
 
 fun main() {
+    Database.connectAndGenerateTables()
+
     Server().start()
 }
 
@@ -46,11 +48,13 @@ fun handleError(e: Throwable): Response =
         }
     }
 
-private val database = Database().database
-
-private val routes = allRoutes(Auth(), Leaderboard(), League(), MatchResource(), Prediction(database), User())
+private val routes = allRoutes(Auth(), Leaderboard(), League(), MatchResource(), Prediction(), User())
 
 private val httpServer = loggingFilter.then(CatchAll(::handleError).then(routes))
 
 // Entrypoint for the lambda
-class ApiLambdaHandler : ApiGatewayRestLambdaFunction(httpServer)
+class ApiLambdaHandler : ApiGatewayRestLambdaFunction(httpServer) {
+    init {
+        Database.connectAndGenerateTables()
+    }
+}

@@ -1,8 +1,8 @@
 package scorcerer.utils
 
-import scorcerer.db.Prediction
-
 data class Result(val homeScore: Int, val awayScore: Int)
+
+data class Prediction(val homeScore: Int, val awayScore: Int, val matchId: String)
 
 object PointsCalculator {
     fun calculatePoints(

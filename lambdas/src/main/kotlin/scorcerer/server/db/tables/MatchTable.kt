@@ -1,28 +1,7 @@
 package scorcerer.server.db.tables
 
-import org.ktorm.dsl.isNull
-import org.ktorm.schema.Table
-import org.ktorm.schema.enum
-import org.ktorm.schema.int
-import org.ktorm.schema.timestamp
-import org.ktorm.schema.varchar
-
-/*
-CREATE TYPE result_enum AS ENUM ('HOME', 'AWAY');
-CREATE TYPE state_enum AS ENUM ('UPCOMING', 'LIVE', 'COMPLETED');
-create table match(
-  id serial primary key,
-  home_team_id int not null REFERENCES team,
-  away_team_id int not null REFERENCES team,
-  datetime timestamp not null,
-  home_score integer not null,
-  away_score integer not null,
-  result result_enum,
-  state state_enum not null,
-  venue varchar(20) not null,
-  matchDay integer not null
-);
- */
+import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.sql.kotlin.datetime.timestampWithTimeZone
 
 enum class MatchState(val value: String) {
     LIVE("LIVE"),
@@ -35,15 +14,15 @@ enum class MatchResult(val value: String) {
     AWAY("AWAY"),
 }
 
-object MatchTable : Table<Nothing>("match") {
-    val id = int("id").primaryKey()
-    val homeTeamId = varchar("home_team_id")
-    val awayTeamId = varchar("away_team_id")
-    val datetime = timestamp("datetime")
-    val homeScore = int("home_score")
-    val awayScore = int("away_socre")
-    val result = enum<MatchResult>("result").isNull()
-    val state = enum<MatchState>("state")
-    val venue = varchar("venue")
-    val matchDay = int("match_day")
+object MatchTable : Table("match") {
+    val id = integer("id").uniqueIndex().autoIncrement()
+    val homeTeamId = integer("home_team_id").references(TeamTable.id)
+    val awayTeamId = integer("away_team_id").references(TeamTable.id)
+    val datetime = timestampWithTimeZone("datetime")
+    val homeScore = integer("home_score").nullable()
+    val awayScore = integer("away_score").nullable()
+    val result = enumerationByName<MatchResult>("result", 10).nullable()
+    val state = enumerationByName<MatchState>("state", 10)
+    val venue = varchar("venue", 30)
+    val matchDay = integer("match_day").check { it.greaterEq(1) }
 }

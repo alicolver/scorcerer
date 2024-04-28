@@ -1,19 +1,9 @@
 package scorcerer.server.db.tables
 
-import org.ktorm.schema.Table
-import org.ktorm.schema.int
-import org.ktorm.schema.varchar
+import org.jetbrains.exposed.sql.Table
 
-/*
-create table team(
-    id serial primary key,
-    name varchar(30) not null,
-    flag_uri varchar(60) not null
-);
- */
-
-object TeamTable : Table<Nothing>("team") {
-    val id = int("id").primaryKey()
-    val name = varchar("name")
-    val flagUri = int("flag_uri")
+object TeamTable : Table("team") {
+    val id = integer("id").uniqueIndex().autoIncrement()
+    val name = varchar("name", 30)
+    val flagUri = integer("flag_uri")
 }

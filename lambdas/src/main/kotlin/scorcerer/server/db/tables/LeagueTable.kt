@@ -1,17 +1,8 @@
 package scorcerer.server.db.tables
 
-import org.ktorm.schema.Table
-import org.ktorm.schema.int
-import org.ktorm.schema.varchar
+import org.jetbrains.exposed.sql.Table
 
-/*
-create table league(
-    id serial primary key,
-    name varchar(30) not null
-);
- */
-
-object LeagueTable : Table<Nothing>("league") {
-    val id = int("id").primaryKey()
-    val name = varchar("name")
+object LeagueTable : Table("league") {
+    val id = varchar("id", 30).uniqueIndex()
+    val name = varchar("name", 30)
 }

@@ -1,19 +1,9 @@
 package scorcerer.server.db.tables
 
-import org.ktorm.schema.Table
-import org.ktorm.schema.int
-import org.ktorm.schema.varchar
+import org.jetbrains.exposed.sql.Table
 
-/*
-create table league_membership(
-    id serial primary key,
-    member_id varchar(30) REFERENCES member not null,
-    league_id int REFERENCES league not null
-);
- */
-
-object LeagueMembershipTable : Table<Nothing>("league") {
-    val id = int("id").primaryKey()
-    val memberId = varchar("member_id")
-    val leagueId = varchar("league_id")
+object LeagueMembershipTable : Table("league_membership") {
+    val id = integer("id").index()
+    val memberId = varchar("member_id", 30).references(MemberTable.id)
+    val leagueId = varchar("league_id", 30).references(LeagueTable.id)
 }
