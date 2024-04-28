@@ -1,45 +1,17 @@
 package scorcerer.server.db.tables
 
-import org.ktorm.dsl.isNull
-import org.ktorm.schema.*
+import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.sql.kotlin.datetime.timestamp
 
-/*
-CREATE TYPE result_enum AS ENUM ('HOME', 'AWAY');
-CREATE TYPE state_enum AS ENUM ('UPCOMING', 'LIVE', 'COMPLETED');
-create table match(
-  id serial primary key,
-  home_team_id int not null REFERENCES team,
-  away_team_id int not null REFERENCES team,
-  datetime timestamp not null,
-  home_score integer not null,
-  away_score integer not null,
-  result result_enum,
-  state state_enum not null,
-  venue varchar(20) not null,
-  matchDay integer not null
-);
- */
-
-enum class MatchState(val value: String) {
-    LIVE("LIVE"),
-    UPCOMING("UPCOMING"),
-    COMPLETED("COMPLETED")
-}
-
-enum class MatchResult(val value: String) {
-    HOME("HOME"),
-    AWAY("AWAY")
-}
-
-object MatchTable : Table<Nothing>("match") {
-    val id = int("id").primaryKey()
-    val homeTeamId = varchar("home_team_id")
-    val awayTeamId = varchar("away_team_id")
+object MatchTable : Table("match") {
+    val id = integer("id").index()
+    val homeTeamId = integer("home_team_id").references(TeamTable.id)
+    val awayTeamId = integer("away_team_id").references(TeamTable.id)
     val datetime = timestamp("datetime")
-    val homeScore = int("home_score")
-    val awayScore = int("away_socre")
-    val result = enum<MatchResult>("result").isNull()
-    val state = enum<MatchState>("state")
-    val venue = varchar("venue")
-    val matchDay = int("match_day")
+    val homeScore = integer("home_score")
+    val awayScore = integer("away_score")
+    val result = varchar("result", 10).nullable()
+    val state = varchar("state", 10)
+    val venue = varchar("venue", 20)
+    val matchDay = integer("match_day")
 }
