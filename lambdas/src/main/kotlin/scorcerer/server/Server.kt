@@ -16,6 +16,7 @@ import scorcerer.server.resources.Leaderboard
 import scorcerer.server.resources.League
 import scorcerer.server.resources.MatchResource
 import scorcerer.server.resources.Prediction
+import scorcerer.server.resources.Team
 import scorcerer.server.resources.User
 
 data class ApiResponseError(val response: Response) : Exception("API failed while executing request handler and provided error response")
@@ -48,7 +49,7 @@ fun handleError(e: Throwable): Response =
         }
     }
 
-private val routes = allRoutes(Auth(), Leaderboard(), League(), MatchResource(), Prediction(), User())
+private val routes = allRoutes(Auth(), Leaderboard(), League(), MatchResource(), Prediction(), Team(), User())
 
 private val httpServer = loggingFilter.then(CatchAll(::handleError).then(routes))
 
