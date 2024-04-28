@@ -27,6 +27,7 @@ jobs:
           CDK_ACCOUNT_ID: ${{ secrets.CDK_ACCOUNT_ID }}
           CDK_DB_PASSWORD: ${{ secrets.CDK_DB_PASSWORD }}
       - name: cdk deploy
+        if: github.ref == 'refs/heads/main'
         uses: youyo/aws-cdk-github-actions@v2
         with:
           cdk_subcommand: "deploy"
