@@ -24,6 +24,8 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: "eu-west-2"
+          CDK_ACCOUNT_ID: ${{ secrets.CDK_ACCOUNT_ID }}
+          CDK_DB_PASSWORD: ${{ secrets.CDK_DB_PASSWORD }}
       - name: cdk deploy
         if: github.ref == 'refs/heads/release'
         uses: youyo/aws-cdk-github-actions@v2
@@ -35,3 +37,5 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: "eu-west-2"
+          CDK_ACCOUNT_ID: ${{ secrets.CDK_ACCOUNT_ID }}
+          CDK_DB_PASSWORD: ${{ secrets.CDK_DB_PASSWORD }}
