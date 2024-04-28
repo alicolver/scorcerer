@@ -4,6 +4,8 @@ import { Credentials, DatabaseInstance, DatabaseInstanceEngine, StorageType } fr
 import { dbPassword } from "../environment"
 import { Code, Function, Runtime } from "aws-cdk-lib/aws-lambda"
 import { LambdaRestApi } from "aws-cdk-lib/aws-apigateway"
+import { StringAttribute, UserPool, UserPoolClient } from "aws-cdk-lib/aws-cognito"
+import { Cognito } from "./cognito"
 
 const dbUser = "postgres"
 const dbPort = 5432
@@ -13,6 +15,8 @@ export class Predictaball extends Stack {
     super(scope, id, props)
 
     const vpc = Vpc.fromLookup(this, "default-vpc", { isDefault: true })
+
+    const cognito = new Cognito(scope);
 
     const db = new DatabaseInstance(this, "predictaballDatabase", {
       engine: DatabaseInstanceEngine.POSTGRES,
@@ -51,7 +55,9 @@ export class Predictaball extends Stack {
         DB_PASSWORD: dbPassword,
         DB_URL: db.dbInstanceEndpointAddress,
         DB_NAME: "postgres",
-        DB_PORT: db.dbInstanceEndpointPort
+        DB_PORT: db.dbInstanceEndpointPort,
+        USER_POOL_CLIENT_ID: cognito.poolClient.userPoolClientId,
+        USER_POOL_ID: cognito.userPool.userPoolId,
       },
       vpc: vpc,
       allowPublicSubnet: true
