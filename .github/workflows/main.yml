@@ -6,9 +6,6 @@ concurrency:
 jobs:
   aws_cdk:
     runs-on: "ubuntu-latest"
-    defaults:
-      run:
-        working-directory: ./cdk
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -16,12 +13,13 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
       - name: Run build with Gradle Wrapper
         run: |
-          cd ../lambdas
+          cd lambdas
           ./gradlew build
       - name: cdk synth
         uses: youyo/aws-cdk-github-actions@v2
         with:
           cdk_subcommand: "synth"
+          working_dir: 'cdk'
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -32,6 +30,7 @@ jobs:
         with:
           cdk_subcommand: "deploy"
           cdk_args: "--require-approval never"
+          working_dir: 'cdk'
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
