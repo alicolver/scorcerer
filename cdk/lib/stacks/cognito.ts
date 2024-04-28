@@ -16,7 +16,7 @@ export class Cognito {
             customAttributes: {
                 givenName: new StringAttribute({ mutable: false }),
                 familyName: new StringAttribute({ mutable: false }),
-                    email: new StringAttribute({ mutable: false }),
+                email: new StringAttribute({ mutable: false }),
                 isAdmin: new StringAttribute({ mutable: true }),
             },
             passwordPolicy: {
