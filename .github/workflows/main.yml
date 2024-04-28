@@ -6,14 +6,18 @@ concurrency:
 jobs:
   aws_cdk:
     runs-on: "ubuntu-latest"
+    defaults:
+      run:
+        working-directory: ./cdk
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
       - name: Run build with Gradle Wrapper
-        working-directory: ./lambdas
-        run: ./gradlew build
+        run: |
+          cd ../lambdas
+          ./gradlew build
       # - name: cdk synth
       #   uses: youyo/aws-cdk-github-actions@v2
       #   with:
