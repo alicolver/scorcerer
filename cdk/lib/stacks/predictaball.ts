@@ -16,7 +16,7 @@ export class Predictaball extends Stack {
 
     const vpc = Vpc.fromLookup(this, "default-vpc", { isDefault: true })
 
-    const cognito = new Cognito(scope);
+    const cognito = new Cognito(this);
 
     const db = new DatabaseInstance(this, "predictaballDatabase", {
       engine: DatabaseInstanceEngine.POSTGRES,

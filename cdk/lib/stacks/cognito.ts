@@ -1,4 +1,4 @@
-import { App, Duration } from "aws-cdk-lib"
+import { Duration, Stack } from "aws-cdk-lib"
 import { StringAttribute, UserPool, UserPoolClient } from "aws-cdk-lib/aws-cognito"
 
 export class Cognito {
@@ -6,7 +6,7 @@ export class Cognito {
     readonly userPool: UserPool;
     readonly poolClient: UserPoolClient;
 
-    constructor(scope: App) {
+    constructor(scope: Stack) {
         this.userPool = new UserPool(scope, "userPool", {
             selfSignUpEnabled: true,
             autoVerify: {
