@@ -1,7 +1,9 @@
 package scorcerer.server.db.tables
 
 import org.ktorm.dsl.isNull
-import org.ktorm.schema.*
+import org.ktorm.schema.Table
+import org.ktorm.schema.enum
+import org.ktorm.schema.int
 
 /*
 CREATE TYPE result_enum AS ENUM ('HOME', 'AWAY');

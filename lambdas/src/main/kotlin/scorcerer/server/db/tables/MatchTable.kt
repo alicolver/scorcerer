@@ -1,7 +1,11 @@
 package scorcerer.server.db.tables
 
 import org.ktorm.dsl.isNull
-import org.ktorm.schema.*
+import org.ktorm.schema.Table
+import org.ktorm.schema.enum
+import org.ktorm.schema.int
+import org.ktorm.schema.timestamp
+import org.ktorm.schema.varchar
 
 /*
 CREATE TYPE result_enum AS ENUM ('HOME', 'AWAY');
@@ -23,12 +27,12 @@ create table match(
 enum class MatchState(val value: String) {
     LIVE("LIVE"),
     UPCOMING("UPCOMING"),
-    COMPLETED("COMPLETED")
+    COMPLETED("COMPLETED"),
 }
 
 enum class MatchResult(val value: String) {
     HOME("HOME"),
-    AWAY("AWAY")
+    AWAY("AWAY"),
 }
 
 object MatchTable : Table<Nothing>("match") {

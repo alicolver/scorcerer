@@ -1,6 +1,6 @@
 import org.jetbrains.kotlin.gradle.internal.KaptGenerateStubsTask
 import org.openapitools.generator.gradle.plugin.tasks.GenerateTask
-//import org.jlleitschuh.gradle.ktlint.tasks.KtLintFormatTask
+import org.jlleitschuh.gradle.ktlint.tasks.KtLintFormatTask
 
 buildscript {
     ext.kotlin_version = "1.9.21"
@@ -17,7 +17,7 @@ buildscript {
 
 plugins {
     id "org.jetbrains.kotlin.kapt" version "1.9.23"
-//    id "org.jlleitschuh.gradle.ktlint" version "12.1.0"
+    id "org.jlleitschuh.gradle.ktlint" version "12.1.0"
 }
 
 group "org.openapitools"
@@ -39,7 +39,7 @@ compileKotlin {
     kotlinOptions.jvmTarget = "11"
     dependsOn = [
             "generateKotlinServer",
- //           "ktlintFormat"
+            "ktlintFormat"
     ]
 }
 
@@ -64,12 +64,12 @@ sourceSets {
     }
 }
 
-//ktlint {
-//    filter {
-//        include("${rootDir}/src/**/*.kt")
-//        exclude { element -> element.file.toString().contains("generated") }
-//    }
-//}
+ktlint {
+    filter {
+        include("${rootDir}/src/**/*.kt")
+        exclude { element -> element.file.toString().contains("generated") }
+    }
+}
 
 dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version")
@@ -119,6 +119,7 @@ task generateKotlinServer(type: GenerateTask){
     configFile = "$rootDir/config.yaml"
     inputs.dir("$rootDir/templates")
     inputs.file("$rootDir/config.yaml")
+    inputs.file("$buildDir/contract.yaml")
 }
 
 task fetchContract(type: Exec) {
@@ -136,13 +137,13 @@ tasks.withType(KaptGenerateStubsTask.class).configureEach {
     ]
 }
 
-//tasks.withType(KtLintFormatTask.class).configureEach {
-//    dependsOn = [
-//        "generateKotlinServer"
-//    ]
-//    inputs.dir("$buildDir/generated/src")
-//    inputs.dir("$rootDir/src")
-//}
+tasks.withType(KtLintFormatTask.class).configureEach {
+    dependsOn = [
+        "generateKotlinServer"
+    ]
+    inputs.dir("$buildDir/generated/src")
+    inputs.dir("$rootDir/src")
+}
 
 test {
    useJUnitPlatform()

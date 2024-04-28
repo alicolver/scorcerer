@@ -1,7 +1,8 @@
 package scorcerer.server.db.tables
 
 import org.ktorm.schema.Table
-import org.ktorm.schema.*
+import org.ktorm.schema.int
+import org.ktorm.schema.varchar
 
 /*
 create table league(
