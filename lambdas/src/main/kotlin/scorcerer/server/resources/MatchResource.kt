@@ -25,23 +25,25 @@ class MatchResource : MatchApi() {
         val matches: List<Match>
         if (filterType != null) {
             matches = transaction {
-                MatchTable.selectAll().where { MatchTable.state eq MatchState.valueOf(filterType) }
-            }.map { row ->
-                Match(
-                    row[MatchTable.homeTeamId].toString(),
-                    row[MatchTable.awayTeamId].toString(),
-                    row[MatchTable.id].toString(),
-                )
+                MatchTable.selectAll().where { MatchTable.state eq MatchState.valueOf(filterType.uppercase()) }
+                    .map { row ->
+                        Match(
+                            row[MatchTable.homeTeamId].toString(),
+                            row[MatchTable.awayTeamId].toString(),
+                            row[MatchTable.id].toString(),
+                        )
+                    }
             }
         } else {
             matches = transaction {
                 MatchTable.selectAll()
-            }.map { row ->
-                Match(
-                    row[MatchTable.homeTeamId].toString(),
-                    row[MatchTable.awayTeamId].toString(),
-                    row[MatchTable.id].toString(),
-                )
+                    .map { row ->
+                        Match(
+                            row[MatchTable.homeTeamId].toString(),
+                            row[MatchTable.awayTeamId].toString(),
+                            row[MatchTable.id].toString(),
+                        )
+                    }
             }
         }
         return matches
