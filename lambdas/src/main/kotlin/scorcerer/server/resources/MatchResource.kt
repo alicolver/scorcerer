@@ -1,5 +1,7 @@
 package scorcerer.server.resources
 
+import org.http4k.core.Response
+import org.http4k.core.Status
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.openapitools.server.apis.MatchApi
@@ -9,6 +11,7 @@ import org.openapitools.server.models.Match
 import org.openapitools.server.models.Prediction
 import org.openapitools.server.models.SetMatchScoreRequest
 import org.postgresql.util.PSQLException
+import scorcerer.server.ApiResponseError
 import scorcerer.server.db.tables.MatchState
 import scorcerer.server.db.tables.MatchTable
 
@@ -41,7 +44,7 @@ class MatchResource : MatchApi() {
                 } get MatchTable.id
             }
         } catch (e: PSQLException) {
-            throw e
+            throw ApiResponseError(Response(Status.INTERNAL_SERVER_ERROR).body("Database error"))
         }
         return CreateMatch200Response(id.toString())
     }
