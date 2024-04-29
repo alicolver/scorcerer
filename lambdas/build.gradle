@@ -131,6 +131,7 @@ task fetchContract(type: Exec) {
         mkdir "$buildDir"
     }
     outputs.file("$buildDir/contract.yaml")
+    outputs.upToDateWhen { false }
 }
 
 tasks.withType(KaptGenerateStubsTask.class).configureEach {
