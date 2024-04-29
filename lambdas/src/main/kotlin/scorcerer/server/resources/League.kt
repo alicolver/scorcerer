@@ -46,8 +46,9 @@ class League : LeagueApi() {
     override fun getLeague(requesterUserId: String, leagueId: String): League {
         val result = transaction {
             LeagueTable.selectAll().where { LeagueTable.id eq leagueId }
-        }.map { row ->
-            League(row[LeagueTable.id], row[LeagueTable.name])
+                .map { row ->
+                    League(row[LeagueTable.id].toString(), row[LeagueTable.name])
+                }
         }
         return result[0]
     }

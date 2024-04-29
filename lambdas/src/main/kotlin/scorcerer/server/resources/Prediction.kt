@@ -17,7 +17,7 @@ class Prediction() : PredictionApi() {
             transaction {
                 PredictionTable.insert {
                     it[this.memberId] = requesterUserId
-                    it[this.matchId] = createPredictionRequest.matchId
+                    it[this.matchId] = createPredictionRequest.matchId.toInt()
                     it[this.homeScore] = createPredictionRequest.homeScore
                     it[this.awayScore] = createPredictionRequest.awayScore
                 } get PredictionTable.id
