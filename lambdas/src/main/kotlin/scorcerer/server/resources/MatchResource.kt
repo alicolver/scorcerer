@@ -3,6 +3,7 @@ package scorcerer.server.resources
 import org.http4k.core.Response
 import org.http4k.core.Status
 import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.openapitools.server.apis.MatchApi
 import org.openapitools.server.models.CreateMatch200Response
@@ -21,10 +22,31 @@ class MatchResource : MatchApi() {
     }
 
     override fun listMatches(requesterUserId: String, filterType: String?): List<Match> {
-        return listOf(
-            Match("England", "France", "12345"),
-            Match("Scotland", "Germany", "12346"),
-        )
+        val matches: List<Match>
+        if (filterType != null) {
+            matches = transaction {
+                MatchTable.selectAll().where { MatchTable.state eq MatchState.valueOf(filterType.uppercase()) }
+                    .map { row ->
+                        Match(
+                            row[MatchTable.homeTeamId].toString(),
+                            row[MatchTable.awayTeamId].toString(),
+                            row[MatchTable.id].toString(),
+                        )
+                    }
+            }
+        } else {
+            matches = transaction {
+                MatchTable.selectAll()
+                    .map { row ->
+                        Match(
+                            row[MatchTable.homeTeamId].toString(),
+                            row[MatchTable.awayTeamId].toString(),
+                            row[MatchTable.id].toString(),
+                        )
+                    }
+            }
+        }
+        return matches
     }
 
     override fun setMatchScore(requesterUserId: String, matchId: String, setMatchScoreRequest: SetMatchScoreRequest) {
@@ -35,8 +57,8 @@ class MatchResource : MatchApi() {
         val id = try {
             transaction {
                 MatchTable.insert {
-                    it[this.homeTeamId] = createMatchRequest.homeTeamId
-                    it[this.awayTeamId] = createMatchRequest.awayTeamId
+                    it[this.homeTeamId] = createMatchRequest.homeTeamId.toInt()
+                    it[this.awayTeamId] = createMatchRequest.awayTeamId.toInt()
                     it[this.datetime] = createMatchRequest.datetime
                     it[this.state] = MatchState.UPCOMING
                     it[this.venue] = createMatchRequest.venue
