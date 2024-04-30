@@ -6,11 +6,8 @@ import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.openapitools.server.apis.MatchApi
-import org.openapitools.server.models.CreateMatch200Response
-import org.openapitools.server.models.CreateMatchRequest
-import org.openapitools.server.models.Match
+import org.openapitools.server.models.*
 import org.openapitools.server.models.Prediction
-import org.openapitools.server.models.SetMatchScoreRequest
 import org.postgresql.util.PSQLException
 import scorcerer.server.ApiResponseError
 import scorcerer.server.db.tables.MatchState
@@ -22,31 +19,19 @@ class MatchResource : MatchApi() {
     }
 
     override fun listMatches(requesterUserId: String, filterType: String?): List<Match> {
-        val matches: List<Match>
-        if (filterType != null) {
-            matches = transaction {
-                MatchTable.selectAll().where { MatchTable.state eq MatchState.valueOf(filterType.uppercase()) }
-                    .map { row ->
-                        Match(
-                            row[MatchTable.homeTeamId].toString(),
-                            row[MatchTable.awayTeamId].toString(),
-                            row[MatchTable.id].toString(),
-                        )
-                    }
-            }
-        } else {
-            matches = transaction {
+        return transaction {
+            if (filterType.isNullOrBlank()) {
                 MatchTable.selectAll()
-                    .map { row ->
-                        Match(
-                            row[MatchTable.homeTeamId].toString(),
-                            row[MatchTable.awayTeamId].toString(),
-                            row[MatchTable.id].toString(),
-                        )
-                    }
+            } else {
+                MatchTable.selectAll().where { MatchTable.state eq MatchState.valueOf(filterType.uppercase()) }
+            }.map { row ->
+                Match(
+                    row[MatchTable.homeTeamId].toString(),
+                    row[MatchTable.awayTeamId].toString(),
+                    row[MatchTable.id].toString(),
+                )
             }
         }
-        return matches
     }
 
     override fun setMatchScore(requesterUserId: String, matchId: String, setMatchScoreRequest: SetMatchScoreRequest) {
