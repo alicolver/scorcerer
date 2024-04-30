@@ -6,8 +6,11 @@ import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.openapitools.server.apis.MatchApi
-import org.openapitools.server.models.*
+import org.openapitools.server.models.CreateMatch200Response
+import org.openapitools.server.models.CreateMatchRequest
+import org.openapitools.server.models.Match
 import org.openapitools.server.models.Prediction
+import org.openapitools.server.models.SetMatchScoreRequest
 import org.postgresql.util.PSQLException
 import scorcerer.server.ApiResponseError
 import scorcerer.server.db.tables.MatchState
