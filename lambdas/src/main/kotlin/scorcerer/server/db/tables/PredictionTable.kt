@@ -10,4 +10,5 @@ object PredictionTable : Table("prediction") {
     val homeScore = integer("home_score").check { it.greaterEq(0) }
     val awayScore = integer("away_score").check { it.greaterEq(0) }
     val result = enumeration<MatchResult>("result").nullable()
+    val points = integer("points").check { it.greaterEq(0) }.check { it.lessEq(10) }.nullable()
 }

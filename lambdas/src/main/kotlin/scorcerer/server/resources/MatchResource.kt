@@ -2,6 +2,7 @@ package scorcerer.server.resources
 
 import org.http4k.core.Response
 import org.http4k.core.Status
+import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -13,12 +14,35 @@ import org.openapitools.server.models.Prediction
 import org.openapitools.server.models.SetMatchScoreRequest
 import org.postgresql.util.PSQLException
 import scorcerer.server.ApiResponseError
+import scorcerer.server.db.tables.LeagueMembershipTable
 import scorcerer.server.db.tables.MatchState
 import scorcerer.server.db.tables.MatchTable
+import scorcerer.server.db.tables.PredictionTable
 
 class MatchResource : MatchApi() {
     override fun getMatchPredictions(requesterUserId: String, matchId: String, leagueId: String?): List<Prediction> {
-        TODO("Not yet implemented")
+        return transaction {
+            if (leagueId.isNullOrBlank()) {
+                PredictionTable.selectAll().where { (PredictionTable.matchId eq matchId.toInt()) }
+            } else {
+                PredictionTable.selectAll().where {
+                    (PredictionTable.matchId eq matchId.toInt()).and(
+                        PredictionTable.memberId inList LeagueMembershipTable.selectAll()
+                            .where { LeagueMembershipTable.leagueId eq leagueId }
+                            .map { row -> row[LeagueMembershipTable.memberId] },
+                    )
+                }
+            }
+                .map { row ->
+                    Prediction(
+                        row[PredictionTable.homeScore],
+                        row[PredictionTable.awayScore],
+                        row[PredictionTable.matchId].toString(),
+                        row[PredictionTable.id].toString(),
+                        row[PredictionTable.points],
+                    )
+                }
+        }
     }
 
     override fun listMatches(requesterUserId: String, filterType: String?): List<Match> {
@@ -37,11 +61,18 @@ class MatchResource : MatchApi() {
         }
     }
 
-    override fun setMatchScore(requesterUserId: String, matchId: String, setMatchScoreRequest: SetMatchScoreRequest) {
+    override fun setMatchScore(
+        requesterUserId: String,
+        matchId: String,
+        setMatchScoreRequest: SetMatchScoreRequest,
+    ) {
         TODO("Not yet implemented")
     }
 
-    override fun createMatch(requesterUserId: String, createMatchRequest: CreateMatchRequest): CreateMatch200Response {
+    override fun createMatch(
+        requesterUserId: String,
+        createMatchRequest: CreateMatchRequest,
+    ): CreateMatch200Response {
         val id = try {
             transaction {
                 MatchTable.insert {
