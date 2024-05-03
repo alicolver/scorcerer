@@ -15,6 +15,9 @@ jobs:
         run: |
           cd lambdas
           ./gradlew build
+      - name: Run test with Gradle Wrapper
+        run: |
+          ./gradlew test
       - name: cdk synth
         uses: youyo/aws-cdk-github-actions@v2
         with:
