@@ -22,9 +22,19 @@ object Database {
             password = Environment.DatabasePassword,
         )
 
+        generateTables()
+    }
+
+    fun generateTables() {
         transaction {
             addLogger(StdOutSqlLogger)
             SchemaUtils.create(MatchTable, LeagueMembershipTable, LeagueTable, MemberTable, PredictionTable, TeamTable)
+        }
+    }
+
+    fun dropTables() {
+        transaction {
+            SchemaUtils.drop(MatchTable, LeagueMembershipTable, LeagueTable, MemberTable, PredictionTable, TeamTable)
         }
     }
 }
