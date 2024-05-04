@@ -2,16 +2,12 @@ package scorcerer.resources
 
 import io.kotlintest.shouldBe
 import org.junit.jupiter.api.Test
-import org.openapitools.server.models.CreateMatchRequest
-import org.openapitools.server.models.CreatePredictionRequest
-import org.openapitools.server.models.CreateTeamRequest
 import scorcerer.DatabaseTest
+import scorcerer.givenMatchExists
+import scorcerer.givenPredictionExists
+import scorcerer.givenTeamExists
 import scorcerer.givenUserExists
-import scorcerer.server.resources.MatchResource
-import scorcerer.server.resources.Prediction
-import scorcerer.server.resources.Team
 import scorcerer.server.resources.User
-import java.time.OffsetDateTime
 
 class UserTest : DatabaseTest() {
     @Test
@@ -24,21 +20,16 @@ class UserTest : DatabaseTest() {
 
     @Test
     fun getUserPredictions() {
-        givenUserExists("userId", "name", 15, 5)
-        Team().createTeam("", CreateTeamRequest("England", ""))
-        Team().createTeam("", CreateTeamRequest("France", ""))
+        val userId = "userId"
+        givenUserExists(userId, "name", 15, 5)
+        val homeTeamId = givenTeamExists("England")
+        val awayTeamId = givenTeamExists("France")
+        val matchId = givenMatchExists(homeTeamId, awayTeamId)
 
-        MatchResource().createMatch(
-            "",
-            CreateMatchRequest(
-                "1",
-                "2",
-                OffsetDateTime.now(),
-                "Oliphant Gardens",
-                1,
-            ),
-        )
-        Prediction().createPrediction("userId", CreatePredictionRequest(1, 1, "1"))
-        User().getUserPredictions("", "userId").size shouldBe 1
+        val predictionId = givenPredictionExists(matchId, userId, 1, 1)
+
+        val userPredictions = User().getUserPredictions("", userId)
+        userPredictions.size shouldBe 1
+        userPredictions[0].predictionId shouldBe predictionId
     }
 }
