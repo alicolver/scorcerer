@@ -12,7 +12,6 @@ import org.http4k.serverless.ApiGatewayRestLambdaFunction
 import org.openapitools.server.apis.allRoutes
 import scorcerer.server.db.Database
 import scorcerer.server.resources.Auth
-import scorcerer.server.resources.Leaderboard
 import scorcerer.server.resources.League
 import scorcerer.server.resources.MatchResource
 import scorcerer.server.resources.Prediction
@@ -49,7 +48,7 @@ fun handleError(e: Throwable): Response =
         }
     }
 
-private val routes = allRoutes(Auth(), Leaderboard(), League(), MatchResource(), Prediction(), Team(), User())
+private val routes = allRoutes(Auth(), League(), MatchResource(), Prediction(), Team(), User())
 
 private val httpServer = loggingFilter.then(CatchAll(::handleError).then(routes))
 

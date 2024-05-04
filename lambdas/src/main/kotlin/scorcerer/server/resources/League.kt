@@ -9,10 +9,13 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.openapitools.server.apis.LeagueApi
 import org.openapitools.server.models.CreateLeague200Response
 import org.openapitools.server.models.CreateLeagueRequest
+import org.openapitools.server.models.LeaderboardInner
 import org.openapitools.server.models.League
+import org.openapitools.server.models.User
 import org.postgresql.util.PSQLException
 import scorcerer.server.db.tables.LeagueMembershipTable
 import scorcerer.server.db.tables.LeagueTable
+import scorcerer.server.db.tables.MemberTable
 import scorcerer.utils.throwDatabaseError
 
 class League : LeagueApi() {
@@ -43,13 +46,61 @@ class League : LeagueApi() {
     }
 
     override fun getLeague(requesterUserId: String, leagueId: String): League {
-        val result = transaction {
+        val leagueName = transaction {
             LeagueTable.selectAll().where { LeagueTable.id eq leagueId }
                 .map { row ->
-                    League(row[LeagueTable.id].toString(), row[LeagueTable.name])
+                    row[LeagueTable.name]
                 }
+        }[0]
+        val userIds = transaction {
+            LeagueMembershipTable.selectAll().where { LeagueMembershipTable.leagueId eq leagueId }
+                .map { row -> row[LeagueMembershipTable.memberId] }
         }
-        return result[0]
+        val users = transaction {
+            MemberTable.selectAll().where {
+                MemberTable.id inList userIds
+            }.map { row ->
+                User(
+                    row[MemberTable.name],
+                    row[MemberTable.id],
+                    row[MemberTable.fixedPoints],
+                    row[MemberTable.livePoints],
+                )
+            }
+        }
+        return League(leagueId, leagueName, users)
+    }
+
+    override fun getLeagueLeaderboard(requesterUserId: String, leagueId: String): List<LeaderboardInner> {
+        val users = transaction {
+            LeagueMembershipTable.selectAll().where {
+                LeagueMembershipTable.leagueId eq leagueId
+            }.flatMap { row ->
+                MemberTable.selectAll().where {
+                    MemberTable.id eq row[LeagueMembershipTable.memberId]
+                }.map { memberRow ->
+                    User(
+                        memberRow[MemberTable.name],
+                        memberRow[MemberTable.id],
+                        memberRow[MemberTable.fixedPoints],
+                        memberRow[MemberTable.livePoints],
+                    )
+                }
+            }
+        }
+
+        val sortedUsers = users.sortedWith(compareByDescending<User> { it.livePoints + it.fixedPoints }.thenBy { it.name })
+
+        var currentPosition = 0
+        var previousPoints = Int.MAX_VALUE
+        val leaderboard = sortedUsers.mapIndexed { index, user ->
+            if (user.livePoints + user.fixedPoints < previousPoints) {
+                currentPosition = index + 1
+            }
+            previousPoints = user.livePoints + user.fixedPoints
+            LeaderboardInner(currentPosition, user)
+        }
+        return leaderboard
     }
 
     override fun joinLeague(requesterUserId: String, leagueId: String) {
