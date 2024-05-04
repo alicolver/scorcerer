@@ -20,6 +20,8 @@ plugins {
     id "org.jlleitschuh.gradle.ktlint" version "12.1.0"
 }
 
+apply plugin: 'jacoco'
+
 group "org.openapitools"
 version "1.0.0"
 
@@ -151,4 +153,35 @@ tasks.withType(KtLintFormatTask.class).configureEach {
 
 test {
    useJUnitPlatform()
+    jacoco {
+        destinationFile = file("$buildDir/jacoco/test.exec")
+    }
 }
+
+test.finalizedBy(jacocoTestReport)
+
+jacoco {
+    // You may modify the Jacoco version here
+    toolVersion = "0.8.2"
+}
+
+tasks.jacocoTestReport {
+    // Adjust the output of the test report
+    reports {
+        xml.required.set(false)
+        csv.required.set(false)
+        html.required.set(true)
+    }
+}
+
+tasks.jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            limit {
+                minimum = "0.1".toBigDecimal()
+            }
+        }
+    }
+}
+
+build.dependsOn jacocoTestCoverageVerification
