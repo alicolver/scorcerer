@@ -1,21 +1,20 @@
 package scorcerer.resources
 
 import io.kotlintest.inspectors.forOne
-import io.kotlintest.matchers.match
 import io.kotlintest.shouldBe
+import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.openapitools.server.models.CreateMatchRequest
+import org.openapitools.server.models.Match
 import org.openapitools.server.models.SetMatchScoreRequest
-import scorcerer.DatabaseTest
-import scorcerer.givenLeagueExists
-import scorcerer.givenMatchExists
-import scorcerer.givenPredictionExists
-import scorcerer.givenTeamExists
-import scorcerer.givenUserExists
-import scorcerer.givenUserInLeague
+import scorcerer.*
+import scorcerer.server.ApiResponseError
 import scorcerer.server.db.tables.MatchState
+import scorcerer.server.db.tables.MatchTable
+import scorcerer.server.db.tables.PredictionTable
 import scorcerer.server.resources.MatchResource
 import java.time.OffsetDateTime
 
@@ -110,9 +109,57 @@ class MatchTest : DatabaseTest() {
     }
 
     @Test
-    fun setMatchScore() {
-        assertThrows<NotImplementedError> {
-            MatchResource().setMatchScore("", "", SetMatchScoreRequest(1, 2))
+    fun setMatchScoreWhenMatchDoesNotExistRaises() {
+        assertThrows<ApiResponseError> {
+            MatchResource().setMatchScore("", "1", SetMatchScoreRequest(1, 2))
         }
+    }
+
+    @Test
+    fun setMatchScoreWhenMatchExistsUpdatesScore() {
+        val matchId = givenMatchExists("1", "2")
+        MatchResource().setMatchScore("", matchId, SetMatchScoreRequest(1, 2))
+        val match = transaction {
+            MatchTable.selectAll().where { MatchTable.id eq matchId.toInt() }.map { row ->
+                Match(
+                    row[MatchTable.homeTeamId].toString(),
+                    row[MatchTable.awayTeamId].toString(),
+                    row[MatchTable.id].toString(),
+                    row[MatchTable.homeScore],
+                    row[MatchTable.awayScore],
+                )
+            }
+        }[0]
+        match.awayScore shouldBe 2
+        match.homeScore shouldBe 1
+    }
+
+    @Test
+    fun setMatchScoreWhenPredictionExistsUpdatesPoints() {
+        val matchId = givenMatchExists("1", "2")
+        givenUserExists("userId", "name")
+        val predictionId = givenPredictionExists(matchId, "userId", 1, 1)
+        val predictionPoints = transaction {
+            PredictionTable.selectAll().where { PredictionTable.id eq predictionId.toInt() }.map { row ->
+                row[PredictionTable.points]
+            }
+        }[0]
+        predictionPoints shouldBe null
+
+        MatchResource().setMatchScore("", matchId, SetMatchScoreRequest(0, 0))
+        val predictionPointsUpdated = transaction {
+            PredictionTable.selectAll().where { PredictionTable.id eq predictionId.toInt() }.map { row ->
+                row[PredictionTable.points]
+            }
+        }[0]
+        predictionPointsUpdated shouldBe 2
+
+        MatchResource().setMatchScore("", matchId, SetMatchScoreRequest(1, 1))
+        val predictionPointsUpdatedAgain = transaction {
+            PredictionTable.selectAll().where { PredictionTable.id eq predictionId.toInt() }.map { row ->
+                row[PredictionTable.points]
+            }
+        }[0]
+        predictionPointsUpdatedAgain shouldBe 5
     }
 }

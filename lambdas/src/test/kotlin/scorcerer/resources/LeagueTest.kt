@@ -12,6 +12,7 @@ import scorcerer.DatabaseTest
 import scorcerer.givenLeagueExists
 import scorcerer.givenUserExists
 import scorcerer.givenUserInLeague
+import scorcerer.server.ApiResponseError
 import scorcerer.server.resources.League
 
 class LeagueTest : DatabaseTest() {
@@ -62,6 +63,16 @@ class LeagueTest : DatabaseTest() {
         }
         league.users.forOne { user ->
             user.userId shouldBe "anotherUserId"
+        }
+    }
+
+    @Test
+    fun getLeagueRaisesWhenLeagueDoesNotExist() {
+        assertThrows<ApiResponseError> {
+            League().getLeague(
+                "userId",
+                "invalid-league",
+            )
         }
     }
 

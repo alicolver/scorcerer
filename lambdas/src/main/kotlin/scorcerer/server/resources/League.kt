@@ -1,5 +1,7 @@
 package scorcerer.server.resources
 
+import org.http4k.core.Response
+import org.http4k.core.Status
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteWhere
@@ -7,12 +9,11 @@ import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.openapitools.server.apis.LeagueApi
-import org.openapitools.server.models.CreateLeague200Response
-import org.openapitools.server.models.CreateLeagueRequest
-import org.openapitools.server.models.LeaderboardInner
+import org.openapitools.server.models.*
 import org.openapitools.server.models.League
 import org.openapitools.server.models.User
 import org.postgresql.util.PSQLException
+import scorcerer.server.ApiResponseError
 import scorcerer.server.db.tables.LeagueMembershipTable
 import scorcerer.server.db.tables.LeagueTable
 import scorcerer.server.db.tables.MemberTable
@@ -47,24 +48,24 @@ class League : LeagueApi() {
 
     override fun getLeague(requesterUserId: String, leagueId: String): League {
         val leagueName = transaction {
-            LeagueTable.selectAll().where { LeagueTable.id eq leagueId }
-                .map { row ->
-                    row[LeagueTable.name]
-                }
-        }[0]
-        val userIds = transaction {
-            LeagueMembershipTable.selectAll().where { LeagueMembershipTable.leagueId eq leagueId }
-                .map { row -> row[LeagueMembershipTable.memberId] }
+            LeagueTable.select(LeagueTable.name).where { LeagueTable.id eq leagueId }.singleOrNull()
+                ?.get(LeagueTable.name)
+        }
+        if (leagueName == null) {
+            throw ApiResponseError(Response(Status.BAD_REQUEST).body("League does not exist"))
         }
         val users = transaction {
-            MemberTable.selectAll().where {
-                MemberTable.id inList userIds
-            }.map { row ->
+            (LeagueTable innerJoin LeagueMembershipTable innerJoin MemberTable).select(
+                MemberTable.name,
+                MemberTable.id,
+                MemberTable.fixedPoints,
+                MemberTable.livePoints,
+            ).where { LeagueTable.id eq leagueId }.map {
                 User(
-                    row[MemberTable.name],
-                    row[MemberTable.id],
-                    row[MemberTable.fixedPoints],
-                    row[MemberTable.livePoints],
+                    it[MemberTable.name],
+                    it[MemberTable.id],
+                    it[MemberTable.fixedPoints],
+                    it[MemberTable.livePoints],
                 )
             }
         }
@@ -89,7 +90,8 @@ class League : LeagueApi() {
             }
         }
 
-        val sortedUsers = users.sortedWith(compareByDescending<User> { it.livePoints + it.fixedPoints }.thenBy { it.name })
+        val sortedUsers =
+            users.sortedWith(compareByDescending<User> { it.livePoints + it.fixedPoints }.thenBy { it.name })
 
         var currentPosition = 0
         var previousPoints = Int.MAX_VALUE
