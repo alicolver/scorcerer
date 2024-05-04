@@ -14,6 +14,7 @@ import scorcerer.*
 import scorcerer.server.ApiResponseError
 import scorcerer.server.db.tables.MatchState
 import scorcerer.server.db.tables.MatchTable
+import scorcerer.server.db.tables.MemberTable
 import scorcerer.server.db.tables.PredictionTable
 import scorcerer.server.resources.MatchResource
 import java.time.OffsetDateTime
@@ -161,5 +162,27 @@ class MatchTest : DatabaseTest() {
             }
         }[0]
         predictionPointsUpdatedAgain shouldBe 5
+    }
+
+    @Test
+    fun setMatchScoreUpdatesUsersLivePoints() {
+        val matchId = givenMatchExists("1", "2")
+        givenUserExists("userId", "name")
+        val predictionId = givenPredictionExists(matchId, "userId", 1, 1)
+
+        val liveUserPoints = transaction {
+            MemberTable.selectAll().where { MemberTable.id eq "userId" }.map { row ->
+                row[MemberTable.livePoints]
+            }
+        }[0]
+        liveUserPoints shouldBe 0
+
+        MatchResource().setMatchScore("", matchId, SetMatchScoreRequest(0, 0))
+        val updateLiveUserPoints = transaction {
+            MemberTable.selectAll().where { MemberTable.id eq "userId" }.map { row ->
+                row[MemberTable.livePoints]
+            }
+        }[0]
+        updateLiveUserPoints shouldBe 2
     }
 }

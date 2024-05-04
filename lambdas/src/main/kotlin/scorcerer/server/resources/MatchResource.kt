@@ -10,11 +10,9 @@ import org.jetbrains.exposed.sql.update
 import org.openapitools.server.apis.MatchApi
 import org.openapitools.server.models.*
 import org.openapitools.server.models.Prediction
+import org.openapitools.server.models.User
 import scorcerer.server.ApiResponseError
-import scorcerer.server.db.tables.LeagueMembershipTable
-import scorcerer.server.db.tables.MatchState
-import scorcerer.server.db.tables.MatchTable
-import scorcerer.server.db.tables.PredictionTable
+import scorcerer.server.db.tables.*
 import scorcerer.utils.PointsCalculator
 
 class MatchResource : MatchApi() {
@@ -74,6 +72,7 @@ class MatchResource : MatchApi() {
         }
         transaction {
             MatchTable.update({ MatchTable.id eq matchId.toInt() }) {
+                it[state] = MatchState.LIVE
                 it[homeScore] = setMatchScoreRequest.homeScore
                 it[awayScore] = setMatchScoreRequest.awayScore
             }
@@ -93,7 +92,7 @@ class MatchResource : MatchApi() {
                 }
             }
         }
-        // recalculate livePoints on each user
+        recalculateLivePointsForAllUsers()
     }
 
     override fun createMatch(
@@ -111,5 +110,29 @@ class MatchResource : MatchApi() {
             } get MatchTable.id
         }
         return CreateMatch200Response(id.toString())
+    }
+}
+
+fun recalculateLivePointsForAllUsers() {
+    transaction {
+        val allUsers = MemberTable.selectAll().map {
+            User(
+                it[MemberTable.name],
+                it[MemberTable.id],
+                it[MemberTable.fixedPoints],
+                it[MemberTable.livePoints],
+            )
+        }
+
+        allUsers.forEach { user ->
+            val totalLivePoints = PredictionTable.innerJoin(MatchTable).select(PredictionTable.points).where {
+                (PredictionTable.memberId eq user.userId) and (PredictionTable.matchId eq MatchTable.id) and (MatchTable.state eq MatchState.LIVE)
+            }.sumOf { it[PredictionTable.points] ?: 0 }
+
+            // Update the livePoints field for the current user
+            MemberTable.update({ MemberTable.id eq user.userId }) {
+                it[MemberTable.livePoints] = totalLivePoints
+            }
+        }
     }
 }
