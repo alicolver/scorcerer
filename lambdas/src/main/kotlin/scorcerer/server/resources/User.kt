@@ -11,6 +11,7 @@ import org.openapitools.server.models.Prediction
 import org.openapitools.server.models.SignupRequest
 import scorcerer.server.ApiResponseError
 import scorcerer.server.db.tables.MemberTable
+import scorcerer.server.db.tables.PredictionTable
 
 class User : UserApi() {
     override fun getUserPoints(requesterUserId: String, userId: String): GetUserPoints200Response {
@@ -24,8 +25,18 @@ class User : UserApi() {
         }
     }
 
-    override fun getUserPredictions(requesterUserId: String, userId: String, leagueId: String?): List<Prediction> {
-        TODO("Not yet implemented")
+    override fun getUserPredictions(requesterUserId: String, userId: String): List<Prediction> {
+        return transaction {
+            PredictionTable.selectAll().where { (PredictionTable.memberId eq requesterUserId) }
+        }.map { row ->
+            Prediction(
+                row[PredictionTable.homeScore],
+                row[PredictionTable.awayScore],
+                row[PredictionTable.matchId].toString(),
+                row[PredictionTable.id].toString(),
+                row[PredictionTable.points],
+            )
+        }
     }
 
     override fun signup(signupRequest: SignupRequest): Unit = transaction {
