@@ -1,18 +1,19 @@
 package scorcerer.utils
 
-data class Result(val homeScore: Int, val awayScore: Int)
-
-data class Prediction(val homeScore: Int, val awayScore: Int, val matchId: String)
+import org.openapitools.server.models.Match
+import org.openapitools.server.models.Prediction
 
 object PointsCalculator {
-    fun calculatePoints(
-        prediction: Prediction,
-        result: Result,
-    ) = when {
-        prediction.awayScore == result.awayScore && prediction.homeScore == result.homeScore -> 5
-        prediction.homeScore < prediction.awayScore && result.homeScore < result.awayScore -> 2
-        prediction.homeScore > prediction.awayScore && result.homeScore > result.awayScore -> 2
-        prediction.homeScore == prediction.awayScore && result.homeScore == result.awayScore -> 2
-        else -> 0
+    fun calculatePoints(prediction: Prediction, match: Match): Int {
+        if (match.awayScore == null || match.homeScore == null) {
+            throw IllegalArgumentException("Result scores cannot be null")
+        }
+        return when {
+            prediction.awayScore == match.awayScore && prediction.homeScore == match.homeScore -> 5
+            prediction.homeScore < prediction.awayScore && match.homeScore < match.awayScore -> 2
+            prediction.homeScore > prediction.awayScore && match.homeScore > match.awayScore -> 2
+            prediction.homeScore == prediction.awayScore && match.homeScore == match.awayScore -> 2
+            else -> 0
+        }
     }
 }
