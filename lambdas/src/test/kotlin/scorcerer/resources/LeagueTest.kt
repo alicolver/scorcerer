@@ -3,22 +3,22 @@ package scorcerer.resources
 import io.kotlintest.shouldBe
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.openapitools.server.models.CreateLeagueRequest
-import org.openapitools.server.models.SignupRequest
 import scorcerer.DatabaseTest
+import scorcerer.givenUserExists
 import scorcerer.server.resources.League
-import scorcerer.server.resources.User
 
 class LeagueTest : DatabaseTest() {
     @BeforeEach
     fun generateUser() {
-        User().signup(SignupRequest("email", "password", "name"))
+        givenUserExists("testId", "name", 0, 0)
     }
 
     @Test
     fun createLeague() {
         val league = League().createLeague(
-            "id-from-cognito",
+            "testId",
             CreateLeagueRequest(
                 "Test League",
             ),
@@ -29,13 +29,13 @@ class LeagueTest : DatabaseTest() {
     @Test
     fun getLeague() {
         League().createLeague(
-            "id-from-cognito",
+            "testId",
             CreateLeagueRequest(
                 "Another League",
             ),
         )
         val league = League().getLeague(
-            "id-from-cognito",
+            "testId",
             "another-league",
         )
         league.name shouldBe "Another League"
@@ -45,8 +45,37 @@ class LeagueTest : DatabaseTest() {
     @Test
     fun leaveLeague() {
         League().leaveLeague(
-            "id-from-cognito",
+            "testId",
             "another-league",
         )
+    }
+
+    @Test
+    fun joinLeague() {
+        League().createLeague(
+            "testId",
+            CreateLeagueRequest(
+                "Another Test League",
+            ),
+        )
+        givenUserExists("anotherUser", "test", 0, 0)
+        League().joinLeague(
+            "anotherUser",
+            "another-test-league",
+        )
+    }
+
+    @Test
+    fun createLeagueRaisesExceptionWhenLeagueExists() {
+        League().createLeague(
+            "testId",
+            CreateLeagueRequest("Duplicate League"),
+        )
+        assertThrows<Exception> {
+            League().createLeague(
+                "testId",
+                CreateLeagueRequest("Duplicate League"),
+            )
+        }
     }
 }

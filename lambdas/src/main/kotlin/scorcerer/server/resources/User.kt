@@ -20,22 +20,22 @@ class User : UserApi() {
                 .selectAll()
                 .where { MemberTable.id eq userId }
                 .firstOrNull()
-                ?.let { row -> GetUserPoints200Response(row[MemberTable.livePoints], row[MemberTable.fixedPoints]) }
+                ?.let { row -> GetUserPoints200Response(row[MemberTable.fixedPoints], row[MemberTable.livePoints]) }
                 ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("User does not exist"))
         }
     }
 
     override fun getUserPredictions(requesterUserId: String, userId: String): List<Prediction> {
         return transaction {
-            PredictionTable.selectAll().where { (PredictionTable.memberId eq requesterUserId) }
-        }.map { row ->
-            Prediction(
-                row[PredictionTable.homeScore],
-                row[PredictionTable.awayScore],
-                row[PredictionTable.matchId].toString(),
-                row[PredictionTable.id].toString(),
-                row[PredictionTable.points],
-            )
+            PredictionTable.selectAll().where { (PredictionTable.memberId eq userId) }.map { row ->
+                Prediction(
+                    row[PredictionTable.homeScore],
+                    row[PredictionTable.awayScore],
+                    row[PredictionTable.matchId].toString(),
+                    row[PredictionTable.id].toString(),
+                    row[PredictionTable.points],
+                )
+            }
         }
     }
 
