@@ -1,30 +1,31 @@
 package scorcerer.resources
 
+import io.kotlintest.inspectors.forOne
+import io.kotlintest.matchers.match
 import io.kotlintest.shouldBe
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import org.openapitools.server.models.CreateLeagueRequest
 import org.openapitools.server.models.CreateMatchRequest
-import org.openapitools.server.models.CreatePredictionRequest
-import org.openapitools.server.models.CreateTeamRequest
 import org.openapitools.server.models.SetMatchScoreRequest
 import scorcerer.DatabaseTest
+import scorcerer.givenLeagueExists
+import scorcerer.givenMatchExists
+import scorcerer.givenPredictionExists
+import scorcerer.givenTeamExists
 import scorcerer.givenUserExists
+import scorcerer.givenUserInLeague
 import scorcerer.server.db.tables.MatchState
-import scorcerer.server.resources.League
 import scorcerer.server.resources.MatchResource
-import scorcerer.server.resources.Prediction
-import scorcerer.server.resources.Team
 import java.time.OffsetDateTime
 
 class MatchTest : DatabaseTest() {
     @BeforeEach
     fun generateTeams() {
-        Team().createTeam("", CreateTeamRequest("England", ""))
-        Team().createTeam("", CreateTeamRequest("France", ""))
-        Team().createTeam("", CreateTeamRequest("Spain", ""))
-        Team().createTeam("", CreateTeamRequest("Scotland", ""))
+        givenTeamExists("England")
+        givenTeamExists("France")
+        givenTeamExists("Spain")
+        givenTeamExists("Scotland")
     }
 
     @Test
@@ -45,27 +46,8 @@ class MatchTest : DatabaseTest() {
 
     @Test
     fun listMatches() {
-        MatchResource().createMatch(
-            "",
-            CreateMatchRequest(
-                "1",
-                "2",
-                OffsetDateTime.now(),
-                "Allianz",
-                1,
-            ),
-        )
-
-        MatchResource().createMatch(
-            "",
-            CreateMatchRequest(
-                "3",
-                "4",
-                OffsetDateTime.now(),
-                "Signal Iduna Park",
-                2,
-            ),
-        )
+        givenMatchExists("1", "2")
+        givenMatchExists("3", "4")
 
         MatchResource().listMatches("", null).size shouldBe 2
         MatchResource().listMatches("", MatchState.UPCOMING.toString()).size shouldBe 2
@@ -77,44 +59,54 @@ class MatchTest : DatabaseTest() {
 
     @Test
     fun getMatchPredictionsWithNoLeagueFilter() {
-        givenUserExists("userId", "name", 0, 0)
-        givenUserExists("anotherUser", "name", 0, 0)
-        MatchResource().createMatch(
-            "",
-            CreateMatchRequest(
-                "3",
-                "4",
-                OffsetDateTime.now(),
-                "Signal Iduna Park",
-                2,
-            ),
-        )
-        Prediction().createPrediction("userId", CreatePredictionRequest(1, 1, "1"))
-        League().createLeague("userId", CreateLeagueRequest("League Name"))
-        Prediction().createPrediction("anotherUser", CreatePredictionRequest(1, 1, "1"))
-        League().createLeague("anotherUser", CreateLeagueRequest("Another League Name"))
-        MatchResource().getMatchPredictions("", "1", null).size shouldBe 2
+        val userId = "userId"
+        givenUserExists(userId, "name")
+        val anotherUserId = "anotherUser"
+        givenUserExists(anotherUserId, "name")
+
+        val matchId = givenMatchExists("3", "4")
+        val predictionId = givenPredictionExists(matchId, userId, 1, 1)
+        val anotherPredictionId = givenPredictionExists(matchId, anotherUserId, 1, 1)
+
+        val leagueId = "test-league"
+        givenLeagueExists(leagueId, "Test League")
+        givenUserInLeague(userId, leagueId)
+
+        val anotherLeagueId = "another-test-league"
+        givenLeagueExists(anotherLeagueId, "Test League")
+        givenUserInLeague(anotherUserId, anotherLeagueId)
+
+        val predictions = MatchResource().getMatchPredictions("", "1", null)
+        predictions.size shouldBe 2
+        predictions.forOne { prediction ->
+            prediction.predictionId shouldBe predictionId
+        }
+        predictions.forOne { prediction ->
+            prediction.predictionId shouldBe anotherPredictionId
+        }
     }
 
     @Test
     fun getMatchPredictionsWithLeagueFilter() {
-        givenUserExists("userId", "name", 0, 0)
-        givenUserExists("anotherUser", "name", 0, 0)
-        MatchResource().createMatch(
-            "",
-            CreateMatchRequest(
-                "3",
-                "4",
-                OffsetDateTime.now(),
-                "Signal Iduna Park",
-                2,
-            ),
-        )
-        Prediction().createPrediction("userId", CreatePredictionRequest(1, 1, "1"))
-        League().createLeague("userId", CreateLeagueRequest("League Name"))
-        Prediction().createPrediction("anotherUser", CreatePredictionRequest(1, 1, "1"))
-        League().createLeague("anotherUser", CreateLeagueRequest("Another League Name"))
-        MatchResource().getMatchPredictions("", "1", "league-name").size shouldBe 1
+        val userId = "userId"
+        givenUserExists(userId, "name", 0, 0)
+        val anotherUserId = "anotherUser"
+        givenUserExists(anotherUserId, "name", 0, 0)
+        val matchId = givenMatchExists("3", "4")
+
+        val predictionId = givenPredictionExists(matchId, userId, 1, 1)
+        val leagueId = "test-league"
+        givenLeagueExists(leagueId, "Test League")
+        givenUserInLeague(userId, leagueId)
+
+        givenPredictionExists(matchId, anotherUserId, 1, 1)
+        val anotherLeagueId = "another-test-league"
+        givenLeagueExists(anotherLeagueId, "Test League")
+        givenUserInLeague(anotherUserId, anotherLeagueId)
+
+        val matchPredictions = MatchResource().getMatchPredictions("", "1", leagueId)
+        matchPredictions.size shouldBe 1
+        matchPredictions[0].predictionId shouldBe predictionId
     }
 
     @Test
