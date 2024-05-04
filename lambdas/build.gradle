@@ -161,12 +161,10 @@ test {
 test.finalizedBy(jacocoTestReport)
 
 jacoco {
-    // You may modify the Jacoco version here
     toolVersion = "0.8.2"
 }
 
 tasks.jacocoTestReport {
-    // Adjust the output of the test report
     reports {
         xml.required.set(false)
         csv.required.set(false)
