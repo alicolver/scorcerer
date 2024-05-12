@@ -33,6 +33,7 @@ class User : UserApi() {
                     row[PredictionTable.awayScore],
                     row[PredictionTable.matchId].toString(),
                     row[PredictionTable.id].toString(),
+                    row[PredictionTable.memberId],
                     row[PredictionTable.points],
                 )
             }

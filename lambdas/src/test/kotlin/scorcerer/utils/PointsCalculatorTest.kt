@@ -19,7 +19,7 @@ internal class PointsCalculatorTest {
         awayScore: Int,
         expectedPoints: Int,
     ) {
-        val prediction = Prediction(predictedHomeScore, predictedAwayScore, "matchId", "predictionId")
+        val prediction = Prediction(predictedHomeScore, predictedAwayScore, "matchId", "predictionId", "userId")
         val result = Match("homeTeam", "awayTeam", "matchId", homeScore, awayScore)
         PointsCalculator.calculatePoints(prediction, result) shouldBe expectedPoints
     }
@@ -27,7 +27,7 @@ internal class PointsCalculatorTest {
     @Test
     fun testCalulatePointsRaisesException() {
         assertThrows<IllegalArgumentException> {
-            val prediction = Prediction(1, 1, "matchId", "predictionId")
+            val prediction = Prediction(1, 1, "matchId", "predictionId", "userId")
             val result = Match("homeTeam", "awayTeam", "matchId")
             PointsCalculator.calculatePoints(prediction, result)
         }
