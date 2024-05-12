@@ -2,20 +2,15 @@ package scorcerer.server.resources
 
 import org.http4k.core.Response
 import org.http4k.core.Status
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.jetbrains.exposed.sql.update
 import org.openapitools.server.apis.MatchApi
 import org.openapitools.server.models.*
 import org.openapitools.server.models.Prediction
 import scorcerer.server.ApiResponseError
-import scorcerer.server.db.tables.LeagueMembershipTable
-import scorcerer.server.db.tables.MatchState
-import scorcerer.server.db.tables.MatchTable
-import scorcerer.server.db.tables.PredictionTable
+import scorcerer.server.db.tables.*
 import scorcerer.utils.PointsCalculator
+import scorcerer.utils.PointsCalculator.calculatePoints
 
 class MatchResource : MatchApi() {
     override fun getMatchPredictions(requesterUserId: String, matchId: String, leagueId: String?): List<Prediction> {
@@ -36,6 +31,7 @@ class MatchResource : MatchApi() {
                     row[PredictionTable.awayScore],
                     row[PredictionTable.matchId].toString(),
                     row[PredictionTable.id].toString(),
+                    row[PredictionTable.memberId],
                     row[PredictionTable.points],
                 )
             }
@@ -85,6 +81,7 @@ class MatchResource : MatchApi() {
                     row[PredictionTable.awayScore],
                     row[PredictionTable.matchId].toString(),
                     row[PredictionTable.id].toString(),
+                    row[PredictionTable.memberId],
                 )
                 val calculatedPoints = PointsCalculator.calculatePoints(prediction, match)
 
@@ -111,5 +108,45 @@ class MatchResource : MatchApi() {
             } get MatchTable.id
         }
         return CreateMatch200Response(id.toString())
+    }
+
+    override fun completeMatch(
+        requesterUserId: String,
+        matchId: String,
+        completeMatchRequest: CompleteMatchRequest,
+    ) {
+        transaction {
+            MatchTable.update({ MatchTable.id eq matchId.toInt() }) {
+                it[state] = MatchState.COMPLETED
+                it[homeScore] = completeMatchRequest.homeScore
+                it[awayScore] = completeMatchRequest.awayScore
+            }
+
+            val predictions =
+                PredictionTable.selectAll().where { PredictionTable.matchId eq matchId.toInt() }.map { row ->
+                    Prediction(
+                        row[PredictionTable.homeScore],
+                        row[PredictionTable.awayScore],
+                        row[PredictionTable.matchId].toString(),
+                        row[PredictionTable.id].toString(),
+                        row[PredictionTable.memberId],
+                    )
+                }
+
+            predictions.forEach { prediction ->
+                val points = calculatePoints(
+                    prediction,
+                    Match("", "", matchId, completeMatchRequest.homeScore, completeMatchRequest.awayScore),
+                )
+                PredictionTable.update({ PredictionTable.id eq prediction.predictionId.toInt() }) {
+                    it[PredictionTable.points] = points
+                }
+                MemberTable.update({ MemberTable.id eq prediction.userId }) {
+                    with(SqlExpressionBuilder) {
+                        it.update(MemberTable.fixedPoints, MemberTable.fixedPoints + points)
+                    }
+                }
+            }
+        }
     }
 }
