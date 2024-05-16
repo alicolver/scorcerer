@@ -1,10 +1,13 @@
 package scorcerer.resources
 
 import io.kotlintest.shouldBe
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 import org.openapitools.server.models.CreatePredictionRequest
 import scorcerer.*
+import scorcerer.server.db.tables.PredictionTable
 import scorcerer.server.resources.Prediction
 
 class PredictionTest : DatabaseTest() {
@@ -28,22 +31,20 @@ class PredictionTest : DatabaseTest() {
     }
 
     @Test
-    fun createPredictionGivenPredictionExistsRaises() {
+    fun createPredictionGivenPredictionExistsUpdates() {
         givenUserExists("userId", "name")
         val homeTeamId = givenTeamExists("England")
         val awayTeamId = givenTeamExists("Scotland")
         val matchId = givenMatchExists(homeTeamId, awayTeamId)
-        givenPredictionExists(matchId, "userId", 1, 1)
-        assertThrows<Exception> {
-            Prediction().createPrediction(
-                requesterUserId = "userId",
-                CreatePredictionRequest(
-                    1,
-                    2,
-                    matchId,
-
-                ),
-            )
+        val predictionId = givenPredictionExists(matchId, "userId", 1, 1)
+        Prediction().createPrediction("userId", CreatePredictionRequest(1, 2, matchId))
+        transaction {
+            PredictionTable.selectAll().where { PredictionTable.id eq predictionId.toInt() }.map { row ->
+                row[PredictionTable.homeScore] shouldBe 1
+                row[PredictionTable.awayScore] shouldBe 2
+                row[PredictionTable.matchId] shouldBe matchId.toInt()
+                row[PredictionTable.memberId] shouldBe "userId"
+            }
         }
     }
 }
