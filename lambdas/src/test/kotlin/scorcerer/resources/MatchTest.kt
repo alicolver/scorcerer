@@ -123,8 +123,12 @@ class MatchTest : DatabaseTest() {
             MatchTable.selectAll().where { MatchTable.id eq matchId.toInt() }.map { row ->
                 Match(
                     row[MatchTable.homeTeamId].toString(),
+                    "",
                     row[MatchTable.awayTeamId].toString(),
+                    "",
                     row[MatchTable.id].toString(),
+                    "",
+                    OffsetDateTime.now(),
                     row[MatchTable.homeScore],
                     row[MatchTable.awayScore],
                 )

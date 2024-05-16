@@ -5,6 +5,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.openapitools.server.apis.TeamApi
 import org.openapitools.server.models.CreateTeam200Response
 import org.openapitools.server.models.CreateTeamRequest
+import org.openapitools.server.models.Team
 import scorcerer.server.db.tables.TeamTable
 
 class Team() : TeamApi() {
@@ -17,5 +18,9 @@ class Team() : TeamApi() {
         }
 
         return CreateTeam200Response(id.toString())
+    }
+
+    override fun getTeam(requesterUserId: String, teamId: String): Team {
+        TODO("not yet implemented")
     }
 }
