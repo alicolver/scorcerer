@@ -5,10 +5,13 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.openapitools.server.models.CreatePredictionRequest
 import scorcerer.*
+import scorcerer.server.ApiResponseError
 import scorcerer.server.db.tables.PredictionTable
 import scorcerer.server.resources.Prediction
+import java.time.OffsetDateTime
 
 class PredictionTest : DatabaseTest() {
     @Test
@@ -16,7 +19,7 @@ class PredictionTest : DatabaseTest() {
         givenUserExists("userId", "name")
         val homeTeamId = givenTeamExists("England")
         val awayTeamId = givenTeamExists("Scotland")
-        val matchId = givenMatchExists(homeTeamId, awayTeamId)
+        val matchId = givenMatchExists(homeTeamId, awayTeamId, OffsetDateTime.now().plusHours(1))
         val prediction = Prediction().createPrediction(
             requesterUserId = "userId",
             CreatePredictionRequest(
@@ -35,7 +38,7 @@ class PredictionTest : DatabaseTest() {
         givenUserExists("userId", "name")
         val homeTeamId = givenTeamExists("England")
         val awayTeamId = givenTeamExists("Scotland")
-        val matchId = givenMatchExists(homeTeamId, awayTeamId)
+        val matchId = givenMatchExists(homeTeamId, awayTeamId, OffsetDateTime.now().plusHours(1))
         val predictionId = givenPredictionExists(matchId, "userId", 1, 1)
         Prediction().createPrediction("userId", CreatePredictionRequest(1, 2, matchId))
         transaction {
@@ -45,6 +48,20 @@ class PredictionTest : DatabaseTest() {
                 row[PredictionTable.matchId] shouldBe matchId.toInt()
                 row[PredictionTable.memberId] shouldBe "userId"
             }
+        }
+    }
+
+    @Test
+    fun createPredictionGivenMatchStartedRaisesError() {
+        givenUserExists("userId", "name")
+        val homeTeamId = givenTeamExists("England")
+        val awayTeamId = givenTeamExists("Scotland")
+        val matchId = givenMatchExists(homeTeamId, awayTeamId, OffsetDateTime.now().minusHours(1))
+        assertThrows<ApiResponseError> {
+            Prediction().createPrediction(
+                "userId",
+                CreatePredictionRequest(1, 2, matchId),
+            )
         }
     }
 }
