@@ -7,7 +7,6 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.openapitools.server.apis.MatchApi
 import org.openapitools.server.models.*
 import org.openapitools.server.models.Prediction
-import org.openapitools.server.models.Team
 import scorcerer.server.ApiResponseError
 import scorcerer.server.db.tables.*
 import scorcerer.utils.PointsCalculator
@@ -41,28 +40,20 @@ class MatchResource : MatchApi() {
     }
 
     override fun listMatches(requesterUserId: String, filterType: String?): List<Match> = transaction {
+        val awayTeamTable = TeamTable.alias("awayTeam")
+        val homeTeamTable = TeamTable.alias("homeTeam")
+        val matchTeamTable = MatchTable.join(awayTeamTable, JoinType.INNER, MatchTable.awayTeamId, awayTeamTable[TeamTable.id])
+            .join(homeTeamTable, JoinType.INNER, MatchTable.homeTeamId, homeTeamTable[TeamTable.id])
         if (filterType.isNullOrBlank()) {
-            MatchTable.selectAll()
+            matchTeamTable.selectAll()
         } else {
-            MatchTable.selectAll().where { MatchTable.state eq MatchState.valueOf(filterType.uppercase()) }
+            matchTeamTable.selectAll().where { MatchTable.state eq MatchState.valueOf(filterType.uppercase()) }
         }.map { row ->
-            val homeTeam =
-                TeamTable.selectAll().where { TeamTable.id eq row[MatchTable.homeTeamId] }.firstOrNull()
-                    ?.let { teamRow ->
-                        Team(teamRow[TeamTable.id].toString(), teamRow[TeamTable.name], teamRow[TeamTable.flagUri])
-                    }
-                    ?: throw ApiResponseError(Response(Status.INTERNAL_SERVER_ERROR))
-            val awayTeam =
-                TeamTable.selectAll().where { TeamTable.id eq row[MatchTable.awayTeamId] }.firstOrNull()
-                    ?.let { teamRow ->
-                        Team(teamRow[TeamTable.id].toString(), teamRow[TeamTable.name], teamRow[TeamTable.flagUri])
-                    }
-                    ?: throw ApiResponseError(Response(Status.INTERNAL_SERVER_ERROR))
             Match(
-                homeTeam.teamName,
-                homeTeam.flagUri,
-                awayTeam.teamName,
-                awayTeam.flagUri,
+                row[homeTeamTable[TeamTable.name]],
+                row[homeTeamTable[TeamTable.flagUri]],
+                row[awayTeamTable[TeamTable.name]],
+                row[awayTeamTable[TeamTable.flagUri]],
                 row[MatchTable.id].toString(),
                 row[MatchTable.venue],
                 row[MatchTable.datetime],
@@ -75,32 +66,24 @@ class MatchResource : MatchApi() {
         matchId: String,
         setMatchScoreRequest: SetMatchScoreRequest,
     ) {
+        val awayTeamTable = TeamTable.alias("awayTeam")
+        val homeTeamTable = TeamTable.alias("homeTeam")
         val match = transaction {
-            MatchTable.selectAll().where { MatchTable.id eq matchId.toInt() }.firstOrNull()?.let { row ->
-                val homeTeam =
-                    TeamTable.selectAll().where { TeamTable.id eq row[MatchTable.homeTeamId] }.firstOrNull()
-                        ?.let { teamRow ->
-                            Team(teamRow[TeamTable.id].toString(), teamRow[TeamTable.name], teamRow[TeamTable.flagUri])
-                        }
-                        ?: throw ApiResponseError(Response(Status.INTERNAL_SERVER_ERROR))
-                val awayTeam =
-                    TeamTable.selectAll().where { TeamTable.id eq row[MatchTable.awayTeamId] }.firstOrNull()
-                        ?.let { teamRow ->
-                            Team(teamRow[TeamTable.id].toString(), teamRow[TeamTable.name], teamRow[TeamTable.flagUri])
-                        }
-                        ?: throw ApiResponseError(Response(Status.INTERNAL_SERVER_ERROR))
-                Match(
-                    homeTeam.teamName,
-                    homeTeam.flagUri,
-                    awayTeam.teamName,
-                    awayTeam.flagUri,
-                    row[MatchTable.id].toString(),
-                    row[MatchTable.venue],
-                    row[MatchTable.datetime],
-                    setMatchScoreRequest.homeScore,
-                    setMatchScoreRequest.awayScore,
-                )
-            } ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("Match does not exist"))
+            MatchTable.join(awayTeamTable, JoinType.INNER, MatchTable.awayTeamId, awayTeamTable[TeamTable.id])
+                .join(homeTeamTable, JoinType.INNER, MatchTable.homeTeamId, homeTeamTable[TeamTable.id]).selectAll()
+                .where { MatchTable.id eq matchId.toInt() }.firstOrNull()?.let { row ->
+                    Match(
+                        row[homeTeamTable[TeamTable.name]],
+                        row[homeTeamTable[TeamTable.flagUri]],
+                        row[awayTeamTable[TeamTable.name]],
+                        row[awayTeamTable[TeamTable.flagUri]],
+                        row[MatchTable.id].toString(),
+                        row[MatchTable.venue],
+                        row[MatchTable.datetime],
+                        setMatchScoreRequest.homeScore,
+                        setMatchScoreRequest.awayScore,
+                    )
+                } ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("Match does not exist"))
         }
         transaction {
             MatchTable.update({ MatchTable.id eq matchId.toInt() }) {
