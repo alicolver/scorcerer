@@ -4,8 +4,11 @@ import io.kotlintest.shouldBe
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.openapitools.server.models.CreateTeamRequest
 import scorcerer.DatabaseTest
+import scorcerer.givenTeamExists
+import scorcerer.server.ApiResponseError
 import scorcerer.server.db.tables.TeamTable
 import scorcerer.server.resources.Team
 
@@ -27,5 +30,18 @@ class TeamTest : DatabaseTest() {
         }
 
         numberOfTeams shouldBe 3
+    }
+
+    @Test
+    fun getTeamWhenTeamExists() {
+        val teamId = givenTeamExists("Scotland")
+        Team().getTeam("userId", teamId).teamName shouldBe "Scotland"
+    }
+
+    @Test
+    fun getTeamWhenTeamDoesNotExistsRaises() {
+        assertThrows<ApiResponseError> {
+            Team().getTeam("", "1")
+        }
     }
 }

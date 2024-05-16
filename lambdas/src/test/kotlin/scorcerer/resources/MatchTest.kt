@@ -48,6 +48,8 @@ class MatchTest : DatabaseTest() {
         givenMatchExists("1", "2")
         givenMatchExists("3", "4")
 
+        val allMatches = MatchResource().listMatches("", null)
+
         MatchResource().listMatches("", null).size shouldBe 2
         MatchResource().listMatches("", MatchState.UPCOMING.toString()).size shouldBe 2
 
