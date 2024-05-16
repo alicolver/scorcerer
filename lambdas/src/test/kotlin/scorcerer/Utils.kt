@@ -2,13 +2,7 @@ package scorcerer
 
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.transactions.transaction
-import scorcerer.server.db.tables.LeagueMembershipTable
-import scorcerer.server.db.tables.LeagueTable
-import scorcerer.server.db.tables.MatchState
-import scorcerer.server.db.tables.MatchTable
-import scorcerer.server.db.tables.MemberTable
-import scorcerer.server.db.tables.PredictionTable
-import scorcerer.server.db.tables.TeamTable
+import scorcerer.server.db.tables.*
 import java.time.OffsetDateTime
 
 fun givenUserExists(id: String, name: String, fixedPoints: Int = 0, livePoints: Int = 0) {
@@ -22,13 +16,17 @@ fun givenUserExists(id: String, name: String, fixedPoints: Int = 0, livePoints: 
     }
 }
 
-fun givenMatchExists(homeTeamId: String, awayTeamId: String): String {
+fun givenMatchExists(
+    homeTeamId: String,
+    awayTeamId: String,
+    matchDatetime: OffsetDateTime = OffsetDateTime.now(),
+): String {
     return (
         transaction {
             MatchTable.insert {
                 it[this.homeTeamId] = homeTeamId.toInt()
                 it[this.awayTeamId] = awayTeamId.toInt()
-                it[this.datetime] = OffsetDateTime.now()
+                it[this.datetime] = matchDatetime
                 it[this.state] = MatchState.UPCOMING
                 it[this.venue] = "Test Venue"
                 it[this.matchDay] = 1
