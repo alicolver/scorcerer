@@ -7,10 +7,12 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.openapitools.server.apis.MatchApi
 import org.openapitools.server.models.*
 import org.openapitools.server.models.Prediction
+import org.openapitools.server.models.Team
 import scorcerer.server.ApiResponseError
 import scorcerer.server.db.tables.*
 import scorcerer.utils.PointsCalculator
 import scorcerer.utils.PointsCalculator.calculatePoints
+import java.time.OffsetDateTime
 
 class MatchResource : MatchApi() {
     override fun getMatchPredictions(requesterUserId: String, matchId: String, leagueId: String?): List<Prediction> {
@@ -44,10 +46,26 @@ class MatchResource : MatchApi() {
         } else {
             MatchTable.selectAll().where { MatchTable.state eq MatchState.valueOf(filterType.uppercase()) }
         }.map { row ->
+            val homeTeam =
+                TeamTable.selectAll().where { TeamTable.id eq row[MatchTable.homeTeamId] }.firstOrNull()
+                    ?.let { teamRow ->
+                        Team(teamRow[TeamTable.id].toString(), teamRow[TeamTable.name], teamRow[TeamTable.flagUri])
+                    }
+                    ?: throw ApiResponseError(Response(Status.INTERNAL_SERVER_ERROR))
+            val awayTeam =
+                TeamTable.selectAll().where { TeamTable.id eq row[MatchTable.awayTeamId] }.firstOrNull()
+                    ?.let { teamRow ->
+                        Team(teamRow[TeamTable.id].toString(), teamRow[TeamTable.name], teamRow[TeamTable.flagUri])
+                    }
+                    ?: throw ApiResponseError(Response(Status.INTERNAL_SERVER_ERROR))
             Match(
-                row[MatchTable.homeTeamId].toString(),
-                row[MatchTable.awayTeamId].toString(),
+                homeTeam.teamName,
+                homeTeam.flagUri,
+                awayTeam.teamName,
+                awayTeam.flagUri,
                 row[MatchTable.id].toString(),
+                row[MatchTable.venue],
+                row[MatchTable.datetime],
             )
         }
     }
@@ -59,10 +77,26 @@ class MatchResource : MatchApi() {
     ) {
         val match = transaction {
             MatchTable.selectAll().where { MatchTable.id eq matchId.toInt() }.firstOrNull()?.let { row ->
+                val homeTeam =
+                    TeamTable.selectAll().where { TeamTable.id eq row[MatchTable.homeTeamId] }.firstOrNull()
+                        ?.let { teamRow ->
+                            Team(teamRow[TeamTable.id].toString(), teamRow[TeamTable.name], teamRow[TeamTable.flagUri])
+                        }
+                        ?: throw ApiResponseError(Response(Status.INTERNAL_SERVER_ERROR))
+                val awayTeam =
+                    TeamTable.selectAll().where { TeamTable.id eq row[MatchTable.awayTeamId] }.firstOrNull()
+                        ?.let { teamRow ->
+                            Team(teamRow[TeamTable.id].toString(), teamRow[TeamTable.name], teamRow[TeamTable.flagUri])
+                        }
+                        ?: throw ApiResponseError(Response(Status.INTERNAL_SERVER_ERROR))
                 Match(
-                    row[MatchTable.homeTeamId].toString(),
-                    row[MatchTable.awayTeamId].toString(),
+                    homeTeam.teamName,
+                    homeTeam.flagUri,
+                    awayTeam.teamName,
+                    awayTeam.flagUri,
                     row[MatchTable.id].toString(),
+                    row[MatchTable.venue],
+                    row[MatchTable.datetime],
                     setMatchScoreRequest.homeScore,
                     setMatchScoreRequest.awayScore,
                 )
@@ -136,7 +170,18 @@ class MatchResource : MatchApi() {
             predictions.forEach { prediction ->
                 val points = calculatePoints(
                     prediction,
-                    Match("", "", matchId, completeMatchRequest.homeScore, completeMatchRequest.awayScore),
+//                  // TODO: have a model where we don't need all this junk
+                    Match(
+                        "",
+                        "",
+                        "",
+                        "",
+                        matchId,
+                        "",
+                        OffsetDateTime.now(),
+                        completeMatchRequest.homeScore,
+                        completeMatchRequest.awayScore,
+                    ),
                 )
                 PredictionTable.update({ PredictionTable.id eq prediction.predictionId.toInt() }) {
                     it[PredictionTable.points] = points

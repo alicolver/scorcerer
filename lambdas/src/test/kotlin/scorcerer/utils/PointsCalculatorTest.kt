@@ -6,6 +6,7 @@ import org.junit.jupiter.params.provider.CsvSource
 import org.openapitools.server.models.Match
 import org.openapitools.server.models.Prediction
 import scorcerer.utils.PointsCalculator
+import java.time.OffsetDateTime
 
 internal class PointsCalculatorTest {
     data class TestInput(val prediction: Prediction, val result: Match)
@@ -20,7 +21,7 @@ internal class PointsCalculatorTest {
         expectedPoints: Int,
     ) {
         val prediction = Prediction(predictedHomeScore, predictedAwayScore, "matchId", "predictionId", "userId")
-        val result = Match("homeTeam", "awayTeam", "matchId", homeScore, awayScore)
+        val result = Match("homeTeam", "", "awayTeam", "", "matchId", "", OffsetDateTime.now(), homeScore, awayScore)
         PointsCalculator.calculatePoints(prediction, result) shouldBe expectedPoints
     }
 
@@ -28,7 +29,7 @@ internal class PointsCalculatorTest {
     fun testCalulatePointsRaisesException() {
         assertThrows<IllegalArgumentException> {
             val prediction = Prediction(1, 1, "matchId", "predictionId", "userId")
-            val result = Match("homeTeam", "awayTeam", "matchId")
+            val result = Match("homeTeam", "", "awayTeam", "", "matchId", "", OffsetDateTime.now())
             PointsCalculator.calculatePoints(prediction, result)
         }
     }
