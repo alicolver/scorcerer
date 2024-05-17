@@ -6,7 +6,6 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.openapitools.server.apis.LeagueApi
 import org.openapitools.server.models.*
@@ -74,20 +73,22 @@ class League : LeagueApi() {
 
     override fun getLeagueLeaderboard(requesterUserId: String, leagueId: String): List<LeaderboardInner> {
         val users = transaction {
-            LeagueMembershipTable.selectAll().where {
-                LeagueMembershipTable.leagueId eq leagueId
-            }.flatMap { row ->
-                MemberTable.selectAll().where {
-                    MemberTable.id eq row[LeagueMembershipTable.memberId]
-                }.map { memberRow ->
+            (LeagueMembershipTable innerJoin MemberTable)
+                .select(
+                    MemberTable.id,
+                    MemberTable.name,
+                    MemberTable.fixedPoints,
+                    MemberTable.livePoints,
+                )
+                .where { LeagueMembershipTable.leagueId eq leagueId }
+                .map {
                     User(
-                        memberRow[MemberTable.name],
-                        memberRow[MemberTable.id],
-                        memberRow[MemberTable.fixedPoints],
-                        memberRow[MemberTable.livePoints],
+                        it[MemberTable.name],
+                        it[MemberTable.id],
+                        it[MemberTable.fixedPoints],
+                        it[MemberTable.livePoints],
                     )
                 }
-            }
         }
 
         val sortedUsers =

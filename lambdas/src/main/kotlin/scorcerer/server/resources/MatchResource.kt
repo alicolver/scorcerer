@@ -19,12 +19,8 @@ class MatchResource : MatchApi() {
             if (leagueId.isNullOrBlank()) {
                 PredictionTable.selectAll().where { (PredictionTable.matchId eq matchId.toInt()) }
             } else {
-                PredictionTable.selectAll().where {
-                    (PredictionTable.matchId eq matchId.toInt()).and(
-                        PredictionTable.memberId inList LeagueMembershipTable.selectAll()
-                            .where { LeagueMembershipTable.leagueId eq leagueId }
-                            .map { row -> row[LeagueMembershipTable.memberId] },
-                    )
+                (PredictionTable innerJoin MemberTable innerJoin LeagueMembershipTable).selectAll().where {
+                    (PredictionTable.matchId eq matchId.toInt()).and(LeagueMembershipTable.leagueId eq leagueId)
                 }
             }.map { row ->
                 Prediction(
@@ -42,8 +38,9 @@ class MatchResource : MatchApi() {
     override fun listMatches(requesterUserId: String, filterType: String?): List<Match> = transaction {
         val awayTeamTable = TeamTable.alias("awayTeam")
         val homeTeamTable = TeamTable.alias("homeTeam")
-        val matchTeamTable = MatchTable.join(awayTeamTable, JoinType.INNER, MatchTable.awayTeamId, awayTeamTable[TeamTable.id])
-            .join(homeTeamTable, JoinType.INNER, MatchTable.homeTeamId, homeTeamTable[TeamTable.id])
+        val matchTeamTable =
+            MatchTable.join(awayTeamTable, JoinType.INNER, MatchTable.awayTeamId, awayTeamTable[TeamTable.id])
+                .join(homeTeamTable, JoinType.INNER, MatchTable.homeTeamId, homeTeamTable[TeamTable.id])
         if (filterType.isNullOrBlank()) {
             matchTeamTable.selectAll()
         } else {
