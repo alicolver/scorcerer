@@ -1,5 +1,6 @@
 package scorcerer.server.resources
 
+import org.http4k.core.RequestContexts
 import org.http4k.core.Response
 import org.http4k.core.Status
 import org.jetbrains.exposed.sql.insert
@@ -14,7 +15,7 @@ import scorcerer.server.ApiResponseError
 import scorcerer.server.db.tables.MemberTable
 import scorcerer.server.db.tables.PredictionTable
 
-class User : UserApi() {
+class User(context: RequestContexts) : UserApi(context) {
     override fun getUserLeagues(requesterUserId: String, userId: String): List<League> {
         TODO("Not yet implemented")
     }

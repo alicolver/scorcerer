@@ -1,5 +1,6 @@
 package scorcerer.server.resources
 
+import org.http4k.core.RequestContexts
 import org.http4k.core.Response
 import org.http4k.core.Status
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
@@ -18,7 +19,7 @@ import scorcerer.server.db.tables.LeagueTable
 import scorcerer.server.db.tables.MemberTable
 import scorcerer.utils.throwDatabaseError
 
-class League : LeagueApi() {
+class League(context: RequestContexts) : LeagueApi(context) {
     override fun createLeague(
         requesterUserId: String,
         createLeagueRequest: CreateLeagueRequest,
@@ -49,10 +50,8 @@ class League : LeagueApi() {
         val leagueName = transaction {
             LeagueTable.select(LeagueTable.name).where { LeagueTable.id eq leagueId }.singleOrNull()
                 ?.get(LeagueTable.name)
-        }
-        if (leagueName == null) {
-            throw ApiResponseError(Response(Status.BAD_REQUEST).body("League does not exist"))
-        }
+        } ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("League does not exist"))
+
         val users = transaction {
             (LeagueTable innerJoin LeagueMembershipTable innerJoin MemberTable).select(
                 MemberTable.name,

@@ -1,0 +1,10 @@
+package org.openapitools.server.apis
+
+import org.http4k.routing.routes
+
+data class Authorizer(
+    val claims: Map<String, String>,
+    val scopes: List<String>
+)
+
+const val LAMBDA_AUTHORIZER_KEY = "HTTP4K_LAMBDA_AUTHORIZER"

@@ -1,5 +1,6 @@
 package scorcerer.server.resources
 
+import org.http4k.core.RequestContexts
 import org.http4k.core.Response
 import org.http4k.core.Status
 import org.jetbrains.exposed.sql.insert
@@ -12,7 +13,7 @@ import org.openapitools.server.models.Team
 import scorcerer.server.ApiResponseError
 import scorcerer.server.db.tables.TeamTable
 
-class Team() : TeamApi() {
+class Team(context: RequestContexts) : TeamApi(context) {
     override fun createTeam(requesterUserId: String, createTeamRequest: CreateTeamRequest): CreateTeam200Response {
         val id = transaction {
             TeamTable.insert {

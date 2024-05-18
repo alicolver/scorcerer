@@ -4,3 +4,6 @@ files:
   routes.mustache:
       folder: src/main/kotlin/org/openapitools/server/apis
       destinationFilename: Routes.kt
+  auth.mustache:
+      folder: src/main/kotlin/org/openapitools/server/apis
+      destinationFilename: Auth.kt

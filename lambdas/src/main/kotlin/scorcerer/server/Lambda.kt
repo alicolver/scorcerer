@@ -9,13 +9,15 @@ import org.http4k.core.HttpHandler
 import org.http4k.core.RequestContexts
 import org.http4k.core.then
 import org.http4k.filter.ServerFilters
-import org.http4k.serverless.ApiGatewayV2AwsHttpAdapter
+import org.http4k.serverless.ApiGatewayRestAwsHttpAdapter
 import org.http4k.serverless.AppLoader
 import org.http4k.serverless.AppLoaderWithContexts
 import org.http4k.serverless.AwsHttpAdapter
 import org.http4k.serverless.AwsLambdaEventFunction
 import org.http4k.serverless.FnHandler
 import org.http4k.serverless.FnLoader
+import org.openapitools.server.apis.Authorizer
+import org.openapitools.server.apis.LAMBDA_AUTHORIZER_KEY
 import java.io.InputStream
 
 class AuthorizerLoader(
@@ -47,8 +49,6 @@ private inline fun <reified T : Any> Moshi.asA(input: InputStream): T = adapter(
 
 private inline fun <reified T> Moshi.asInputStream(a: T) = adapter(T::class.java).toJson(a).byteInputStream()
 
-const val LAMBDA_AUTHORIZER_KEY = "HTTP4K_LAMBDA_AUTHORIZER"
-
 internal fun addLambdaAuthorizerContext(authorizer: Authorizer?, contexts: RequestContexts) =
     Filter { next ->
         {
@@ -59,19 +59,12 @@ internal fun addLambdaAuthorizerContext(authorizer: Authorizer?, contexts: Reque
         }
     }
 
-data class Authorizer(
-    val claims: Map<String, String>,
-    val scopes: List<String>,
-)
-
 private fun Map<String, Any>.getAuthorizerContext(): Authorizer? {
-    val jwt =
-        getNested("requestContext")?.getNested("authorizer")?.getNested("jwt")
-            ?: return null
+    val authorizer = getNested("requestContext")?.getNested("authorizer") ?: return null
 
     return Authorizer(
-        jwt.getStringNested("claims") ?: emptyMap(),
-        jwt.getStringList("scopes") ?: emptyList(),
+        authorizer.getStringNested("claims") ?: emptyMap(),
+        authorizer.getStringList("scopes") ?: emptyList(),
     )
 }
 
@@ -81,8 +74,8 @@ internal fun Map<String, Any>.getStringNested(name: String): Map<String, String>
 
 internal fun Map<String, Any>.getStringList(name: String): List<String>? = get(name) as? List<String>
 
-abstract class ApiGatewayV2AuthorizerLambdaFunction(input: AppLoaderWithContexts, contexts: RequestContexts) :
-    AwsLambdaEventFunction(AuthorizerLoader(ApiGatewayV2AwsHttpAdapter, contexts, input)) {
+abstract class ApiGatewayRestAuthorizerLambdaFunction(input: AppLoaderWithContexts, contexts: RequestContexts) :
+    AwsLambdaEventFunction(AuthorizerLoader(ApiGatewayRestAwsHttpAdapter, contexts, input)) {
     constructor(input: AppLoader, contexts: RequestContexts) : this(AppLoaderWithContexts { env, _ -> input(env) }, contexts)
     constructor(input: HttpHandler, contexts: RequestContexts) : this(AppLoader { input }, contexts)
 }

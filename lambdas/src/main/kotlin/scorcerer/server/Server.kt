@@ -2,13 +2,13 @@ package scorcerer.server
 
 import com.squareup.moshi.JsonDataException
 import org.http4k.core.Filter
+import org.http4k.core.RequestContexts
 import org.http4k.core.Response
 import org.http4k.core.Status
 import org.http4k.core.then
 import org.http4k.filter.ServerFilters.CatchAll
 import org.http4k.server.SunHttp
 import org.http4k.server.asServer
-import org.http4k.serverless.ApiGatewayRestLambdaFunction
 import org.openapitools.server.apis.allRoutes
 import scorcerer.server.db.Database
 import scorcerer.server.resources.Auth
@@ -48,12 +48,21 @@ fun handleError(e: Throwable): Response =
         }
     }
 
-private val routes = allRoutes(Auth(), League(), MatchResource(), Prediction(), Team(), User())
+private val requestContext = RequestContexts()
+
+private val routes = allRoutes(
+    Auth(requestContext),
+    League(requestContext),
+    MatchResource(requestContext),
+    Prediction(requestContext),
+    Team(requestContext),
+    User(requestContext),
+)
 
 private val httpServer = loggingFilter.then(CatchAll(::handleError).then(routes))
 
 // Entrypoint for the lambda
-class ApiLambdaHandler : ApiGatewayRestLambdaFunction(httpServer) {
+class ApiLambdaHandler : ApiGatewayRestAuthorizerLambdaFunction(httpServer, requestContext) {
     init {
         Database.connectAndGenerateTables()
     }

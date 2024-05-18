@@ -1,5 +1,6 @@
 package scorcerer.server.resources
 
+import org.http4k.core.RequestContexts
 import org.http4k.core.Response
 import org.http4k.core.Status
 import org.jetbrains.exposed.sql.and
@@ -16,7 +17,7 @@ import scorcerer.server.db.tables.MatchTable
 import scorcerer.server.db.tables.PredictionTable
 import java.time.OffsetDateTime
 
-class Prediction : PredictionApi() {
+class Prediction(context: RequestContexts) : PredictionApi(context) {
     override fun createPrediction(
         requesterUserId: String,
         createPredictionRequest: CreatePredictionRequest,

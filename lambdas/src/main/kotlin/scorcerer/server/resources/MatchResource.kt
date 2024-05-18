@@ -1,5 +1,6 @@
 package scorcerer.server.resources
 
+import org.http4k.core.RequestContexts
 import org.http4k.core.Response
 import org.http4k.core.Status
 import org.jetbrains.exposed.sql.*
@@ -9,11 +10,12 @@ import org.openapitools.server.models.*
 import org.openapitools.server.models.Prediction
 import scorcerer.server.ApiResponseError
 import scorcerer.server.db.tables.*
+import scorcerer.server.log
 import scorcerer.utils.PointsCalculator
 import scorcerer.utils.PointsCalculator.calculatePoints
 import java.time.OffsetDateTime
 
-class MatchResource : MatchApi() {
+class MatchResource(context: RequestContexts) : MatchApi(context) {
     override fun getMatchPredictions(requesterUserId: String, matchId: String, leagueId: String?): List<Prediction> {
         return transaction {
             if (leagueId.isNullOrBlank()) {
