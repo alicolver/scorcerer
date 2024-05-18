@@ -3,9 +3,10 @@ import { Instance, InstanceClass, InstanceSize, InstanceType, MachineImage, Port
 import { Credentials, DatabaseInstance, DatabaseInstanceEngine, StorageType } from "aws-cdk-lib/aws-rds"
 import { dbPassword } from "../environment"
 import { Code, Function, Runtime } from "aws-cdk-lib/aws-lambda"
-import { LambdaRestApi } from "aws-cdk-lib/aws-apigateway"
-import { StringAttribute, UserPool, UserPoolClient } from "aws-cdk-lib/aws-cognito"
+import { SpecRestApi } from "aws-cdk-lib/aws-apigateway"
 import { Cognito } from "./cognito"
+import { Role, ServicePrincipal } from "aws-cdk-lib/aws-iam";
+import { importApiDefinition } from "../config/api_definition";
 
 const dbUser = "postgres"
 const dbPort = 5432
@@ -65,9 +66,16 @@ export class Predictaball extends Stack {
 
     db.connections.allowFrom(apiHandler, Port.tcp(dbPort))
 
-    new LambdaRestApi(this, "apiGateway", {
-      handler: apiHandler,
-      proxy: true
+    const gatewayRole = new Role(this, "gatewayRole", {
+      assumedBy: new ServicePrincipal("apigateway.amazonaws.com")
+    })
+
+    const apiDefinition = importApiDefinition(cognito.userPool.userPoolId, apiHandler.functionArn, gatewayRole.roleArn)
+
+    apiHandler.grantInvoke(gatewayRole)
+
+    new SpecRestApi(this, "apiGateway", {
+      apiDefinition: apiDefinition,
     })
   }
 }

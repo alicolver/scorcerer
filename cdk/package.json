@@ -5,13 +5,15 @@
     "cdk": "npx ts-node --prefer-ts-exts lib/app.ts"
   },
   "scripts": {
+    "pullApiSpec": "mkdir -p build && curl https://raw.githubusercontent.com/alicolver/score-contract/main/api-contract.yaml -o build/contract.yaml",
     "test": "jest",
-    "cdk": "cdk",
+    "cdk": "npm run pullApiSpec && cdk",
     "lint": "eslint --fix lib"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
     "@types/jest": "^29.5.12",
+    "@types/js-yaml": "^4.0.9",
     "@types/node": "20.12.7",
     "@types/prettier": "2.7.3",
     "aws-cdk": "2.137.0",
@@ -27,6 +29,7 @@
   "dependencies": {
     "aws-cdk-lib": "^2.137.0",
     "constructs": "^10.3.0",
+    "js-yaml": "^4.1.0",
     "source-map-support": "^0.5.21"
   }
 }
