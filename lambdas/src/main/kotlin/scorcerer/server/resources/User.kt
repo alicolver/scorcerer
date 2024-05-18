@@ -109,14 +109,5 @@ class User(context: RequestContexts) : UserApi(context) {
                 },
             )
         }
-
-//        transaction {
-//            MemberTable.insert {
-//                it[this.id] = userId
-//                it[this.name] = signupRequest.name
-//                it[this.fixedPoints] = 0
-//                it[this.livePoints] = 0
-//            }
-//        }
     }
 }
