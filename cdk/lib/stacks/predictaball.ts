@@ -1,4 +1,4 @@
-import { App, Duration, SecretValue, Stack, StackProps } from "aws-cdk-lib"
+import { App, Duration, SecretValue, Stack, StackProps, RemovalPolicy } from "aws-cdk-lib"
 import { Instance, InstanceClass, InstanceSize, InstanceType, MachineImage, Port, SubnetType, Vpc } from "aws-cdk-lib/aws-ec2"
 import { Credentials, DatabaseInstance, DatabaseInstanceEngine, StorageType } from "aws-cdk-lib/aws-rds"
 import { dbPassword } from "../environment"
@@ -7,6 +7,7 @@ import { SpecRestApi } from "aws-cdk-lib/aws-apigateway"
 import { Cognito } from "./cognito"
 import { Role, ServicePrincipal } from "aws-cdk-lib/aws-iam";
 import { importApiDefinition } from "../config/api_definition";
+import { Bucket, BlockPublicAccess, BucketEncryption } from "aws-cdk-lib/aws-s3";
 
 const dbUser = "postgres"
 const dbPort = 5432
@@ -45,6 +46,14 @@ export class Predictaball extends Stack {
     db.connections.allowFrom(bastion, Port.tcp(dbPort))
     bastion.connections.allowFromAnyIpv4(Port.tcp(22)) // Allow ssh access
 
+    const leaderboardBucket = new Bucket(this, "leaderboardBucket", {
+      blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
+      encryption: BucketEncryption.S3_MANAGED,
+      enforceSSL: true,
+      versioned: true,
+      removalPolicy: RemovalPolicy.RETAIN,
+    })
+
     const apiHandler = new Function(this, "apiHandler", {
       runtime: Runtime.JAVA_11,
       code: Code.fromAsset("../lambdas/build/distributions/scorcerer-1.0.0.zip"),
@@ -59,10 +68,13 @@ export class Predictaball extends Stack {
         DB_PORT: db.dbInstanceEndpointPort,
         USER_POOL_CLIENT_ID: cognito.poolClient.userPoolClientId,
         USER_POOL_ID: cognito.userPool.userPoolId,
+        LEADERBOARD_BUCKET_NAME: leaderboardBucket.bucketName
       },
       vpc: vpc,
       allowPublicSubnet: true
     })
+
+    leaderboardBucket.grantReadWrite(apiHandler)
 
     db.connections.allowFrom(apiHandler, Port.tcp(dbPort))
 
