@@ -1,6 +1,7 @@
 package scorcerer.resources
 
 import io.kotlintest.shouldBe
+import org.http4k.core.RequestContexts
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -20,7 +21,7 @@ class PredictionTest : DatabaseTest() {
         val homeTeamId = givenTeamExists("England")
         val awayTeamId = givenTeamExists("Scotland")
         val matchId = givenMatchExists(homeTeamId, awayTeamId, OffsetDateTime.now().plusHours(1))
-        val prediction = Prediction().createPrediction(
+        val prediction = Prediction(RequestContexts()).createPrediction(
             requesterUserId = "userId",
             CreatePredictionRequest(
                 1,
@@ -40,7 +41,7 @@ class PredictionTest : DatabaseTest() {
         val awayTeamId = givenTeamExists("Scotland")
         val matchId = givenMatchExists(homeTeamId, awayTeamId, OffsetDateTime.now().plusHours(1))
         val predictionId = givenPredictionExists(matchId, "userId", 1, 1)
-        Prediction().createPrediction("userId", CreatePredictionRequest(1, 2, matchId))
+        Prediction(RequestContexts()).createPrediction("userId", CreatePredictionRequest(1, 2, matchId))
         transaction {
             PredictionTable.selectAll().where { PredictionTable.id eq predictionId.toInt() }.map { row ->
                 row[PredictionTable.homeScore] shouldBe 1
@@ -58,7 +59,7 @@ class PredictionTest : DatabaseTest() {
         val awayTeamId = givenTeamExists("Scotland")
         val matchId = givenMatchExists(homeTeamId, awayTeamId, OffsetDateTime.now().minusHours(1))
         assertThrows<ApiResponseError> {
-            Prediction().createPrediction(
+            Prediction(RequestContexts()).createPrediction(
                 "userId",
                 CreatePredictionRequest(1, 2, matchId),
             )

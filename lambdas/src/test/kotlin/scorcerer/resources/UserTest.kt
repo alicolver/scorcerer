@@ -1,6 +1,7 @@
 package scorcerer.resources
 
 import io.kotlintest.shouldBe
+import org.http4k.core.RequestContexts
 import org.junit.jupiter.api.Test
 import scorcerer.DatabaseTest
 import scorcerer.givenMatchExists
@@ -13,7 +14,7 @@ class UserTest : DatabaseTest() {
     @Test
     fun getUserPoints() {
         givenUserExists("userId", "name", 15, 5)
-        val userPoints = User().getUserPoints("", "userId")
+        val userPoints = User(RequestContexts()).getUserPoints("", "userId")
         userPoints.livePoints shouldBe 5
         userPoints.fixedPoints shouldBe 15
     }
@@ -28,7 +29,7 @@ class UserTest : DatabaseTest() {
 
         val predictionId = givenPredictionExists(matchId, userId, 1, 1)
 
-        val userPredictions = User().getUserPredictions("", userId)
+        val userPredictions = User(RequestContexts()).getUserPredictions("", userId)
         userPredictions.size shouldBe 1
         userPredictions[0].predictionId shouldBe predictionId
     }

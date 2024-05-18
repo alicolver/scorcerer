@@ -2,6 +2,7 @@ package scorcerer.resources
 
 import io.kotlintest.inspectors.forOne
 import io.kotlintest.shouldBe
+import org.http4k.core.RequestContexts
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.jupiter.api.BeforeEach
@@ -29,7 +30,7 @@ class MatchTest : DatabaseTest() {
 
     @Test
     fun createMatch() {
-        val match = MatchResource().createMatch(
+        val match = MatchResource(RequestContexts()).createMatch(
             "",
             CreateMatchRequest(
                 "1",
@@ -48,14 +49,12 @@ class MatchTest : DatabaseTest() {
         givenMatchExists("1", "2")
         givenMatchExists("3", "4")
 
-        val allMatches = MatchResource().listMatches("", null)
-
-        MatchResource().listMatches("", null).size shouldBe 2
-        MatchResource().listMatches("", MatchState.UPCOMING.toString()).size shouldBe 2
+        MatchResource(RequestContexts()).listMatches("", null).size shouldBe 2
+        MatchResource(RequestContexts()).listMatches("", MatchState.UPCOMING.toString()).size shouldBe 2
 
         // There should be no matches which are LIVE or COMPLETED
-        MatchResource().listMatches("", MatchState.COMPLETED.toString()).size shouldBe 0
-        MatchResource().listMatches("", MatchState.LIVE.toString()).size shouldBe 0
+        MatchResource(RequestContexts()).listMatches("", MatchState.COMPLETED.toString()).size shouldBe 0
+        MatchResource(RequestContexts()).listMatches("", MatchState.LIVE.toString()).size shouldBe 0
     }
 
     @Test
@@ -77,7 +76,7 @@ class MatchTest : DatabaseTest() {
         givenLeagueExists(anotherLeagueId, "Test League")
         givenUserInLeague(anotherUserId, anotherLeagueId)
 
-        val predictions = MatchResource().getMatchPredictions("", "1", null)
+        val predictions = MatchResource(RequestContexts()).getMatchPredictions("", "1", null)
         predictions.size shouldBe 2
         predictions.forOne { prediction ->
             prediction.predictionId shouldBe predictionId
@@ -105,7 +104,7 @@ class MatchTest : DatabaseTest() {
         givenLeagueExists(anotherLeagueId, "Test League")
         givenUserInLeague(anotherUserId, anotherLeagueId)
 
-        val matchPredictions = MatchResource().getMatchPredictions("", "1", leagueId)
+        val matchPredictions = MatchResource(RequestContexts()).getMatchPredictions("", "1", leagueId)
         matchPredictions.size shouldBe 1
         matchPredictions[0].predictionId shouldBe predictionId
     }
@@ -113,14 +112,14 @@ class MatchTest : DatabaseTest() {
     @Test
     fun setMatchScoreWhenMatchDoesNotExistRaises() {
         assertThrows<ApiResponseError> {
-            MatchResource().setMatchScore("", "1", SetMatchScoreRequest(1, 2))
+            MatchResource(RequestContexts()).setMatchScore("", "1", SetMatchScoreRequest(1, 2))
         }
     }
 
     @Test
     fun setMatchScoreWhenMatchExistsUpdatesScore() {
         val matchId = givenMatchExists("1", "2")
-        MatchResource().setMatchScore("", matchId, SetMatchScoreRequest(1, 2))
+        MatchResource(RequestContexts()).setMatchScore("", matchId, SetMatchScoreRequest(1, 2))
         val match = transaction {
             MatchTable.selectAll().where { MatchTable.id eq matchId.toInt() }.map { row ->
                 Match(
@@ -152,7 +151,7 @@ class MatchTest : DatabaseTest() {
         }[0]
         predictionPoints shouldBe null
 
-        MatchResource().setMatchScore("", matchId, SetMatchScoreRequest(0, 0))
+        MatchResource(RequestContexts()).setMatchScore("", matchId, SetMatchScoreRequest(0, 0))
         val predictionPointsUpdated = transaction {
             PredictionTable.selectAll().where { PredictionTable.id eq predictionId.toInt() }.map { row ->
                 row[PredictionTable.points]
@@ -160,7 +159,7 @@ class MatchTest : DatabaseTest() {
         }[0]
         predictionPointsUpdated shouldBe 2
 
-        MatchResource().setMatchScore("", matchId, SetMatchScoreRequest(1, 1))
+        MatchResource(RequestContexts()).setMatchScore("", matchId, SetMatchScoreRequest(1, 1))
         val predictionPointsUpdatedAgain = transaction {
             PredictionTable.selectAll().where { PredictionTable.id eq predictionId.toInt() }.map { row ->
                 row[PredictionTable.points]

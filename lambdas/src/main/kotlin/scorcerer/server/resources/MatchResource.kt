@@ -10,7 +10,6 @@ import org.openapitools.server.models.*
 import org.openapitools.server.models.Prediction
 import scorcerer.server.ApiResponseError
 import scorcerer.server.db.tables.*
-import scorcerer.server.log
 import scorcerer.utils.PointsCalculator
 import scorcerer.utils.PointsCalculator.calculatePoints
 import java.time.OffsetDateTime

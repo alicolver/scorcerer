@@ -2,6 +2,7 @@ package scorcerer.resources
 
 import io.kotlintest.inspectors.forOne
 import io.kotlintest.shouldBe
+import org.http4k.core.RequestContexts
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -23,7 +24,7 @@ class LeagueTest : DatabaseTest() {
 
     @Test
     fun createLeague() {
-        val league = League().createLeague(
+        val league = League(RequestContexts()).createLeague(
             "userId",
             CreateLeagueRequest(
                 "Test League",
@@ -35,7 +36,7 @@ class LeagueTest : DatabaseTest() {
     @Test
     fun getLeagueWhenNoUsersInLeague() {
         givenLeagueExists("test-league", "Test League")
-        val league = League().getLeague(
+        val league = League(RequestContexts()).getLeague(
             "userId",
             "test-league",
         )
@@ -53,7 +54,7 @@ class LeagueTest : DatabaseTest() {
         givenUserInLeague("userId", leagueId)
         givenUserInLeague("anotherUserId", leagueId)
 
-        val league = League().getLeague(
+        val league = League(RequestContexts()).getLeague(
             "userId",
             "test-league",
         )
@@ -69,7 +70,7 @@ class LeagueTest : DatabaseTest() {
     @Test
     fun getLeagueRaisesWhenLeagueDoesNotExist() {
         assertThrows<ApiResponseError> {
-            League().getLeague(
+            League(RequestContexts()).getLeague(
                 "userId",
                 "invalid-league",
             )
@@ -90,7 +91,7 @@ class LeagueTest : DatabaseTest() {
             givenUserInLeague(userId, "test-league")
         }
 
-        val leagueLeaderboard = League().getLeagueLeaderboard("", "test-league")
+        val leagueLeaderboard = League(RequestContexts()).getLeagueLeaderboard("", "test-league")
         leagueLeaderboard.size shouldBe 5
 
         leagueLeaderboard shouldBe listOf(
@@ -104,7 +105,7 @@ class LeagueTest : DatabaseTest() {
 
     @Test
     fun leaveLeague() {
-        League().leaveLeague(
+        League(RequestContexts()).leaveLeague(
             "userId",
             "another-league",
         )
@@ -115,7 +116,7 @@ class LeagueTest : DatabaseTest() {
     fun joinLeague() {
         givenLeagueExists("test-league", "Test League")
         givenUserExists("anotherUser", "test", 0, 0)
-        League().joinLeague(
+        League(RequestContexts()).joinLeague(
             "anotherUser",
             "test-league",
         )
@@ -126,7 +127,7 @@ class LeagueTest : DatabaseTest() {
     fun createLeagueRaisesExceptionWhenLeagueExists() {
         givenLeagueExists("test-league", "Test League")
         assertThrows<Exception> {
-            League().createLeague(
+            League(RequestContexts()).createLeague(
                 "userId",
                 CreateLeagueRequest("Test League"),
             )
