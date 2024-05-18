@@ -7,6 +7,7 @@ import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.openapitools.server.apis.UserApi
 import org.openapitools.server.models.GetUserPoints200Response
+import org.openapitools.server.models.League
 import org.openapitools.server.models.Prediction
 import org.openapitools.server.models.SignupRequest
 import scorcerer.server.ApiResponseError
@@ -14,6 +15,10 @@ import scorcerer.server.db.tables.MemberTable
 import scorcerer.server.db.tables.PredictionTable
 
 class User : UserApi() {
+    override fun getUserLeagues(requesterUserId: String, userId: String): List<League> {
+        TODO("Not yet implemented")
+    }
+
     override fun getUserPoints(requesterUserId: String, userId: String): GetUserPoints200Response {
         return transaction {
             MemberTable
