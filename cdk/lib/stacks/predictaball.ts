@@ -5,9 +5,11 @@ import { dbPassword } from "../environment"
 import { Code, Function, Runtime } from "aws-cdk-lib/aws-lambda"
 import { SpecRestApi } from "aws-cdk-lib/aws-apigateway"
 import { Cognito } from "./cognito"
-import { Role, ServicePrincipal } from "aws-cdk-lib/aws-iam";
-import { importApiDefinition } from "../config/api_definition";
-import { Bucket, BlockPublicAccess, BucketEncryption } from "aws-cdk-lib/aws-s3";
+import { Effect, PolicyStatement, Role, ServicePrincipal } from "aws-cdk-lib/aws-iam"
+import { importApiDefinition } from "../config/api_definition"
+import { Queue } from "aws-cdk-lib/aws-sqs"
+import { SqsEventSource } from "aws-cdk-lib/aws-lambda-event-sources"
+import { Bucket, BlockPublicAccess, BucketEncryption } from "aws-cdk-lib/aws-s3"
 
 const dbUser = "postgres"
 const dbPort = 5432
@@ -18,7 +20,7 @@ export class Predictaball extends Stack {
 
     const vpc = Vpc.fromLookup(this, "default-vpc", { isDefault: true })
 
-    const cognito = new Cognito(this);
+    const cognito = new Cognito(this)
 
     const db = new DatabaseInstance(this, "predictaballDatabase", {
       engine: DatabaseInstanceEngine.POSTGRES,
@@ -54,37 +56,93 @@ export class Predictaball extends Stack {
       removalPolicy: RemovalPolicy.RETAIN,
     })
 
+    const userCreateDLQ = new Queue(this, "userCreationDLQ")
+
+    const userCreationQueue = new Queue(this, "userCreationQueue", {
+      deadLetterQueue: {
+        queue: userCreateDLQ,
+        maxReceiveCount: 3,
+      }
+    })
+
+    const lambdaEnvironment = {
+      DB_USER: dbUser,
+      DB_PASSWORD: dbPassword,
+      DB_URL: db.dbInstanceEndpointAddress,
+      DB_NAME: "postgres",
+      DB_PORT: db.dbInstanceEndpointPort,
+      USER_POOL_CLIENT_ID: cognito.poolClient.userPoolClientId,
+      USER_POOL_ID: cognito.userPool.userPoolId,
+      USER_CREATION_QUEUE_URL: userCreationQueue.queueUrl,
+      LEADERBOARD_BUCKET_NAME: leaderboardBucket.bucketName
+    }
+
     const apiHandler = new Function(this, "apiHandler", {
       runtime: Runtime.JAVA_11,
       code: Code.fromAsset("../lambdas/build/distributions/scorcerer-1.0.0.zip"),
       handler: "scorcerer.server.ApiLambdaHandler",
       timeout: Duration.seconds(15),
       memorySize: 256,
-      environment: {
-        DB_USER: dbUser,
-        DB_PASSWORD: dbPassword,
-        DB_URL: db.dbInstanceEndpointAddress,
-        DB_NAME: "postgres",
-        DB_PORT: db.dbInstanceEndpointPort,
-        USER_POOL_CLIENT_ID: cognito.poolClient.userPoolClientId,
-        USER_POOL_ID: cognito.userPool.userPoolId,
-        LEADERBOARD_BUCKET_NAME: leaderboardBucket.bucketName
-      },
+      environment: lambdaEnvironment,
       vpc: vpc,
       allowPublicSubnet: true
     })
 
+    const apiAuthHandler = new Function(this, "apiAuthHandler", {
+      runtime: Runtime.JAVA_11,
+      code: Code.fromAsset("../lambdas/build/distributions/scorcerer-1.0.0.zip"),
+      handler: "scorcerer.server.ApiAuthLambdaHandler",
+      timeout: Duration.seconds(25),
+      memorySize: 256,
+      environment: lambdaEnvironment
+    })
+
+    const userCreationHandler = new Function(this, "userCreationHandler", {
+      runtime: Runtime.JAVA_11,
+      code: Code.fromAsset("../lambdas/build/distributions/scorcerer-1.0.0.zip"),
+      handler: "scorcerer.server.events.UserCreationEventHandler",
+      timeout: Duration.seconds(25),
+      memorySize: 256,
+      environment: lambdaEnvironment,
+      vpc: vpc,
+      allowPublicSubnet: true
+    })
+    const eventSource = new SqsEventSource(userCreationQueue)
+    userCreationHandler.addEventSource(eventSource)
+
+
+    userCreationQueue.grantSendMessages(apiAuthHandler)
+
+    apiAuthHandler.addToRolePolicy(
+      new PolicyStatement({
+        effect: Effect.ALLOW,
+        actions: [
+          "cognito-idp:AdminInitiateAuth",
+          "cognito-idp:AdminCreateUser",
+          "cognito-idp:AdminSetUserPassword",
+        ],
+        resources: [cognito.userPool.userPoolArn]
+      })
+    )
+
     leaderboardBucket.grantReadWrite(apiHandler)
 
     db.connections.allowFrom(apiHandler, Port.tcp(dbPort))
+    db.connections.allowFrom(userCreationHandler, Port.tcp(dbPort))
 
     const gatewayRole = new Role(this, "gatewayRole", {
       assumedBy: new ServicePrincipal("apigateway.amazonaws.com")
     })
 
-    const apiDefinition = importApiDefinition(cognito.userPool.userPoolId, apiHandler.functionArn, gatewayRole.roleArn)
+    const apiDefinition = importApiDefinition(
+      cognito.userPool.userPoolId,
+      apiHandler.functionArn,
+      apiAuthHandler.functionArn,
+      gatewayRole.roleArn
+    )
 
     apiHandler.grantInvoke(gatewayRole)
+    apiAuthHandler.grantInvoke(gatewayRole)
 
     new SpecRestApi(this, "apiGateway", {
       apiDefinition: apiDefinition,

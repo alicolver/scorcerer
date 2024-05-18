@@ -1,9 +1,17 @@
 package scorcerer.server.resources
 
+import aws.sdk.kotlin.runtime.auth.credentials.EnvironmentCredentialsProvider
+import aws.sdk.kotlin.services.cognitoidentityprovider.CognitoIdentityProviderClient
+import aws.sdk.kotlin.services.cognitoidentityprovider.model.AdminCreateUserRequest
+import aws.sdk.kotlin.services.cognitoidentityprovider.model.AdminSetUserPasswordRequest
+import aws.sdk.kotlin.services.cognitoidentityprovider.model.AttributeType
+import aws.sdk.kotlin.services.cognitoidentityprovider.model.MessageActionType
+import aws.sdk.kotlin.services.sqs.SqsClient
+import aws.sdk.kotlin.services.sqs.model.SendMessageRequest
+import kotlinx.coroutines.runBlocking
 import org.http4k.core.RequestContexts
 import org.http4k.core.Response
 import org.http4k.core.Status
-import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.openapitools.server.apis.UserApi
@@ -11,11 +19,22 @@ import org.openapitools.server.models.GetUserPoints200Response
 import org.openapitools.server.models.League
 import org.openapitools.server.models.Prediction
 import org.openapitools.server.models.SignupRequest
+import org.openapitools.server.toJson
 import scorcerer.server.ApiResponseError
+import scorcerer.server.Environment
 import scorcerer.server.db.tables.MemberTable
 import scorcerer.server.db.tables.PredictionTable
+import scorcerer.server.events.UserCreationEvent
+import scorcerer.server.log
 
 class User(context: RequestContexts) : UserApi(context) {
+    private val cognitoClient = CognitoIdentityProviderClient {
+        region = "eu-west-2"
+        credentialsProvider = EnvironmentCredentialsProvider()
+    }
+
+    private val sqsClient = SqsClient { region = "eu-west-2" }
+
     override fun getUserLeagues(requesterUserId: String, userId: String): List<League> {
         TODO("Not yet implemented")
     }
@@ -46,12 +65,58 @@ class User(context: RequestContexts) : UserApi(context) {
         }
     }
 
-    override fun signup(signupRequest: SignupRequest): Unit = transaction {
-        MemberTable.insert {
-            it[this.id] = "id-from-cognito"
-            it[this.name] = signupRequest.name
-            it[this.fixedPoints] = 0
-            it[this.livePoints] = 0
+    override fun signup(signupRequest: SignupRequest) {
+        val request = AdminCreateUserRequest {
+            username = signupRequest.email
+            userPoolId = Environment.CognitoUserPoolId
+            messageAction = MessageActionType.Suppress
+            userAttributes = listOf(
+                AttributeType {
+                    name = "email"
+                    value = signupRequest.email
+                },
+                AttributeType {
+                    name = "given_name"
+                    value = signupRequest.name
+                },
+                AttributeType {
+                    name = "family_name"
+                    value = "Smith"
+                },
+            )
         }
+
+        val passwordRequest = AdminSetUserPasswordRequest {
+            password = signupRequest.password
+            username = signupRequest.email
+            userPoolId = Environment.CognitoUserPoolId
+            permanent = true
+        }
+
+        val userId = runBlocking {
+            val response = cognitoClient.adminCreateUser(request)
+            cognitoClient.adminSetUserPassword(passwordRequest)
+            response.user?.attributes?.find { it.name == "sub" }?.value ?: throw Exception("Failed to find user sub")
+        }
+
+        log.info("Created user ($userId) and set password successfully")
+
+        runBlocking {
+            sqsClient.sendMessage(
+                SendMessageRequest {
+                    queueUrl = Environment.UserCreationQueueUrl
+                    messageBody = UserCreationEvent(userId, signupRequest.name).toJson()
+                },
+            )
+        }
+
+//        transaction {
+//            MemberTable.insert {
+//                it[this.id] = userId
+//                it[this.name] = signupRequest.name
+//                it[this.fixedPoints] = 0
+//                it[this.livePoints] = 0
+//            }
+//        }
     }
 }
