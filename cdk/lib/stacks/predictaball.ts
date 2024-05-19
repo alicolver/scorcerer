@@ -10,6 +10,7 @@ import { importApiDefinition } from "../config/api_definition"
 import { Queue } from "aws-cdk-lib/aws-sqs"
 import { SqsEventSource } from "aws-cdk-lib/aws-lambda-event-sources"
 import { Bucket, BlockPublicAccess, BucketEncryption } from "aws-cdk-lib/aws-s3"
+import { SqsEventSourceProps } from "aws-cdk-lib/aws-lambda-event-sources/lib/sqs";
 
 const dbUser = "postgres"
 const dbPort = 5432
@@ -117,7 +118,8 @@ export class Predictaball extends Stack {
       memorySize: 256,
       environment: lambdaEnvironment,
       vpc: vpc,
-      allowPublicSubnet: true
+      allowPublicSubnet: true,
+      reservedConcurrentExecutions: 1
     })
     const eventSource = new SqsEventSource(userCreationQueue)
     userCreationHandler.addEventSource(eventSource)
@@ -138,6 +140,7 @@ export class Predictaball extends Stack {
     )
 
     leaderboardBucket.grantReadWrite(apiHandler)
+    leaderboardBucket.grantReadWrite(userCreationHandler)
 
     db.connections.allowFrom(apiHandler, Port.tcp(dbPort))
     db.connections.allowFrom(userCreationHandler, Port.tcp(dbPort))
