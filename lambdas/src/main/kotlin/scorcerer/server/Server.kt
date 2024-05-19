@@ -1,5 +1,6 @@
 package scorcerer.server
 
+import aws.sdk.kotlin.services.s3.S3Client
 import com.squareup.moshi.JsonDataException
 import org.http4k.core.Filter
 import org.http4k.core.RequestContexts
@@ -50,9 +51,11 @@ fun handleError(e: Throwable): Response =
 
 private val requestContext = RequestContexts()
 
+val s3Client = S3Client { region = "eu-west-2" }
+
 private val routes = allRoutes(
     Auth(requestContext),
-    League(requestContext),
+    League(requestContext, s3Client, Environment.LeaderboardBucketName),
     MatchResource(requestContext),
     Prediction(requestContext),
     Team(requestContext),

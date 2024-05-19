@@ -1,5 +1,9 @@
 package scorcerer.server.resources
 
+import aws.sdk.kotlin.services.s3.S3Client
+import aws.sdk.kotlin.services.s3.model.PutObjectRequest
+import aws.smithy.kotlin.runtime.content.ByteStream
+import kotlinx.coroutines.runBlocking
 import org.http4k.core.RequestContexts
 import org.http4k.core.Response
 import org.http4k.core.Status
@@ -12,6 +16,7 @@ import org.openapitools.server.apis.LeagueApi
 import org.openapitools.server.models.*
 import org.openapitools.server.models.League
 import org.openapitools.server.models.User
+import org.openapitools.server.toJson
 import org.postgresql.util.PSQLException
 import scorcerer.server.ApiResponseError
 import scorcerer.server.db.tables.LeagueMembershipTable
@@ -19,7 +24,8 @@ import scorcerer.server.db.tables.LeagueTable
 import scorcerer.server.db.tables.MemberTable
 import scorcerer.utils.throwDatabaseError
 
-class League(context: RequestContexts) : LeagueApi(context) {
+class League(context: RequestContexts, private val s3Client: S3Client, private val leaderboardBucketName: String) :
+    LeagueApi(context) {
     override fun createLeague(
         requesterUserId: String,
         createLeagueRequest: CreateLeagueRequest,
@@ -102,6 +108,12 @@ class League(context: RequestContexts) : LeagueApi(context) {
             previousPoints = user.livePoints + user.fixedPoints
             LeaderboardInner(currentPosition, user)
         }
+        runBlocking {
+            S3Service(s3Client, leaderboardBucketName).writeLeaderboard(
+                1,
+            )
+        }
+
         return leaderboard
     }
 
@@ -120,5 +132,17 @@ class League(context: RequestContexts) : LeagueApi(context) {
                 (LeagueMembershipTable.leagueId eq leagueId).and(LeagueMembershipTable.memberId eq requesterUserId)
             }
         }
+    }
+}
+
+class S3Service(private val s3Client: S3Client, private val s3BucketName: String) {
+    suspend fun writeLeaderboard(matchDay: Int) {
+        val exampleLeaderboard = listOf(LeaderboardInner(1, User("name", "id", 1, 1)))
+        val request = PutObjectRequest {
+            bucket = s3BucketName
+            key = "matchDay$matchDay.json"
+            body = ByteStream.fromString(exampleLeaderboard.toJson())
+        }
+        s3Client.putObject(request)
     }
 }
