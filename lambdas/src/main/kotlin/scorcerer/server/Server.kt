@@ -61,9 +61,12 @@ private val routes = allRoutes(
 
 private val httpServer = loggingFilter.then(CatchAll(::handleError).then(routes))
 
-// Entrypoint for the lambda
+// Entrypoint for non auth lambda
 class ApiLambdaHandler : ApiGatewayRestAuthorizerLambdaFunction(httpServer, requestContext) {
     init {
         Database.connectAndGenerateTables()
     }
 }
+
+// Entrypoint for auth lambda
+class ApiAuthLambdaHandler : ApiGatewayRestAuthorizerLambdaFunction(httpServer, requestContext)
