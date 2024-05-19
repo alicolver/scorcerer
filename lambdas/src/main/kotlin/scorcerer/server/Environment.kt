@@ -8,6 +8,7 @@ object Environment {
     val DatabaseUrl = getEnvVarOrFail("DB_URL")
     val DatabaseName = getEnvVarOrFail("DB_NAME")
     val DatabasePort: String = getEnvVarOrDefault("DB_PORT", DEFAULT_DATABASE_PORT)
+    val LeaderboardBucketName: String = getEnvVarOrFail("LEADERBOARD_BUCKET_NAME")
 
     private fun getEnvVarOrFail(name: String) = System.getenv(name) ?: throw Exception("Expected environment variable $name to be set")
 
