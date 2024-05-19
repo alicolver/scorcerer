@@ -137,12 +137,15 @@ components:
     user:
       type: object
       required:
-        - name
+        - firstName
+        - familyName
         - userId
         - fixedPoints
         - livePoints
       properties:
-        name:
+        firstName:
+          type: string
+        familyName:
           type: string
         userId:
           type: string
@@ -519,15 +522,15 @@ paths:
                   type: string
                 password:
                   type: string
-                first_name:
+                firstName:
                   type: string
-                family_name:
+                familyName:
                   type: string
               required:
                 - email
                 - password
-                - first_name
-                - family_name
+                - firstName
+                - familyName
       responses:
         '200':
           description: Successful response

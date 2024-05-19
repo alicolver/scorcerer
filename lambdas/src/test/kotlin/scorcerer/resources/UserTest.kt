@@ -13,7 +13,7 @@ import scorcerer.server.resources.User
 class UserTest : DatabaseTest() {
     @Test
     fun getUserPoints() {
-        givenUserExists("userId", "name", 15, 5)
+        givenUserExists("userId", "name", fixedPoints = 15, livePoints = 5)
         val userPoints = User(RequestContexts()).getUserPoints("", "userId")
         userPoints.livePoints shouldBe 5
         userPoints.fixedPoints shouldBe 15
@@ -22,7 +22,7 @@ class UserTest : DatabaseTest() {
     @Test
     fun getUserPredictions() {
         val userId = "userId"
-        givenUserExists(userId, "name", 15, 5)
+        givenUserExists(userId, "name", fixedPoints = 15, livePoints = 5)
         val homeTeamId = givenTeamExists("England")
         val awayTeamId = givenTeamExists("France")
         val matchId = givenMatchExists(homeTeamId, awayTeamId)

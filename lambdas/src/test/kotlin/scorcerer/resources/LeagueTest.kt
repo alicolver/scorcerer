@@ -91,7 +91,7 @@ class LeagueTest : DatabaseTest() {
     @Test
     fun joinLeague() {
         givenLeagueExists("test-league", "Test League")
-        givenUserExists("anotherUser", "test", 0, 0)
+        givenUserExists("anotherUser", "test", fixedPoints = 0, livePoints = 0)
         League(RequestContexts(), mockS3Client, "leaderboardBucketName").joinLeague(
             "anotherUser",
             "test-league",
