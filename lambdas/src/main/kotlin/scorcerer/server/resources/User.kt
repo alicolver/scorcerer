@@ -77,11 +77,11 @@ class User(context: RequestContexts) : UserApi(context) {
                 },
                 AttributeType {
                     name = "given_name"
-                    value = signupRequest.name
+                    value = signupRequest.firstName
                 },
                 AttributeType {
                     name = "family_name"
-                    value = "Smith"
+                    value = signupRequest.familyName
                 },
             )
         }
@@ -105,7 +105,7 @@ class User(context: RequestContexts) : UserApi(context) {
             sqsClient.sendMessage(
                 SendMessageRequest {
                     queueUrl = Environment.UserCreationQueueUrl
-                    messageBody = UserCreationEvent(userId, signupRequest.name).toJson()
+                    messageBody = UserCreationEvent(userId, signupRequest.firstName, signupRequest.familyName).toJson()
                 },
             )
         }

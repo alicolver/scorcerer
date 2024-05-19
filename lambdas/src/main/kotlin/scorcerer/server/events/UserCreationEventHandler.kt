@@ -14,7 +14,8 @@ import se.ansman.kotshi.JsonSerializable
 @JsonSerializable
 data class UserCreationEvent(
     val id: String,
-    val name: String,
+    val firstName: String,
+    val familyName: String,
 )
 
 class UserCreationEventHandler : RequestHandler<SQSEvent, Unit> {
@@ -30,7 +31,7 @@ class UserCreationEventHandler : RequestHandler<SQSEvent, Unit> {
             transaction {
                 MemberTable.insert { row ->
                     row[this.id] = userCreationEvent.id
-                    row[this.name] = userCreationEvent.name
+                    row[this.name] = userCreationEvent.firstName
                     row[this.fixedPoints] = 0
                     row[this.livePoints] = 0
                 }
