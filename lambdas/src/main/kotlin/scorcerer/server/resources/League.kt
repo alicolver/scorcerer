@@ -104,14 +104,14 @@ class League(context: RequestContexts, private val s3Client: S3Client, private v
 
         var currentPosition = 0
         var previousPoints = Int.MAX_VALUE
-        val leaderboard = sortedUsers.mapIndexed { index, user ->
-            if (user.livePoints + user.fixedPoints < previousPoints) {
-                currentPosition = index + 1
-            }
-            previousPoints = user.livePoints + user.fixedPoints
-            LeaderboardInner(currentPosition, user)
-        }
-        runBlocking {
+//        val leaderboard = sortedUsers.mapIndexed { index, user ->
+//            if (user.livePoints + user.fixedPoints < previousPoints) {
+//                currentPosition = index + 1
+//            }
+//            previousPoints = user.livePoints + user.fixedPoints
+//            LeaderboardInner(currentPosition, user)
+//        }
+        val leaderboard = runBlocking {
             S3Service(s3Client, leaderboardBucketName).getLeaderboard(
                 1,
             )
