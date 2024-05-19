@@ -99,7 +99,6 @@ export class Predictaball extends Stack {
       environment: lambdaEnvironment,
       vpc: vpc,
       allowPublicSubnet: true,
-      reservedConcurrentExecutions: 50
     })
 
     const apiAuthHandler = new Function(this, "apiAuthHandler", {
@@ -120,7 +119,6 @@ export class Predictaball extends Stack {
       environment: lambdaEnvironment,
       vpc: vpc,
       allowPublicSubnet: true,
-      reservedConcurrentExecutions: 1
     })
     const eventSource = new SqsEventSource(userCreationQueue)
     userCreationHandler.addEventSource(eventSource)
