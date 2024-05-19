@@ -98,7 +98,8 @@ export class Predictaball extends Stack {
       memorySize: 256,
       environment: lambdaEnvironment,
       vpc: vpc,
-      allowPublicSubnet: true
+      allowPublicSubnet: true,
+      reservedConcurrentExecutions: 50
     })
 
     const apiAuthHandler = new Function(this, "apiAuthHandler", {
