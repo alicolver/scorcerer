@@ -1,6 +1,7 @@
 package scorcerer.server.resources
 
 import aws.sdk.kotlin.services.s3.S3Client
+import aws.sdk.kotlin.services.s3.model.GetObjectRequest
 import aws.sdk.kotlin.services.s3.model.PutObjectRequest
 import aws.smithy.kotlin.runtime.content.ByteStream
 import kotlinx.coroutines.runBlocking
@@ -13,6 +14,7 @@ import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.openapitools.server.apis.LeagueApi
+import org.openapitools.server.kotshiJson
 import org.openapitools.server.models.*
 import org.openapitools.server.models.League
 import org.openapitools.server.models.User
@@ -23,6 +25,7 @@ import scorcerer.server.db.tables.LeagueMembershipTable
 import scorcerer.server.db.tables.LeagueTable
 import scorcerer.server.db.tables.MemberTable
 import scorcerer.utils.throwDatabaseError
+import se.ansman.kotshi.JsonSerializable
 
 class League(context: RequestContexts, private val s3Client: S3Client, private val leaderboardBucketName: String) :
     LeagueApi(context) {
@@ -109,7 +112,7 @@ class League(context: RequestContexts, private val s3Client: S3Client, private v
             LeaderboardInner(currentPosition, user)
         }
         runBlocking {
-            S3Service(s3Client, leaderboardBucketName).writeLeaderboard(
+            S3Service(s3Client, leaderboardBucketName).getLeaderboard(
                 1,
             )
         }
@@ -144,5 +147,20 @@ class S3Service(private val s3Client: S3Client, private val s3BucketName: String
             body = ByteStream.fromString(exampleLeaderboard.toJson())
         }
         s3Client.putObject(request)
+    }
+
+    suspend fun getLeaderboard(matchDay: Int): List<LeaderboardInner> {
+        val request = GetObjectRequest {
+            bucket = s3BucketName
+            key = "matchDay$matchDay.json"
+        }
+
+        val leaderboard = s3Client.getObject(request) { resp ->
+            val json = resp.body?.toJson()
+            requireNotNull(json) { "Leaderboard is empty" }
+            return@getObject kotshiJson.asA<List<LeaderboardInner>>(json)
+        }
+
+        return leaderboard
     }
 }
