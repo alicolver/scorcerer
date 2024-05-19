@@ -55,7 +55,7 @@ val s3Client = S3Client { region = "eu-west-2" }
 
 private val routes = allRoutes(
     Auth(requestContext),
-    League(requestContext, s3Client),
+    League(requestContext, s3Client, Environment.LeaderboardBucketName),
     MatchResource(requestContext),
     Prediction(requestContext),
     Team(requestContext),

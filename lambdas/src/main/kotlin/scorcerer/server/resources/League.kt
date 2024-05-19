@@ -19,13 +19,13 @@ import org.openapitools.server.models.User
 import org.openapitools.server.toJson
 import org.postgresql.util.PSQLException
 import scorcerer.server.ApiResponseError
-import scorcerer.server.Environment
 import scorcerer.server.db.tables.LeagueMembershipTable
 import scorcerer.server.db.tables.LeagueTable
 import scorcerer.server.db.tables.MemberTable
 import scorcerer.utils.throwDatabaseError
 
-class League(context: RequestContexts, private val s3Client: S3Client) : LeagueApi(context) {
+class League(context: RequestContexts, private val s3Client: S3Client, private val leaderboardBucketName: String) :
+    LeagueApi(context) {
     override fun createLeague(
         requesterUserId: String,
         createLeagueRequest: CreateLeagueRequest,
@@ -109,8 +109,7 @@ class League(context: RequestContexts, private val s3Client: S3Client) : LeagueA
             LeaderboardInner(currentPosition, user)
         }
         runBlocking {
-            S3Service(s3Client).writeLeaderboard(
-                Environment.LeaderboardBucketName,
+            S3Service(s3Client, leaderboardBucketName).writeLeaderboard(
                 1,
             )
         }
@@ -136,11 +135,11 @@ class League(context: RequestContexts, private val s3Client: S3Client) : LeagueA
     }
 }
 
-class S3Service(private val s3Client: S3Client) {
-    suspend fun writeLeaderboard(bucketName: String, matchDay: Int) {
+class S3Service(private val s3Client: S3Client, private val s3BucketName: String) {
+    suspend fun writeLeaderboard(matchDay: Int) {
         val exampleLeaderboard = listOf(LeaderboardInner(1, User("name", "id", 1, 1)))
         val request = PutObjectRequest {
-            bucket = bucketName
+            bucket = s3BucketName
             key = "matchDay$matchDay.json"
             body = ByteStream.fromString(exampleLeaderboard.toJson())
         }
