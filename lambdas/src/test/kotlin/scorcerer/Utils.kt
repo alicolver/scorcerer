@@ -20,6 +20,7 @@ fun givenMatchExists(
     homeTeamId: String,
     awayTeamId: String,
     matchDatetime: OffsetDateTime = OffsetDateTime.now(),
+    matchState: MatchState = MatchState.UPCOMING,
 ): String {
     return (
         transaction {
@@ -27,7 +28,7 @@ fun givenMatchExists(
                 it[this.homeTeamId] = homeTeamId.toInt()
                 it[this.awayTeamId] = awayTeamId.toInt()
                 it[this.datetime] = matchDatetime
-                it[this.state] = MatchState.UPCOMING
+                it[this.state] = matchState
                 it[this.venue] = "Test Venue"
                 it[this.matchDay] = 1
             }
@@ -55,7 +56,7 @@ fun givenLeagueExists(leagueId: String, leagueName: String) {
     }
 }
 
-fun givenPredictionExists(matchId: String, userId: String, homeScore: Int, awayScore: Int): String {
+fun givenPredictionExists(matchId: String, userId: String, homeScore: Int, awayScore: Int, points: Int? = null): String {
     return (
         transaction {
             PredictionTable.insert {
@@ -63,6 +64,7 @@ fun givenPredictionExists(matchId: String, userId: String, homeScore: Int, awayS
                 it[this.matchId] = matchId.toInt()
                 it[this.homeScore] = homeScore
                 it[this.awayScore] = awayScore
+                it[this.points] = points
             }
         } get PredictionTable.id
         ).toString()

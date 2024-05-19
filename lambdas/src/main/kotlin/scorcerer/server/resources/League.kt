@@ -1,9 +1,6 @@
 package scorcerer.server.resources
 
 import aws.sdk.kotlin.services.s3.S3Client
-import aws.sdk.kotlin.services.s3.model.GetObjectRequest
-import aws.sdk.kotlin.services.s3.model.PutObjectRequest
-import aws.smithy.kotlin.runtime.content.ByteStream
 import kotlinx.coroutines.runBlocking
 import org.http4k.core.RequestContexts
 import org.http4k.core.Response
@@ -14,16 +11,16 @@ import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.openapitools.server.apis.LeagueApi
-import org.openapitools.server.kotshiJson
 import org.openapitools.server.models.*
 import org.openapitools.server.models.League
 import org.openapitools.server.models.User
-import org.openapitools.server.toJson
 import org.postgresql.util.PSQLException
 import scorcerer.server.ApiResponseError
 import scorcerer.server.db.tables.LeagueMembershipTable
 import scorcerer.server.db.tables.LeagueTable
 import scorcerer.server.db.tables.MemberTable
+import scorcerer.utils.LeaderboardS3Service
+import scorcerer.utils.filterLeaderboardToLeague
 import scorcerer.utils.throwDatabaseError
 
 class League(context: RequestContexts, private val s3Client: S3Client, private val leaderboardBucketName: String) :
@@ -79,7 +76,17 @@ class League(context: RequestContexts, private val s3Client: S3Client, private v
     }
 
     override fun getLeagueLeaderboard(requesterUserId: String, leagueId: String): List<LeaderboardInner> {
-        val users = transaction {
+        // TODO: add logic to decide which matchDay to get leaderboard for
+        // TODO: get previous matchDay leaderboard so that movement can be calculated
+        val globalLeaderboard = runBlocking {
+            LeaderboardS3Service(s3Client, leaderboardBucketName).getLeaderboard(
+                1,
+            )
+        }
+        if (leagueId == "global") {
+            return globalLeaderboard
+        }
+        val leagueUsersIds = transaction {
             (LeagueMembershipTable innerJoin MemberTable)
                 .select(
                     MemberTable.id,
@@ -89,34 +96,10 @@ class League(context: RequestContexts, private val s3Client: S3Client, private v
                 )
                 .where { LeagueMembershipTable.leagueId eq leagueId }
                 .map {
-                    User(
-                        it[MemberTable.name],
-                        it[MemberTable.id],
-                        it[MemberTable.fixedPoints],
-                        it[MemberTable.livePoints],
-                    )
+                    it[MemberTable.id]
                 }
         }
-
-        val sortedUsers =
-            users.sortedWith(compareByDescending<User> { it.livePoints + it.fixedPoints }.thenBy { it.name })
-
-        var currentPosition = 0
-        var previousPoints = Int.MAX_VALUE
-//        val leaderboard = sortedUsers.mapIndexed { index, user ->
-//            if (user.livePoints + user.fixedPoints < previousPoints) {
-//                currentPosition = index + 1
-//            }
-//            previousPoints = user.livePoints + user.fixedPoints
-//            LeaderboardInner(currentPosition, user)
-//        }
-        val leaderboard = runBlocking {
-            S3Service(s3Client, leaderboardBucketName).getLeaderboard(
-                1,
-            )
-        }
-
-        return leaderboard
+        return filterLeaderboardToLeague(globalLeaderboard, leagueUsersIds)
     }
 
     override fun joinLeague(requesterUserId: String, leagueId: String) {
@@ -134,32 +117,5 @@ class League(context: RequestContexts, private val s3Client: S3Client, private v
                 (LeagueMembershipTable.leagueId eq leagueId).and(LeagueMembershipTable.memberId eq requesterUserId)
             }
         }
-    }
-}
-
-class S3Service(private val s3Client: S3Client, private val s3BucketName: String) {
-    suspend fun writeLeaderboard(matchDay: Int) {
-        val exampleLeaderboard = listOf(LeaderboardInner(1, User("name", "id", 1, 1)))
-        val request = PutObjectRequest {
-            bucket = s3BucketName
-            key = "matchDay$matchDay.json"
-            body = ByteStream.fromString(exampleLeaderboard.toJson())
-        }
-        s3Client.putObject(request)
-    }
-
-    suspend fun getLeaderboard(matchDay: Int): List<LeaderboardInner> {
-        val request = GetObjectRequest {
-            bucket = s3BucketName
-            key = "matchDay$matchDay.json"
-        }
-
-        val leaderboard = s3Client.getObject(request) { resp ->
-            val json = resp.body?.toJson()
-            requireNotNull(json) { "Leaderboard is empty" }
-            return@getObject kotshiJson.asA<List<LeaderboardInner>>(json)
-        }
-
-        return leaderboard
     }
 }
