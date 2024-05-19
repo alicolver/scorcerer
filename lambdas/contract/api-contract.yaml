@@ -137,12 +137,15 @@ components:
     user:
       type: object
       required:
-        - name
+        - firstName
+        - familyName
         - userId
         - fixedPoints
         - livePoints
       properties:
-        name:
+        firstName:
+          type: string
+        familyName:
           type: string
         userId:
           type: string

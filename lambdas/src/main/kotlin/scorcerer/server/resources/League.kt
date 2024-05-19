@@ -59,13 +59,15 @@ class League(context: RequestContexts, private val s3Client: S3Client, private v
 
         val users = transaction {
             (LeagueTable innerJoin LeagueMembershipTable innerJoin MemberTable).select(
-                MemberTable.name,
+                MemberTable.firstName,
+                MemberTable.familyName,
                 MemberTable.id,
                 MemberTable.fixedPoints,
                 MemberTable.livePoints,
             ).where { LeagueTable.id eq leagueId }.map {
                 User(
-                    it[MemberTable.name],
+                    it[MemberTable.firstName],
+                    it[MemberTable.familyName],
                     it[MemberTable.id],
                     it[MemberTable.fixedPoints],
                     it[MemberTable.livePoints],
@@ -88,12 +90,7 @@ class League(context: RequestContexts, private val s3Client: S3Client, private v
         }
         val leagueUsersIds = transaction {
             (LeagueMembershipTable innerJoin MemberTable)
-                .select(
-                    MemberTable.id,
-                    MemberTable.name,
-                    MemberTable.fixedPoints,
-                    MemberTable.livePoints,
-                )
+                .select(MemberTable.id)
                 .where { LeagueMembershipTable.leagueId eq leagueId }
                 .map {
                     it[MemberTable.id]
