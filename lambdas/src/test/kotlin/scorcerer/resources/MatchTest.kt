@@ -1,5 +1,6 @@
 package scorcerer.resources
 
+import aws.sdk.kotlin.services.s3.S3Client
 import io.kotlintest.inspectors.forOne
 import io.kotlintest.shouldBe
 import org.http4k.core.RequestContexts
@@ -8,6 +9,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import org.mockito.Mockito
 import org.openapitools.server.models.CreateMatchRequest
 import org.openapitools.server.models.Match
 import org.openapitools.server.models.SetMatchScoreRequest
@@ -28,9 +30,11 @@ class MatchTest : DatabaseTest() {
         givenTeamExists("Scotland")
     }
 
+    private val mockS3Client: S3Client = Mockito.mock(S3Client::class.java)
+
     @Test
     fun createMatch() {
-        val match = MatchResource(RequestContexts()).createMatch(
+        val match = MatchResource(RequestContexts(), mockS3Client, "leaderboardBucketName").createMatch(
             "",
             CreateMatchRequest(
                 "1",
@@ -49,12 +53,12 @@ class MatchTest : DatabaseTest() {
         givenMatchExists("1", "2")
         givenMatchExists("3", "4")
 
-        MatchResource(RequestContexts()).listMatches("", null).size shouldBe 2
-        MatchResource(RequestContexts()).listMatches("", MatchState.UPCOMING.toString()).size shouldBe 2
+        MatchResource(RequestContexts(), mockS3Client, "leaderboardBucketName").listMatches("", null).size shouldBe 2
+        MatchResource(RequestContexts(), mockS3Client, "leaderboardBucketName").listMatches("", MatchState.UPCOMING.toString()).size shouldBe 2
 
         // There should be no matches which are LIVE or COMPLETED
-        MatchResource(RequestContexts()).listMatches("", MatchState.COMPLETED.toString()).size shouldBe 0
-        MatchResource(RequestContexts()).listMatches("", MatchState.LIVE.toString()).size shouldBe 0
+        MatchResource(RequestContexts(), mockS3Client, "leaderboardBucketName").listMatches("", MatchState.COMPLETED.toString()).size shouldBe 0
+        MatchResource(RequestContexts(), mockS3Client, "leaderboardBucketName").listMatches("", MatchState.LIVE.toString()).size shouldBe 0
     }
 
     @Test
@@ -76,7 +80,7 @@ class MatchTest : DatabaseTest() {
         givenLeagueExists(anotherLeagueId, "Test League")
         givenUserInLeague(anotherUserId, anotherLeagueId)
 
-        val predictions = MatchResource(RequestContexts()).getMatchPredictions("", "1", null)
+        val predictions = MatchResource(RequestContexts(), mockS3Client, "leaderboardBucketName").getMatchPredictions("", "1", null)
         predictions.size shouldBe 2
         predictions.forOne { prediction ->
             prediction.predictionId shouldBe predictionId
@@ -104,7 +108,7 @@ class MatchTest : DatabaseTest() {
         givenLeagueExists(anotherLeagueId, "Test League")
         givenUserInLeague(anotherUserId, anotherLeagueId)
 
-        val matchPredictions = MatchResource(RequestContexts()).getMatchPredictions("", "1", leagueId)
+        val matchPredictions = MatchResource(RequestContexts(), mockS3Client, "leaderboardBucketName").getMatchPredictions("", "1", leagueId)
         matchPredictions.size shouldBe 1
         matchPredictions[0].predictionId shouldBe predictionId
     }
@@ -112,14 +116,14 @@ class MatchTest : DatabaseTest() {
     @Test
     fun setMatchScoreWhenMatchDoesNotExistRaises() {
         assertThrows<ApiResponseError> {
-            MatchResource(RequestContexts()).setMatchScore("", "1", SetMatchScoreRequest(1, 2))
+            MatchResource(RequestContexts(), mockS3Client, "leaderboardBucketName").setMatchScore("", "1", SetMatchScoreRequest(1, 2))
         }
     }
 
     @Test
     fun setMatchScoreWhenMatchExistsUpdatesScore() {
         val matchId = givenMatchExists("1", "2")
-        MatchResource(RequestContexts()).setMatchScore("", matchId, SetMatchScoreRequest(1, 2))
+        MatchResource(RequestContexts(), mockS3Client, "leaderboardBucketName").setMatchScore("", matchId, SetMatchScoreRequest(1, 2))
         val match = transaction {
             MatchTable.selectAll().where { MatchTable.id eq matchId.toInt() }.map { row ->
                 Match(
@@ -151,7 +155,7 @@ class MatchTest : DatabaseTest() {
         }[0]
         predictionPoints shouldBe null
 
-        MatchResource(RequestContexts()).setMatchScore("", matchId, SetMatchScoreRequest(0, 0))
+        MatchResource(RequestContexts(), mockS3Client, "leaderboardBucketName").setMatchScore("", matchId, SetMatchScoreRequest(0, 0))
         val predictionPointsUpdated = transaction {
             PredictionTable.selectAll().where { PredictionTable.id eq predictionId.toInt() }.map { row ->
                 row[PredictionTable.points]
@@ -159,7 +163,7 @@ class MatchTest : DatabaseTest() {
         }[0]
         predictionPointsUpdated shouldBe 2
 
-        MatchResource(RequestContexts()).setMatchScore("", matchId, SetMatchScoreRequest(1, 1))
+        MatchResource(RequestContexts(), mockS3Client, "leaderboardBucketName").setMatchScore("", matchId, SetMatchScoreRequest(1, 1))
         val predictionPointsUpdatedAgain = transaction {
             PredictionTable.selectAll().where { PredictionTable.id eq predictionId.toInt() }.map { row ->
                 row[PredictionTable.points]

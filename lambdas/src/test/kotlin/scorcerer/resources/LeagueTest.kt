@@ -22,7 +22,7 @@ class LeagueTest : DatabaseTest() {
         givenUserExists("userId", "name")
     }
 
-    val mockS3Client = mock(S3Client::class.java)
+    private val mockS3Client: S3Client = mock(S3Client::class.java)
 
     @Test
     fun createLeague() {
@@ -78,33 +78,6 @@ class LeagueTest : DatabaseTest() {
             )
         }
     }
-
-//    @Test
-//    fun getLeagueLeaderboard() {
-//        givenUserExists("user1", "name1", 5, 5)
-//        givenUserExists("user2", "name2", 3, 4)
-//        givenUserExists("user3", "name3", 5, 7)
-//        givenUserExists("user4", "name4", 5, 5)
-//        givenUserExists("user5", "name5", 10, 5)
-//
-//        givenLeagueExists("test-league", "Test League")
-//
-//        listOf("user1", "user2", "user3", "user4", "user5").map { userId ->
-//            givenUserInLeague(userId, "test-league")
-//        }
-//
-//        val leagueLeaderboard =
-//            League(RequestContexts(), mockS3Client, "leaderboardBucketName").getLeagueLeaderboard("", "test-league")
-//        leagueLeaderboard.size shouldBe 5
-//
-//        leagueLeaderboard shouldBe listOf(
-//            LeaderboardInner(1, User("name5", "user5", 10, 5)),
-//            LeaderboardInner(2, User("name3", "user3", 5, 7)),
-//            LeaderboardInner(3, User("name1", "user1", 5, 5)),
-//            LeaderboardInner(3, User("name4", "user4", 5, 5)),
-//            LeaderboardInner(5, User("name2", "user2", 3, 4)),
-//        )
-//    }
 
     @Test
     fun leaveLeague() {
