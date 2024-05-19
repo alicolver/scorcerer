@@ -103,6 +103,7 @@ class League(context: RequestContexts, private val s3Client: S3Client, private v
     }
 
     override fun joinLeague(requesterUserId: String, leagueId: String) {
+        // TODO: check if league exists
         transaction {
             LeagueMembershipTable.insert {
                 it[this.memberId] = requesterUserId
