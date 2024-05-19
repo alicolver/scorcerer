@@ -1,0 +1,745 @@
+openapi: 3.0.0
+info:
+  version: 1.0.0
+  title: ScorePredictor
+  description: An API for the Score Predictor Backend
+components:
+  securitySchemes:
+    CognitoAuthorizer:
+      type: apiKey
+      name: Authorization
+      in: header
+      x-amazon-apigateway-authtype: cognito_user_pools
+      x-amazon-apigateway-authorizer:
+        type: cognito_user_pools
+        providerARNs:
+          - arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${cognitoUserPoolId}
+  schemas:
+    prediction:
+      type: object
+      required:
+        - homeScore
+        - awayScore
+        - matchId
+        - predictionId
+        - userId
+      properties:
+        points:
+          description: The points earned by the prediction
+          type: integer
+          format: int32
+        homeScore:
+          description: The home team final number of goals
+          type: integer
+          format: int32
+        awayScore:
+          description: The away team final number of goals
+          type: integer
+          format: int32
+        matchId:
+          description: The matchId which is being predicted
+          type: string
+        predictionId:
+          description: Unique predictionId
+          type: string
+        userId:
+          description: The user who made the prediction
+          type: string
+    match:
+      type: object
+      required:
+        - homeTeam
+        - homeTeamFlagUri
+        - awayTeam
+        - awayTeamFlagUri
+        - matchId
+        - venue
+        - datetime
+      properties:
+        homeTeam:
+          description: Home team
+          type: string
+        homeTeamFlagUri:
+          description: Home team flag uri
+          type: string
+        awayTeam:
+          description: Away team
+          type: string
+        awayTeamFlagUri:
+          description: Away team flag uri
+          type: string
+        homeScore:
+          description: The home team final number of goals
+          type: integer
+          format: int32
+        awayScore:
+          description: The away team final number of goals
+          type: integer
+          format: int32
+        matchId:
+          description: Unique matchId
+          type: string
+        venue:
+          description: Venue of the match
+          type: string
+        datetime:
+          description: datetime of kickoff
+          type: string
+          format: date-time
+    league:
+      type: object
+      required:
+        - leagueId
+        - name
+        - users
+      properties:
+        leagueId:
+          description: Unique league Id
+          type: string
+        name:
+          description: League name
+          type: string
+        users:
+          description: List of users in the league
+          type: array
+          items:
+            $ref: '#/components/schemas/user'
+    team:
+      type: object
+      required:
+        - teamId
+        - teamName
+        - flagUri
+      properties:
+        teamId:
+          description: Team Id
+          type: string
+        teamName:
+          description: Team name
+          type: string
+        flagUri:
+          description: Team flag uri
+          type: string
+    leaderboard:
+      type: array
+      items:
+        type: object
+        required:
+          - position
+          - user
+        properties:
+          position:
+            type: integer
+            format: int32
+            minimum: 1
+          user:
+            $ref: '#/components/schemas/user'
+    user:
+      type: object
+      required:
+        - name
+        - userId
+        - fixedPoints
+        - livePoints
+      properties:
+        name:
+          type: string
+        userId:
+          type: string
+        fixedPoints:
+          type: integer
+        livePoints:
+          type: integer
+security:
+  - CognitoAuthorizer: []
+paths:
+  /team:
+    post:
+      tags:
+        - team
+      operationId: createTeam
+      description: Create a team
+      x-amazon-apigateway-integration:
+        type: "aws_proxy"
+        httpMethod: "POST"
+        uri: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${apiHandlerArn}/invocations"
+        credentials: "${apiGatewayRoleArn}"
+        payloadFormatVersion: "1.0"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                teamName:
+                  type: string
+                flagUri:
+                  type: string
+              required:
+                - teamName
+                - flagUri
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  teamId:
+                    type: string
+  /team/{teamId}:
+    get:
+      tags:
+        - team
+      operationId: getTeam
+      description: Get a team by Id
+      x-amazon-apigateway-integration:
+        type: "aws_proxy"
+        httpMethod: "POST"
+        uri: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${apiHandlerArn}/invocations"
+        credentials: "${apiGatewayRoleArn}"
+        payloadFormatVersion: "1.0"
+      parameters:
+        - in: path
+          name: teamId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/team'
+
+  /prediction:
+    post:
+      tags:
+        - prediction
+      operationId: createPrediction
+      description: Create a prediction
+      x-amazon-apigateway-integration:
+        type: "aws_proxy"
+        httpMethod: "POST"
+        uri: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${apiHandlerArn}/invocations"
+        credentials: "${apiGatewayRoleArn}"
+        payloadFormatVersion: "1.0"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                homeScore:
+                  description: The home team final number of goals
+                  type: integer
+                  format: int32
+                awayScore:
+                  description: The away team final number of goals
+                  type: integer
+                  format: int32
+                matchId:
+                  description: The matchId which is being predicted
+                  type: string
+                toGoThrough:
+                  description: For knockout games which team will go through
+                  type: string
+                  enum:
+                    - HOME
+                    - AWAY
+              required:
+                - homeScore
+                - awayScore
+                - matchId
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  predictionId:
+                    type: string
+
+  /match:
+    post:
+      tags:
+        - match
+      operationId: createMatch
+      description: Create a match
+      x-amazon-apigateway-integration:
+        type: "aws_proxy"
+        httpMethod: "POST"
+        uri: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${apiHandlerArn}/invocations"
+        credentials: "${apiGatewayRoleArn}"
+        payloadFormatVersion: "1.0"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                homeTeamId:
+                  description: Home team ID
+                  type: string
+                awayTeamId:
+                  description: Away team ID
+                  type: string
+                datetime:
+                  description: datetime of kickoff
+                  type: string
+                  format: date-time
+                venue:
+                  description: Venue of the match
+                  type: string
+                matchDay:
+                  description: Match day
+                  type: integer
+              required:
+                - homeTeamId
+                - awayTeamId
+                - datetime
+                - venue
+                - matchDay
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  matchId:
+                    type: string
+
+  /match/list:
+    get:
+      tags:
+        - match
+      operationId: listMatches
+      description: List matches
+      x-amazon-apigateway-integration:
+        type: "aws_proxy"
+        httpMethod: "POST"
+        uri: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${apiHandlerArn}/invocations"
+        credentials: "${apiGatewayRoleArn}"
+        payloadFormatVersion: "1.0"
+      parameters:
+        - in: query
+          name: filterType
+          schema:
+            type: string
+            enum: [live, upcoming, completed]
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/match'
+  /match/{matchId}/predictions:
+    get:
+      tags:
+        - match
+      operationId: getMatchPredictions
+      description: Get match predictions
+      x-amazon-apigateway-integration:
+        type: "aws_proxy"
+        httpMethod: "POST"
+        uri: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${apiHandlerArn}/invocations"
+        credentials: "${apiGatewayRoleArn}"
+        payloadFormatVersion: "1.0"
+      parameters:
+        - in: path
+          name: matchId
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: leagueId
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/prediction'
+  /match/{matchId}/score:
+    post:
+      tags:
+        - match
+      operationId: setMatchScore
+      description: Update match score
+      x-amazon-apigateway-integration:
+        type: "aws_proxy"
+        httpMethod: "POST"
+        uri: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${apiHandlerArn}/invocations"
+        credentials: "${apiGatewayRoleArn}"
+        payloadFormatVersion: "1.0"
+      parameters:
+        - in: path
+          name: matchId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                homeScore:
+                  description: The home team final number of goals
+                  type: integer
+                  format: int32
+                awayScore:
+                  description: The away team final number of goals
+                  type: integer
+                  format: int32
+      responses:
+        '200':
+          description: Successful response
+
+  /match/{matchId}/complete:
+    post:
+      tags:
+        - match
+      operationId: completeMatch
+      description: Mark match as completed
+      x-amazon-apigateway-integration:
+        type: "aws_proxy"
+        httpMethod: "POST"
+        uri: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${apiHandlerArn}/invocations"
+        credentials: "${apiGatewayRoleArn}"
+        payloadFormatVersion: "1.0"
+      parameters:
+        - in: path
+          name: matchId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - homeScore
+                - awayScore
+              properties:
+                homeScore:
+                  description: The home team final number of goals
+                  type: integer
+                  format: int32
+                awayScore:
+                  description: The away team final number of goals
+                  type: integer
+                  format: int32
+      responses:
+        '200':
+          description: Successful response
+
+  /auth/login:
+    post:
+      tags:
+        - auth
+      operationId: login
+      description: Login
+      security: []
+      x-amazon-apigateway-integration:
+        type: "aws_proxy"
+        httpMethod: "POST"
+        uri: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${apiAuthHandlerArn}/invocations"
+        credentials: "${apiGatewayRoleArn}"
+        payloadFormatVersion: "1.0"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+              required:
+                - email
+                - password
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  idToken:
+                    type: string
+
+        '401':
+          description: Unauthorized
+
+
+  /user:
+    post:
+      tags:
+        - user
+      operationId: signup
+      security: []
+      description: Register as a new user
+      x-amazon-apigateway-integration:
+        type: "aws_proxy"
+        httpMethod: "POST"
+        uri: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${apiAuthHandlerArn}/invocations"
+        credentials: "${apiGatewayRoleArn}"
+        payloadFormatVersion: "1.0"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+                first_name:
+                  type: string
+                family_name:
+                  type: string
+              required:
+                - email
+                - password
+                - first_name
+                - family_name
+      responses:
+        '200':
+          description: Successful response
+  /user/{userId}/predictions:
+    get:
+      tags:
+        - user
+      operationId: getUserPredictions
+      description: Get users predictions
+      x-amazon-apigateway-integration:
+        type: "aws_proxy"
+        httpMethod: "POST"
+        uri: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${apiHandlerArn}/invocations"
+        credentials: "${apiGatewayRoleArn}"
+        payloadFormatVersion: "1.0"
+      parameters:
+        - in: path
+          required: true
+          name: userId
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/prediction'
+  /user/{userId}/points:
+    get:
+      tags:
+        - user
+      operationId: getUserPoints
+      description: Get users points
+      x-amazon-apigateway-integration:
+        type: "aws_proxy"
+        httpMethod: "POST"
+        uri: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${apiHandlerArn}/invocations"
+        credentials: "${apiGatewayRoleArn}"
+        payloadFormatVersion: "1.0"
+      parameters:
+        - in: path
+          required: true
+          name: userId
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  fixedPoints:
+                    type: integer
+                    format: int32
+                  livePoints:
+                    type: integer
+                    format: int32
+  /user/{userId}/leagues:
+    get:
+      tags:
+        - user
+      operationId: getUserLeagues
+      description: Get leagues that user is member of
+      x-amazon-apigateway-integration:
+        type: "aws_proxy"
+        httpMethod: "POST"
+        uri: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${apiHandlerArn}/invocations"
+        credentials: "${apiGatewayRoleArn}"
+        payloadFormatVersion: "1.0"
+      parameters:
+        - in: path
+          required: true
+          name: userId
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/league'
+
+  /league:
+    post:
+      tags:
+        - league
+      operationId: createLeague
+      description: Create a league
+      x-amazon-apigateway-integration:
+        type: "aws_proxy"
+        httpMethod: "POST"
+        uri: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${apiHandlerArn}/invocations"
+        credentials: "${apiGatewayRoleArn}"
+        payloadFormatVersion: "1.0"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                leagueName:
+                  type: string
+              required:
+                - leagueName
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  leagueId:
+                    type: string
+  /league/{leagueId}:
+    get:
+      tags:
+        - league
+      operationId: getLeague
+      description: Get a league by Id
+      x-amazon-apigateway-integration:
+        type: "aws_proxy"
+        httpMethod: "POST"
+        uri: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${apiHandlerArn}/invocations"
+        credentials: "${apiGatewayRoleArn}"
+        payloadFormatVersion: "1.0"
+      parameters:
+        - in: path
+          name: leagueId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/league'
+  /league/{leagueId}/leaderboard:
+    get:
+      tags:
+        - league
+      operationId: getLeagueLeaderboard
+      description: Returns the league leaderboard
+      x-amazon-apigateway-integration:
+        type: "aws_proxy"
+        httpMethod: "POST"
+        uri: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${apiHandlerArn}/invocations"
+        credentials: "${apiGatewayRoleArn}"
+        payloadFormatVersion: "1.0"
+      parameters:
+        - in: path
+          name: leagueId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/leaderboard'
+  /league/{leagueId}/join:
+    post:
+      tags:
+        - league
+      operationId: joinLeague
+      description: Join a league
+      x-amazon-apigateway-integration:
+        type: "aws_proxy"
+        httpMethod: "POST"
+        uri: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${apiHandlerArn}/invocations"
+        credentials: "${apiGatewayRoleArn}"
+        payloadFormatVersion: "1.0"
+      parameters:
+        - in: path
+          name: leagueId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+  /league/{leagueId}/leave:
+    post:
+      tags:
+        - league
+      operationId: leaveLeague
+      description: Leave a league
+      x-amazon-apigateway-integration:
+        type: "aws_proxy"
+        httpMethod: "POST"
+        uri: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${apiHandlerArn}/invocations"
+        credentials: "${apiGatewayRoleArn}"
+        payloadFormatVersion: "1.0"
+      parameters:
+        - in: path
+          name: leagueId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response

@@ -8,7 +8,7 @@ export function importApiDefinition(
   apiAuthHandlerArn: string,
   apiGatewayRoleArn: string
 ): ApiDefinition {
-  const spec = fs.readFileSync("build/contract.yaml").toString()
+  const spec = fs.readFileSync("../lambdas/contract/api-contract.yaml").toString()
 
   const modified = spec
     .replaceAll("${cognitoUserPoolId}", cognitoUserPoolId)

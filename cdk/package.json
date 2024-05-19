@@ -5,9 +5,8 @@
     "cdk": "npx ts-node --prefer-ts-exts lib/app.ts"
   },
   "scripts": {
-    "pullApiSpec": "mkdir -p build && curl https://raw.githubusercontent.com/alicolver/score-contract/main/api-contract.yaml -o build/contract.yaml",
     "test": "jest",
-    "cdk": "npm run pullApiSpec && cdk",
+    "cdk": "cdk",
     "lint": "eslint --fix lib"
   },
   "devDependencies": {

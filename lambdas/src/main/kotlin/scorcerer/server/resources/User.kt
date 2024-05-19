@@ -1,6 +1,5 @@
 package scorcerer.server.resources
 
-import aws.sdk.kotlin.runtime.auth.credentials.EnvironmentCredentialsProvider
 import aws.sdk.kotlin.services.cognitoidentityprovider.CognitoIdentityProviderClient
 import aws.sdk.kotlin.services.cognitoidentityprovider.model.AdminCreateUserRequest
 import aws.sdk.kotlin.services.cognitoidentityprovider.model.AdminSetUserPasswordRequest
@@ -28,11 +27,7 @@ import scorcerer.server.events.UserCreationEvent
 import scorcerer.server.log
 
 class User(context: RequestContexts) : UserApi(context) {
-    private val cognitoClient = CognitoIdentityProviderClient {
-        region = "eu-west-2"
-        credentialsProvider = EnvironmentCredentialsProvider()
-    }
-
+    private val cognitoClient = CognitoIdentityProviderClient { region = "eu-west-2" }
     private val sqsClient = SqsClient { region = "eu-west-2" }
 
     override fun getUserLeagues(requesterUserId: String, userId: String): List<League> {

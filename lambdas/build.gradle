@@ -118,30 +118,17 @@ task buildZip(type: Zip) {
 
 task generateKotlinServer(type: GenerateTask){
     generatorName = "kotlin-server"
-    inputSpec = "$buildDir/contract.yaml".toString()
+    inputSpec = "$rootDir/contract/api-contract.yaml".toString()
     additionalProperties = [
             interfaceOnly:"true",
             library:"jaxrs-spec"
     ]
     outputDir = "$buildDir/generated".toString()
     templateDir = "$rootDir/templates"
-    dependsOn = [
-            "fetchContract"
-    ]
     configFile = "$rootDir/config.yaml"
     inputs.dir("$rootDir/templates")
     inputs.file("$rootDir/config.yaml")
-    inputs.file("$buildDir/contract.yaml")
-}
-
-task fetchContract(type: Exec) {
-    workingDir "$buildDir"
-    commandLine 'curl', 'https://raw.githubusercontent.com/alicolver/score-contract/main/api-contract.yaml', '-o', 'contract.yaml'
-    doFirst {
-        mkdir "$buildDir"
-    }
-    outputs.file("$buildDir/contract.yaml")
-    outputs.upToDateWhen { false }
+    inputs.file("$rootDir/contract/api-contract.yaml")
 }
 
 tasks.withType(KaptGenerateStubsTask.class).configureEach {
