@@ -25,7 +25,6 @@ import scorcerer.server.db.tables.LeagueMembershipTable
 import scorcerer.server.db.tables.LeagueTable
 import scorcerer.server.db.tables.MemberTable
 import scorcerer.utils.throwDatabaseError
-import se.ansman.kotshi.JsonSerializable
 
 class League(context: RequestContexts, private val s3Client: S3Client, private val leaderboardBucketName: String) :
     LeagueApi(context) {
