@@ -1,11 +1,11 @@
 import { App, Duration, SecretValue, Stack, StackProps, RemovalPolicy } from "aws-cdk-lib"
-import { Instance, InstanceClass, InstanceSize, InstanceType, MachineImage, Port, SubnetType, Vpc } from "aws-cdk-lib/aws-ec2"
+import { Instance, InstanceClass, InstanceSize, InstanceType, MachineImage, Port, SubnetType, Vpc, GatewayVpcEndpointAwsService } from "aws-cdk-lib/aws-ec2"
 import { Credentials, DatabaseInstance, DatabaseInstanceEngine, StorageType } from "aws-cdk-lib/aws-rds"
 import { dbPassword } from "../environment"
 import { Code, Function, Runtime } from "aws-cdk-lib/aws-lambda"
 import { SpecRestApi } from "aws-cdk-lib/aws-apigateway"
 import { Cognito } from "./cognito"
-import { Effect, PolicyStatement, Role, ServicePrincipal } from "aws-cdk-lib/aws-iam"
+import { Effect, PolicyStatement, Role, ServicePrincipal, AnyPrincipal } from "aws-cdk-lib/aws-iam"
 import { importApiDefinition } from "../config/api_definition"
 import { Queue } from "aws-cdk-lib/aws-sqs"
 import { SqsEventSource } from "aws-cdk-lib/aws-lambda-event-sources"
@@ -19,6 +19,18 @@ export class Predictaball extends Stack {
     super(scope, id, props)
 
     const vpc = Vpc.fromLookup(this, "default-vpc", { isDefault: true })
+
+    const s3BucketAcessPoint = vpc.addGatewayEndpoint("s3Endpoint", {
+      service: GatewayVpcEndpointAwsService.S3,
+    })
+
+    s3BucketAcessPoint.addToPolicy(
+      new PolicyStatement({
+        principals: [new AnyPrincipal()],
+        actions: ["s3:*"],
+        resources: ["*"],
+      }),
+    )
 
     const cognito = new Cognito(this)
 
