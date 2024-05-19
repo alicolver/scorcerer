@@ -25,7 +25,7 @@ import scorcerer.server.db.tables.LeagueTable
 import scorcerer.server.db.tables.MemberTable
 import scorcerer.utils.throwDatabaseError
 
-class League(context: RequestContexts) : LeagueApi(context) {
+class League(context: RequestContexts, private val s3Client: S3Client) : LeagueApi(context) {
     override fun createLeague(
         requesterUserId: String,
         createLeagueRequest: CreateLeagueRequest,
@@ -109,7 +109,10 @@ class League(context: RequestContexts) : LeagueApi(context) {
             LeaderboardInner(currentPosition, user)
         }
         runBlocking {
-            writeLeaderboardToS3(leaderboard, 1, Environment.LeaderboardBucketName)
+            S3Service(s3Client).writeLeaderboard(
+                Environment.LeaderboardBucketName,
+                1,
+            )
         }
 
         return leaderboard
@@ -133,14 +136,14 @@ class League(context: RequestContexts) : LeagueApi(context) {
     }
 }
 
-suspend fun writeLeaderboardToS3(leaderboard: List<LeaderboardInner>, matchDay: Int, bucketName: String) {
-    val request = PutObjectRequest {
-        bucket = bucketName
-        key = "matchDay$matchDay.json"
-        body = ByteStream.fromString(leaderboard.toJson())
-    }
-
-    S3Client { region = "us-east-1" }.use { s3 ->
-        s3.putObject(request)
+class S3Service(private val s3Client: S3Client) {
+    suspend fun writeLeaderboard(bucketName: String, matchDay: Int) {
+        val exampleLeaderboard = listOf(LeaderboardInner(1, User("name", "id", 1, 1)))
+        val request = PutObjectRequest {
+            bucket = bucketName
+            key = "matchDay$matchDay.json"
+            body = ByteStream.fromString(exampleLeaderboard.toJson())
+        }
+        s3Client.putObject(request)
     }
 }
