@@ -14,7 +14,7 @@ import scorcerer.server.ApiResponseError
 import scorcerer.server.db.tables.*
 import scorcerer.utils.LeaderboardS3Service
 import scorcerer.utils.PointsCalculator.calculatePoints
-import scorcerer.utils.caclulateGlobalLeaderboard
+import scorcerer.utils.calculateGlobalLeaderboard
 import scorcerer.utils.recalculateLivePoints
 import java.time.OffsetDateTime
 
@@ -110,7 +110,7 @@ class MatchResource(context: RequestContexts, private val s3Client: S3Client, pr
 
         recalculateLivePoints()
 
-        val globalLeaderboard = caclulateGlobalLeaderboard()
+        val globalLeaderboard = calculateGlobalLeaderboard()
         runBlocking {
             LeaderboardS3Service(s3Client, leaderboardBucketName).writeLeaderboard(globalLeaderboard, 1)
         }
@@ -182,7 +182,7 @@ class MatchResource(context: RequestContexts, private val s3Client: S3Client, pr
                 }
 
                 recalculateLivePoints()
-                val globalLeaderboard = caclulateGlobalLeaderboard()
+                val globalLeaderboard = calculateGlobalLeaderboard()
                 runBlocking {
                     LeaderboardS3Service(s3Client, leaderboardBucketName).writeLeaderboard(globalLeaderboard, 1)
                 }

@@ -11,6 +11,7 @@ import kotlinx.coroutines.runBlocking
 import org.http4k.core.RequestContexts
 import org.http4k.core.Response
 import org.http4k.core.Status
+import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.openapitools.server.apis.UserApi
@@ -18,9 +19,12 @@ import org.openapitools.server.models.GetUserPoints200Response
 import org.openapitools.server.models.League
 import org.openapitools.server.models.Prediction
 import org.openapitools.server.models.SignupRequest
+import org.openapitools.server.models.User
 import org.openapitools.server.toJson
 import scorcerer.server.ApiResponseError
 import scorcerer.server.Environment
+import scorcerer.server.db.tables.LeagueMembershipTable
+import scorcerer.server.db.tables.LeagueTable
 import scorcerer.server.db.tables.MemberTable
 import scorcerer.server.db.tables.PredictionTable
 import scorcerer.server.events.UserCreationEvent
@@ -31,7 +35,33 @@ class User(context: RequestContexts) : UserApi(context) {
     private val sqsClient = SqsClient { region = "eu-west-2" }
 
     override fun getUserLeagues(requesterUserId: String, userId: String): List<League> {
-        TODO("Not yet implemented")
+        return transaction {
+            val userLeagueIds = LeagueMembershipTable
+                .select(LeagueMembershipTable.leagueId).where { LeagueMembershipTable.memberId eq userId }
+                .map { it[LeagueMembershipTable.leagueId] }
+
+            val leaguesWithUsers = (LeagueTable innerJoin LeagueMembershipTable innerJoin MemberTable)
+                .selectAll().where { LeagueTable.id inList userLeagueIds }
+                .groupBy { it[LeagueTable.id] }
+                .mapValues { entry ->
+                    val leagueId = entry.key
+                    val rows = entry.value
+
+                    val leagueName = rows.first()[LeagueTable.name]
+                    val usersInLeague = rows.map {
+                        User(
+                            it[MemberTable.firstName],
+                            it[MemberTable.familyName],
+                            it[MemberTable.id],
+                            it[MemberTable.fixedPoints],
+                            it[MemberTable.livePoints],
+                        )
+                    }
+
+                    League(leagueId, leagueName, usersInLeague)
+                }
+            leaguesWithUsers.values.toList()
+        }
     }
 
     override fun getUserPoints(requesterUserId: String, userId: String): GetUserPoints200Response {

@@ -37,7 +37,7 @@ fun filterLeaderboardToLeague(
     return filteredLeaderboard
 }
 
-fun caclulateGlobalLeaderboard(): List<LeaderboardInner> {
+fun calculateGlobalLeaderboard(): List<LeaderboardInner> {
     val globalUsers = transaction {
         (LeagueMembershipTable innerJoin MemberTable)
             .select(
