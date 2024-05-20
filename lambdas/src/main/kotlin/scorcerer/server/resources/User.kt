@@ -11,6 +11,7 @@ import kotlinx.coroutines.runBlocking
 import org.http4k.core.RequestContexts
 import org.http4k.core.Response
 import org.http4k.core.Status
+import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.openapitools.server.apis.UserApi
@@ -34,37 +35,33 @@ class User(context: RequestContexts) : UserApi(context) {
     private val sqsClient = SqsClient { region = "eu-west-2" }
 
     override fun getUserLeagues(requesterUserId: String, userId: String): List<League> {
-        val mutableListLeagues = mutableListOf<League>()
-        val userLeagueIds = transaction {
-            LeagueMembershipTable.select(LeagueMembershipTable.leagueId).where {
-                LeagueMembershipTable.memberId eq userId
-            }.map { it[LeagueMembershipTable.leagueId] }
-        }
-        for (leagueId in userLeagueIds) {
-            val usersInLeague = transaction {
-                (LeagueTable innerJoin LeagueMembershipTable innerJoin MemberTable).select(
-                    MemberTable.firstName,
-                    MemberTable.familyName,
-                    MemberTable.id,
-                    MemberTable.fixedPoints,
-                    MemberTable.livePoints,
-                ).where { LeagueTable.id eq leagueId }.map {
-                    User(
-                        it[MemberTable.firstName],
-                        it[MemberTable.familyName],
-                        it[MemberTable.id],
-                        it[MemberTable.fixedPoints],
-                        it[MemberTable.livePoints],
-                    )
+        return transaction {
+            val userLeagueIds = LeagueMembershipTable
+                .select(LeagueMembershipTable.leagueId).where { LeagueMembershipTable.memberId eq userId }
+                .map { it[LeagueMembershipTable.leagueId] }
+
+            val leaguesWithUsers = (LeagueTable innerJoin LeagueMembershipTable innerJoin MemberTable)
+                .selectAll().where { LeagueTable.id inList userLeagueIds }
+                .groupBy { it[LeagueTable.id] }
+                .mapValues { entry ->
+                    val leagueId = entry.key
+                    val rows = entry.value
+
+                    val leagueName = rows.first()[LeagueTable.name]
+                    val usersInLeague = rows.map {
+                        User(
+                            it[MemberTable.firstName],
+                            it[MemberTable.familyName],
+                            it[MemberTable.id],
+                            it[MemberTable.fixedPoints],
+                            it[MemberTable.livePoints],
+                        )
+                    }
+
+                    League(leagueId, leagueName, usersInLeague)
                 }
-            }
-            val leagueName = transaction {
-                LeagueTable.select(LeagueTable.name).where { LeagueTable.id eq leagueId }.singleOrNull()
-                    ?.get(LeagueTable.name)
-            } ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("League does not exist"))
-            mutableListLeagues.add(League(leagueId, leagueName, usersInLeague))
+            leaguesWithUsers.values.toList()
         }
-        return mutableListLeagues
     }
 
     override fun getUserPoints(requesterUserId: String, userId: String): GetUserPoints200Response {
