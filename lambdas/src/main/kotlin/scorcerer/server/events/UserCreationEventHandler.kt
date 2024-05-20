@@ -16,7 +16,7 @@ import scorcerer.server.db.tables.LeagueTable
 import scorcerer.server.db.tables.MemberTable
 import scorcerer.server.log
 import scorcerer.utils.LeaderboardS3Service
-import scorcerer.utils.caclulateGlobalLeaderboard
+import scorcerer.utils.calculateGlobalLeaderboard
 import se.ansman.kotshi.JsonSerializable
 
 @JsonSerializable
@@ -60,7 +60,7 @@ class UserCreationEventHandler : RequestHandler<SQSEvent, Unit> {
                 }
             }
 
-            val globalLeaderboard = caclulateGlobalLeaderboard()
+            val globalLeaderboard = calculateGlobalLeaderboard()
             val s3Client = S3Client { region = "eu-west-2" }
             runBlocking {
                 // TODO: add logic to calculate match day

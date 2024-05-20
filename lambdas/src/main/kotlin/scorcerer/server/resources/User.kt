@@ -18,9 +18,12 @@ import org.openapitools.server.models.GetUserPoints200Response
 import org.openapitools.server.models.League
 import org.openapitools.server.models.Prediction
 import org.openapitools.server.models.SignupRequest
+import org.openapitools.server.models.User
 import org.openapitools.server.toJson
 import scorcerer.server.ApiResponseError
 import scorcerer.server.Environment
+import scorcerer.server.db.tables.LeagueMembershipTable
+import scorcerer.server.db.tables.LeagueTable
 import scorcerer.server.db.tables.MemberTable
 import scorcerer.server.db.tables.PredictionTable
 import scorcerer.server.events.UserCreationEvent
@@ -31,7 +34,37 @@ class User(context: RequestContexts) : UserApi(context) {
     private val sqsClient = SqsClient { region = "eu-west-2" }
 
     override fun getUserLeagues(requesterUserId: String, userId: String): List<League> {
-        TODO("Not yet implemented")
+        val mutableListLeagues = mutableListOf<League>()
+        val userLeagueIds = transaction {
+            LeagueMembershipTable.select(LeagueMembershipTable.leagueId).where {
+                LeagueMembershipTable.memberId eq userId
+            }.map { it[LeagueMembershipTable.leagueId] }
+        }
+        for (leagueId in userLeagueIds) {
+            val usersInLeague = transaction {
+                (LeagueTable innerJoin LeagueMembershipTable innerJoin MemberTable).select(
+                    MemberTable.firstName,
+                    MemberTable.familyName,
+                    MemberTable.id,
+                    MemberTable.fixedPoints,
+                    MemberTable.livePoints,
+                ).where { LeagueTable.id eq leagueId }.map {
+                    User(
+                        it[MemberTable.firstName],
+                        it[MemberTable.familyName],
+                        it[MemberTable.id],
+                        it[MemberTable.fixedPoints],
+                        it[MemberTable.livePoints],
+                    )
+                }
+            }
+            val leagueName = transaction {
+                LeagueTable.select(LeagueTable.name).where { LeagueTable.id eq leagueId }.singleOrNull()
+                    ?.get(LeagueTable.name)
+            } ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("League does not exist"))
+            mutableListLeagues.add(League(leagueId, leagueName, usersInLeague))
+        }
+        return mutableListLeagues
     }
 
     override fun getUserPoints(requesterUserId: String, userId: String): GetUserPoints200Response {
