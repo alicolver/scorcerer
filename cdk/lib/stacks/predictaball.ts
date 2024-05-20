@@ -1,16 +1,25 @@
-import { App, Duration, SecretValue, Stack, StackProps, RemovalPolicy } from "aws-cdk-lib"
-import { Instance, InstanceClass, InstanceSize, InstanceType, MachineImage, Port, SubnetType, Vpc, GatewayVpcEndpointAwsService } from "aws-cdk-lib/aws-ec2"
+import { App, Duration, RemovalPolicy, SecretValue, Stack, StackProps } from "aws-cdk-lib"
+import {
+  GatewayVpcEndpointAwsService,
+  Instance,
+  InstanceClass,
+  InstanceSize,
+  InstanceType,
+  MachineImage,
+  Port,
+  SubnetType,
+  Vpc
+} from "aws-cdk-lib/aws-ec2"
 import { Credentials, DatabaseInstance, DatabaseInstanceEngine, StorageType } from "aws-cdk-lib/aws-rds"
 import { dbPassword } from "../environment"
 import { Code, Function, Runtime } from "aws-cdk-lib/aws-lambda"
 import { SpecRestApi } from "aws-cdk-lib/aws-apigateway"
 import { Cognito } from "./cognito"
-import { Effect, PolicyStatement, Role, ServicePrincipal, AnyPrincipal } from "aws-cdk-lib/aws-iam"
+import { AnyPrincipal, Effect, PolicyStatement, Role, ServicePrincipal } from "aws-cdk-lib/aws-iam"
 import { importApiDefinition } from "../config/api_definition"
 import { Queue } from "aws-cdk-lib/aws-sqs"
 import { SqsEventSource } from "aws-cdk-lib/aws-lambda-event-sources"
-import { Bucket, BlockPublicAccess, BucketEncryption } from "aws-cdk-lib/aws-s3"
-import { SqsEventSourceProps } from "aws-cdk-lib/aws-lambda-event-sources/lib/sqs";
+import { BlockPublicAccess, Bucket, BucketEncryption } from "aws-cdk-lib/aws-s3"
 
 const dbUser = "postgres"
 const dbPort = 5432

@@ -3,11 +3,16 @@ package scorcerer.server
 import aws.sdk.kotlin.services.s3.S3Client
 import com.squareup.moshi.JsonDataException
 import org.http4k.core.Filter
+import org.http4k.core.Method
 import org.http4k.core.RequestContexts
 import org.http4k.core.Response
 import org.http4k.core.Status
 import org.http4k.core.then
+import org.http4k.filter.AllowAll
+import org.http4k.filter.CorsPolicy
+import org.http4k.filter.OriginPolicy
 import org.http4k.filter.ServerFilters.CatchAll
+import org.http4k.filter.ServerFilters.Cors
 import org.http4k.server.SunHttp
 import org.http4k.server.asServer
 import org.openapitools.server.apis.allRoutes
@@ -62,7 +67,22 @@ private val routes = allRoutes(
     User(requestContext),
 )
 
-private val httpServer = loggingFilter.then(CatchAll(::handleError).then(routes))
+val cors = Cors(
+    CorsPolicy(
+        OriginPolicy.AllowAll(),
+        listOf(
+            "content-type",
+            "access-control-allow-origin",
+            "access-control-allow-headers",
+            "access-control-allow-methods",
+            "access-control-allow-credentials",
+        ),
+        Method.values().toList(),
+        true,
+    ),
+)
+
+private val httpServer = cors.then(loggingFilter.then(CatchAll(::handleError).then(routes)))
 
 // Entrypoint for non auth lambda
 class ApiLambdaHandler : ApiGatewayRestAuthorizerLambdaFunction(httpServer, requestContext) {

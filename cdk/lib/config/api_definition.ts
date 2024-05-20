@@ -16,5 +16,23 @@ export function importApiDefinition(
     .replaceAll("${apiAuthHandlerArn}", apiAuthHandlerArn)
     .replaceAll("${apiGatewayRoleArn}", apiGatewayRoleArn)
 
-  return new InlineApiDefinition(yaml.load(modified))
+  const parsedSpec: any = yaml.load(modified)
+  const paths = parsedSpec["paths"]
+  Object.keys(paths).forEach(endpoint => {
+    paths[endpoint] = {
+      ...paths[endpoint],
+      options: {
+        security: [],
+        "x-amazon-apigateway-integration": {
+          type: "aws_proxy",
+          httpMethod: "POST",
+          payloadFormatVersion: "1.0",
+          credentials: apiGatewayRoleArn,
+          uri: `arn:aws:apigateway:\${AWS::Region}:lambda:path/2015-03-31/functions/${apiHandlerArn}/invocations`
+        }
+      }
+    }
+  })
+
+  return new InlineApiDefinition(parsedSpec)
 }
