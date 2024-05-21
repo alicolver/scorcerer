@@ -104,7 +104,7 @@ export class Predictaball extends Stack {
       code: Code.fromAsset("../lambdas/build/distributions/scorcerer-1.0.0.zip"),
       handler: "scorcerer.server.ApiLambdaHandler",
       timeout: Duration.seconds(15),
-      memorySize: 256,
+      memorySize: 512,
       environment: lambdaEnvironment,
       vpc: vpc,
       allowPublicSubnet: true,
