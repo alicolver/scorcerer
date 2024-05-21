@@ -8,18 +8,16 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.openapitools.server.kotshiJson
 import scorcerer.server.Environment
 import scorcerer.server.db.Database
 import scorcerer.server.db.tables.LeagueMembershipTable
 import scorcerer.server.db.tables.LeagueTable
 import scorcerer.server.db.tables.MemberTable
+import scorcerer.server.fromJson
 import scorcerer.server.log
 import scorcerer.utils.LeaderboardS3Service
 import scorcerer.utils.calculateGlobalLeaderboard
-import se.ansman.kotshi.JsonSerializable
 
-@JsonSerializable
 data class UserCreationEvent(
     val id: String,
     val firstName: String,
@@ -35,7 +33,7 @@ class UserCreationEventHandler : RequestHandler<SQSEvent, Unit> {
         log.info("Handling ${input?.records?.size} records")
 
         input?.records?.forEach {
-            val userCreationEvent = kotshiJson.asA<UserCreationEvent>(it.body)
+            val userCreationEvent: UserCreationEvent = it.body.fromJson()
 
             transaction {
                 MemberTable.insert { row ->

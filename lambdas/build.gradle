@@ -4,7 +4,6 @@ import org.jlleitschuh.gradle.ktlint.tasks.KtLintFormatTask
 
 buildscript {
     ext.kotlin_version = "1.9.21"
-    ext.kotshiVersion = "2.15.0"
     repositories {
         mavenCentral()
         maven { url "https://plugins.gradle.org/m2/" }
@@ -16,7 +15,6 @@ buildscript {
 }
 
 plugins {
-    id "org.jetbrains.kotlin.kapt" version "1.9.23"
     id "org.jlleitschuh.gradle.ktlint" version "12.1.0"
 }
 
@@ -80,10 +78,7 @@ dependencies {
     implementation("org.http4k:http4k-contract")
     implementation(platform("org.http4k:http4k-bom:4.41.1.0"))
     implementation(platform("org.http4k:http4k-connect-bom:3.35.0.0"))
-    implementation("com.squareup.moshi:moshi-kotlin:1.14.0")
-    implementation("org.http4k:http4k-format-moshi")
-    implementation("se.ansman.kotshi:api:$kotshiVersion")
-    kapt("se.ansman.kotshi:compiler:$kotshiVersion")
+    implementation("org.http4k:http4k-format-jackson:5.20.0.0")
     implementation("org.http4k:http4k-serverless-lambda")
     implementation("org.postgresql:postgresql:42.7.3")
     implementation("org.slf4j:slf4j-simple:2.0.6")
@@ -93,6 +88,8 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-core:0.49.0")
     implementation("org.jetbrains.exposed:exposed-dao:0.49.0")
     implementation("org.jetbrains.exposed:exposed-kotlin-datetime:0.49.0")
+    implementation("com.fasterxml.jackson.core:jackson-core:2.17.1")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.17.1")
     runtimeOnly("org.jetbrains.exposed:exposed-jdbc:0.49.0")
     testImplementation("io.kotlintest:kotlintest:2.0.7")
     testImplementation("io.kotest:kotest-runner-junit5:5.9.0")
