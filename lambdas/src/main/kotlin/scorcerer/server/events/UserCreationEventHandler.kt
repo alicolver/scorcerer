@@ -63,8 +63,9 @@ class UserCreationEventHandler : RequestHandler<SQSEvent, Unit> {
             val globalLeaderboard = calculateGlobalLeaderboard()
             val s3Client = S3Client { region = "eu-west-2" }
             runBlocking {
-                // TODO: add logic to calculate match day
-                LeaderboardS3Service(s3Client, Environment.LeaderboardBucketName).writeLeaderboard(globalLeaderboard, 1)
+                val leaderboardService = LeaderboardS3Service(s3Client, Environment.LeaderboardBucketName)
+                val latestLeaderboardMatchDay = leaderboardService.getLatestLeaderboardMatchDay()
+                leaderboardService.writeLeaderboard(globalLeaderboard, latestLeaderboardMatchDay)
             }
         }
     }

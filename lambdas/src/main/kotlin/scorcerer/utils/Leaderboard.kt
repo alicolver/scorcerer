@@ -2,6 +2,7 @@ package scorcerer.utils
 
 import aws.sdk.kotlin.services.s3.S3Client
 import aws.sdk.kotlin.services.s3.model.GetObjectRequest
+import aws.sdk.kotlin.services.s3.model.ListObjectsV2Request
 import aws.sdk.kotlin.services.s3.model.PutObjectRequest
 import aws.smithy.kotlin.runtime.content.ByteStream
 import aws.smithy.kotlin.runtime.content.decodeToString
@@ -81,6 +82,19 @@ class LeaderboardS3Service(private val s3Client: S3Client, private val s3BucketN
             body = ByteStream.fromString(leaderboard.toJson())
         }
         s3Client.putObject(request)
+    }
+
+    suspend fun getLatestLeaderboardMatchDay(): Int {
+        val listRequest = ListObjectsV2Request {
+            bucket = s3BucketName
+        }
+        val listResponse = s3Client.listObjectsV2(listRequest)
+
+        val latestMatchDay = listResponse.contents
+            ?.mapNotNull { it.key?.substringAfter("matchDay")?.substringBefore(".json")?.toIntOrNull() }
+            ?.maxOrNull()
+            ?: 0
+        return latestMatchDay
     }
 
     suspend fun getLeaderboard(matchDay: Int): List<LeaderboardInner> {
