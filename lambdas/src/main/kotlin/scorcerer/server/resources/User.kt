@@ -2,6 +2,7 @@ package scorcerer.server.resources
 
 import aws.sdk.kotlin.services.cognitoidentityprovider.CognitoIdentityProviderClient
 import aws.sdk.kotlin.services.cognitoidentityprovider.model.AdminCreateUserRequest
+import aws.sdk.kotlin.services.cognitoidentityprovider.model.AdminDeleteUserRequest
 import aws.sdk.kotlin.services.cognitoidentityprovider.model.AdminSetUserPasswordRequest
 import aws.sdk.kotlin.services.cognitoidentityprovider.model.AttributeType
 import aws.sdk.kotlin.services.cognitoidentityprovider.model.MessageActionType
@@ -118,9 +119,28 @@ class User(context: RequestContexts) : UserApi(context) {
             permanent = true
         }
 
+        // We only delete users if we fail to set their password
+        val deleteUserRequest = AdminDeleteUserRequest {
+            userPoolId = Environment.CognitoUserPoolId
+            username = signupRequest.email
+        }
+
         val userId = runBlocking {
-            val response = cognitoClient.adminCreateUser(request)
-            cognitoClient.adminSetUserPassword(passwordRequest)
+            val response = try {
+                cognitoClient.adminCreateUser(request)
+            } catch (e: Exception) {
+                throw ApiResponseError(Response(Status.BAD_REQUEST).body("Failed to create user"))
+            }
+
+            try {
+                cognitoClient.adminSetUserPassword(passwordRequest)
+            } catch (e: Exception) {
+                log.info("Error thrown while setting new user password - ${e.message}")
+                cognitoClient.adminDeleteUser(deleteUserRequest)
+                log.info("User has been deleted")
+
+                throw ApiResponseError(Response(Status.BAD_REQUEST).body("The given password was invalid"))
+            }
             response.user?.attributes?.find { it.name == "sub" }?.value ?: throw Exception("Failed to find user sub")
         }
 

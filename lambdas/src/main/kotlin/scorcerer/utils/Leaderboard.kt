@@ -7,7 +7,7 @@ import aws.sdk.kotlin.services.s3.model.PutObjectRequest
 import aws.smithy.kotlin.runtime.content.ByteStream
 import aws.smithy.kotlin.runtime.content.decodeToString
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.openapitools.server.kotshiJson
+import org.openapitools.server.fromJson
 import org.openapitools.server.models.LeaderboardInner
 import org.openapitools.server.models.User
 import org.openapitools.server.toJson
@@ -103,12 +103,10 @@ class LeaderboardS3Service(private val s3Client: S3Client, private val s3BucketN
             key = "matchDay$matchDay.json"
         }
 
-        val leaderboard = s3Client.getObject(request) { resp ->
+        return s3Client.getObject(request) { resp ->
             val json = resp.body?.decodeToString()
             requireNotNull(json) { "Leaderboard is empty" }
-            return@getObject kotshiJson.asA<List<LeaderboardInner>>(json)
+            return@getObject json.fromJson()
         }
-
-        return leaderboard
     }
 }
