@@ -74,6 +74,7 @@ ktlint {
 dependencies {
     implementation("aws.sdk.kotlin:s3:1.2.15")
     implementation("org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.9.5")
     implementation("org.http4k:http4k-core")
     implementation("org.http4k:http4k-contract")
     implementation(platform("org.http4k:http4k-bom:4.41.1.0"))
