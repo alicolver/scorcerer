@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.mockito.Mockito
 import org.openapitools.server.models.CreateMatchRequest
-import org.openapitools.server.models.Match
 import org.openapitools.server.models.SetMatchScoreRequest
 import scorcerer.*
 import scorcerer.server.ApiResponseError
@@ -19,6 +18,7 @@ import scorcerer.server.db.tables.MatchState
 import scorcerer.server.db.tables.MatchTable
 import scorcerer.server.db.tables.PredictionTable
 import scorcerer.server.resources.MatchResource
+import scorcerer.utils.MatchResult
 import java.time.OffsetDateTime
 
 class MatchTest : DatabaseTest() {
@@ -126,17 +126,7 @@ class MatchTest : DatabaseTest() {
         MatchResource(RequestContexts(), mockS3Client, "leaderboardBucketName").setMatchScore("", matchId, SetMatchScoreRequest(1, 2))
         val match = transaction {
             MatchTable.selectAll().where { MatchTable.id eq matchId.toInt() }.map { row ->
-                Match(
-                    row[MatchTable.homeTeamId].toString(),
-                    "",
-                    row[MatchTable.awayTeamId].toString(),
-                    "",
-                    row[MatchTable.id].toString(),
-                    "",
-                    OffsetDateTime.now(),
-                    row[MatchTable.homeScore],
-                    row[MatchTable.awayScore],
-                )
+                MatchResult(row[MatchTable.homeScore] ?: 0, row[MatchTable.awayScore] ?: 0)
             }
         }[0]
         match.awayScore shouldBe 2

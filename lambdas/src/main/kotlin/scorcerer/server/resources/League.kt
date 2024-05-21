@@ -78,21 +78,18 @@ class League(context: RequestContexts, private val s3Client: S3Client, private v
     }
 
     override fun getLeagueLeaderboard(requesterUserId: String, leagueId: String): List<LeaderboardInner> {
-        // TODO: add logic to decide which matchDay to get leaderboard for
         // TODO: get previous matchDay leaderboard so that movement can be calculated
         val globalLeaderboard = runBlocking {
-            LeaderboardS3Service(s3Client, leaderboardBucketName).getLeaderboard(
-                1,
-            )
+            val leaderboardService = LeaderboardS3Service(s3Client, leaderboardBucketName)
+            val latestLeaderboardMatchDay = leaderboardService.getLatestLeaderboardMatchDay()
+            leaderboardService.getLeaderboard(latestLeaderboardMatchDay)
         }
         if (leagueId == "global") {
             return globalLeaderboard
         }
         val leagueUsersIds = transaction {
-            (LeagueMembershipTable innerJoin MemberTable)
-                .select(MemberTable.id)
-                .where { LeagueMembershipTable.leagueId eq leagueId }
-                .map {
+            (LeagueMembershipTable innerJoin MemberTable).select(MemberTable.id)
+                .where { LeagueMembershipTable.leagueId eq leagueId }.map {
                     it[MemberTable.id]
                 }
         }

@@ -55,6 +55,7 @@ components:
         - matchId
         - venue
         - datetime
+        - matchDay
       properties:
         homeTeam:
           description: Home team
@@ -86,6 +87,10 @@ components:
           description: datetime of kickoff
           type: string
           format: date-time
+        matchDay:
+          description: Match day of the game
+          type: integer
+          format: int32
     league:
       type: object
       required:
@@ -153,6 +158,12 @@ components:
           type: integer
         livePoints:
           type: integer
+    toGoThrough:
+      description: For knockout games which team will go through
+      type: string
+      enum:
+        - HOME
+        - AWAY
 security:
   - CognitoAuthorizer: []
 paths:
@@ -249,11 +260,7 @@ paths:
                   description: The matchId which is being predicted
                   type: string
                 toGoThrough:
-                  description: For knockout games which team will go through
-                  type: string
-                  enum:
-                    - HOME
-                    - AWAY
+                  $ref: '#/components/schemas/toGoThrough'
               required:
                 - homeScore
                 - awayScore
@@ -412,6 +419,9 @@ paths:
                   description: The away team final number of goals
                   type: integer
                   format: int32
+              required:
+                - homeScore
+                - awayScore
       responses:
         '200':
           description: Successful response
@@ -452,6 +462,10 @@ paths:
                   description: The away team final number of goals
                   type: integer
                   format: int32
+                toGoThrough:
+                  $ref: '#/components/schemas/toGoThrough'
+
+
       responses:
         '200':
           description: Successful response

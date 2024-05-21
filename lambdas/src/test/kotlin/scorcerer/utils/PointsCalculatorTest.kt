@@ -1,12 +1,10 @@
 import io.kotlintest.shouldBe
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 import org.openapitools.server.models.Match
 import org.openapitools.server.models.Prediction
+import scorcerer.utils.MatchResult
 import scorcerer.utils.PointsCalculator
-import java.time.OffsetDateTime
 
 internal class PointsCalculatorTest {
     data class TestInput(val prediction: Prediction, val result: Match)
@@ -21,16 +19,7 @@ internal class PointsCalculatorTest {
         expectedPoints: Int,
     ) {
         val prediction = Prediction(predictedHomeScore, predictedAwayScore, "matchId", "predictionId", "userId")
-        val result = Match("homeTeam", "", "awayTeam", "", "matchId", "", OffsetDateTime.now(), homeScore, awayScore)
+        val result = MatchResult(homeScore, awayScore)
         PointsCalculator.calculatePoints(prediction, result) shouldBe expectedPoints
-    }
-
-    @Test
-    fun testCalulatePointsRaisesException() {
-        assertThrows<IllegalArgumentException> {
-            val prediction = Prediction(1, 1, "matchId", "predictionId", "userId")
-            val result = Match("homeTeam", "", "awayTeam", "", "matchId", "", OffsetDateTime.now())
-            PointsCalculator.calculatePoints(prediction, result)
-        }
     }
 }

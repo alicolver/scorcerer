@@ -13,12 +13,16 @@ import org.openapitools.server.models.Prediction
 import scorcerer.server.ApiResponseError
 import scorcerer.server.db.tables.*
 import scorcerer.utils.LeaderboardS3Service
+import scorcerer.utils.MatchResult
 import scorcerer.utils.PointsCalculator.calculatePoints
 import scorcerer.utils.calculateGlobalLeaderboard
 import scorcerer.utils.recalculateLivePoints
-import java.time.OffsetDateTime
 
-class MatchResource(context: RequestContexts, private val s3Client: S3Client, private val leaderboardBucketName: String) : MatchApi(context) {
+class MatchResource(
+    context: RequestContexts,
+    private val s3Client: S3Client,
+    private val leaderboardBucketName: String,
+) : MatchApi(context) {
     override fun getMatchPredictions(requesterUserId: String, matchId: String, leagueId: String?): List<Prediction> {
         return transaction {
             if (leagueId.isNullOrBlank()) {
@@ -59,6 +63,7 @@ class MatchResource(context: RequestContexts, private val s3Client: S3Client, pr
                 row[MatchTable.id].toString(),
                 row[MatchTable.venue],
                 row[MatchTable.datetime],
+                row[MatchTable.matchDay],
             )
         }
     }
@@ -70,7 +75,7 @@ class MatchResource(context: RequestContexts, private val s3Client: S3Client, pr
     ) {
         val awayTeamTable = TeamTable.alias("awayTeam")
         val homeTeamTable = TeamTable.alias("homeTeam")
-        transaction {
+        val match = transaction {
             val match =
                 MatchTable.join(awayTeamTable, JoinType.INNER, MatchTable.awayTeamId, awayTeamTable[TeamTable.id])
                     .join(homeTeamTable, JoinType.INNER, MatchTable.homeTeamId, homeTeamTable[TeamTable.id]).selectAll()
@@ -83,6 +88,7 @@ class MatchResource(context: RequestContexts, private val s3Client: S3Client, pr
                             row[MatchTable.id].toString(),
                             row[MatchTable.venue],
                             row[MatchTable.datetime],
+                            row[MatchTable.matchDay],
                             setMatchScoreRequest.homeScore,
                             setMatchScoreRequest.awayScore,
                         )
@@ -100,19 +106,20 @@ class MatchResource(context: RequestContexts, private val s3Client: S3Client, pr
                     row[PredictionTable.id].toString(),
                     row[PredictionTable.memberId],
                 )
-                val calculatedPoints = calculatePoints(prediction, match)
+                val calculatedPoints = calculatePoints(prediction, MatchResult(setMatchScoreRequest.homeScore, setMatchScoreRequest.awayScore))
 
                 PredictionTable.update({ PredictionTable.id eq row[PredictionTable.id] }) {
                     it[points] = calculatedPoints
                 }
             }
+            match
         }
 
         recalculateLivePoints()
 
         val globalLeaderboard = calculateGlobalLeaderboard()
         runBlocking {
-            LeaderboardS3Service(s3Client, leaderboardBucketName).writeLeaderboard(globalLeaderboard, 1)
+            LeaderboardS3Service(s3Client, leaderboardBucketName).writeLeaderboard(globalLeaderboard, match.matchDay)
         }
     }
 
@@ -139,6 +146,11 @@ class MatchResource(context: RequestContexts, private val s3Client: S3Client, pr
         completeMatchRequest: CompleteMatchRequest,
     ) {
         transaction {
+            val matchDay =
+                MatchTable.select(MatchTable.matchDay).where { MatchTable.id eq matchId.toInt() }.firstOrNull()
+                    ?.let { row -> row[MatchTable.matchDay] }
+                    ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("Match does not exist"))
+
             MatchTable.update({ MatchTable.id eq matchId.toInt() }) {
                 it[state] = MatchState.COMPLETED
                 it[homeScore] = completeMatchRequest.homeScore
@@ -159,15 +171,8 @@ class MatchResource(context: RequestContexts, private val s3Client: S3Client, pr
             predictions.forEach { prediction ->
                 val points = calculatePoints(
                     prediction,
-//                  // TODO: have a model where we don't need all this junk
-                    Match(
-                        "",
-                        "",
-                        "",
-                        "",
-                        matchId,
-                        "",
-                        OffsetDateTime.now(),
+                    // TODO: have a model where we don't need all this junk
+                    MatchResult(
                         completeMatchRequest.homeScore,
                         completeMatchRequest.awayScore,
                     ),
@@ -184,7 +189,7 @@ class MatchResource(context: RequestContexts, private val s3Client: S3Client, pr
                 recalculateLivePoints()
                 val globalLeaderboard = calculateGlobalLeaderboard()
                 runBlocking {
-                    LeaderboardS3Service(s3Client, leaderboardBucketName).writeLeaderboard(globalLeaderboard, 1)
+                    LeaderboardS3Service(s3Client, leaderboardBucketName).writeLeaderboard(globalLeaderboard, matchDay)
                 }
             }
         }
