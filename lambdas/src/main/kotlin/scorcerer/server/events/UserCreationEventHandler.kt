@@ -8,12 +8,12 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.openapitools.server.fromJson
 import scorcerer.server.Environment
 import scorcerer.server.db.Database
 import scorcerer.server.db.tables.LeagueMembershipTable
 import scorcerer.server.db.tables.LeagueTable
 import scorcerer.server.db.tables.MemberTable
-import scorcerer.server.fromJson
 import scorcerer.server.log
 import scorcerer.utils.LeaderboardS3Service
 import scorcerer.utils.calculateGlobalLeaderboard
