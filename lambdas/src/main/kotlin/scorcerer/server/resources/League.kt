@@ -97,12 +97,15 @@ class League(context: RequestContexts, private val s3Client: S3Client, private v
     }
 
     override fun joinLeague(requesterUserId: String, leagueId: String) {
-        // TODO: check if league exists
-        transaction {
-            LeagueMembershipTable.insert {
-                it[this.memberId] = requesterUserId
-                it[this.leagueId] = leagueId
+        try {
+            transaction {
+                LeagueMembershipTable.insert {
+                    it[this.memberId] = requesterUserId
+                    it[this.leagueId] = leagueId
+                }
             }
+        } catch (e: Exception) {
+            throw ApiResponseError(Response(Status.NOT_FOUND).body("League does not exist"))
         }
     }
 
