@@ -115,7 +115,7 @@ export class Predictaball extends Stack {
       code: Code.fromAsset("../lambdas/build/distributions/scorcerer-1.0.0.zip"),
       handler: "scorcerer.server.ApiAuthLambdaHandler",
       timeout: Duration.seconds(25),
-      memorySize: 256,
+      memorySize: 512,
       environment: lambdaEnvironment
     })
 
@@ -124,7 +124,7 @@ export class Predictaball extends Stack {
       code: Code.fromAsset("../lambdas/build/distributions/scorcerer-1.0.0.zip"),
       handler: "scorcerer.server.events.UserCreationEventHandler",
       timeout: Duration.seconds(25),
-      memorySize: 256,
+      memorySize: 512,
       environment: lambdaEnvironment,
       vpc: vpc,
       allowPublicSubnet: true,
@@ -142,6 +142,7 @@ export class Predictaball extends Stack {
           "cognito-idp:AdminInitiateAuth",
           "cognito-idp:AdminCreateUser",
           "cognito-idp:AdminSetUserPassword",
+          "cognito-idp:AdminDeleteUser"
         ],
         resources: [cognito.userPool.userPoolArn]
       })
