@@ -1,11 +1,10 @@
 package scorcerer.utils
 
-import org.openapitools.server.models.Match
 import org.openapitools.server.models.Prediction
 
 data class MatchResult(
     val homeScore: Int,
-    val awayScore: Int
+    val awayScore: Int,
 )
 object PointsCalculator {
     fun calculatePoints(prediction: Prediction, result: MatchResult): Int {

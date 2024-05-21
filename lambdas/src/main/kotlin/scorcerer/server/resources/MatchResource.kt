@@ -17,7 +17,6 @@ import scorcerer.utils.MatchResult
 import scorcerer.utils.PointsCalculator.calculatePoints
 import scorcerer.utils.calculateGlobalLeaderboard
 import scorcerer.utils.recalculateLivePoints
-import java.time.OffsetDateTime
 
 class MatchResource(
     context: RequestContexts,
