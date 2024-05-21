@@ -44,28 +44,34 @@ class MatchResource(
         }
     }
 
-    override fun listMatches(requesterUserId: String, filterType: String?): List<Match> = transaction {
-        val awayTeamTable = TeamTable.alias("awayTeam")
-        val homeTeamTable = TeamTable.alias("homeTeam")
-        val matchTeamTable =
-            MatchTable.join(awayTeamTable, JoinType.INNER, MatchTable.awayTeamId, awayTeamTable[TeamTable.id])
-                .join(homeTeamTable, JoinType.INNER, MatchTable.homeTeamId, homeTeamTable[TeamTable.id])
-        if (filterType.isNullOrBlank()) {
-            matchTeamTable.selectAll()
-        } else {
-            matchTeamTable.selectAll().where { MatchTable.state eq MatchState.valueOf(filterType.uppercase()) }
-        }.map { row ->
-            Match(
-                row[homeTeamTable[TeamTable.name]],
-                row[homeTeamTable[TeamTable.flagUri]],
-                row[awayTeamTable[TeamTable.name]],
-                row[awayTeamTable[TeamTable.flagUri]],
-                row[MatchTable.id].toString(),
-                row[MatchTable.venue],
-                row[MatchTable.datetime],
-                row[MatchTable.matchDay],
-            )
+    override fun listMatches(requesterUserId: String, filterType: String?): List<Match> {
+        val matches = transaction {
+            val awayTeamTable = TeamTable.alias("awayTeam")
+            val homeTeamTable = TeamTable.alias("homeTeam")
+            val matchTeamTable =
+                MatchTable.join(awayTeamTable, JoinType.INNER, MatchTable.awayTeamId, awayTeamTable[TeamTable.id])
+                    .join(homeTeamTable, JoinType.INNER, MatchTable.homeTeamId, homeTeamTable[TeamTable.id])
+            if (filterType.isNullOrBlank()) {
+                matchTeamTable.selectAll()
+            } else {
+                matchTeamTable.selectAll().where { MatchTable.state eq MatchState.valueOf(filterType.uppercase()) }
+            }.map { row ->
+                Match(
+                    row[homeTeamTable[TeamTable.name]],
+                    row[homeTeamTable[TeamTable.flagUri]],
+                    row[awayTeamTable[TeamTable.name]],
+                    row[awayTeamTable[TeamTable.flagUri]],
+                    row[MatchTable.id].toString(),
+                    row[MatchTable.venue],
+                    row[MatchTable.datetime],
+                    row[MatchTable.matchDay],
+                )
+            }
         }
+        if (!filterType.isNullOrBlank() && MatchState.valueOf(filterType.uppercase()) == MatchState.UPCOMING) {
+            return getMatchesOnNextNMatchDays(matches, 2)
+        }
+        return matches
     }
 
     override fun setMatchScore(
@@ -171,7 +177,6 @@ class MatchResource(
             predictions.forEach { prediction ->
                 val points = calculatePoints(
                     prediction,
-                    // TODO: have a model where we don't need all this junk
                     MatchResult(
                         completeMatchRequest.homeScore,
                         completeMatchRequest.awayScore,
@@ -194,4 +199,14 @@ class MatchResource(
             }
         }
     }
+}
+
+fun getMatchesOnNextNMatchDays(matches: List<Match>, matchDays: Int): List<Match> {
+    val uniqueMatchDays = matches.map { it.matchDay }.distinct()
+    if (uniqueMatchDays.size < matchDays) {
+        val lowestMatchDay = uniqueMatchDays.minOrNull() ?: return emptyList()
+        return matches.filter { it.matchDay == lowestMatchDay }
+    }
+    val lowestMatchDays = uniqueMatchDays.sorted().take(matchDays)
+    return matches.filter { it.matchDay in lowestMatchDays }
 }
