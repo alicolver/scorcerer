@@ -11,6 +11,7 @@ import org.jetbrains.exposed.sql.update
 import org.openapitools.server.apis.PredictionApi
 import org.openapitools.server.models.CreatePrediction200Response
 import org.openapitools.server.models.CreatePredictionRequest
+import org.openapitools.server.models.Prediction
 import scorcerer.server.ApiResponseError
 import scorcerer.server.db.tables.MatchResult
 import scorcerer.server.db.tables.MatchTable
@@ -64,5 +65,22 @@ class Prediction(context: RequestContexts) : PredictionApi(context) {
         }
 
         return CreatePrediction200Response(predictionId.toString())
+    }
+
+    override fun getPrediction(requesterUserId: String, matchId: String): Prediction {
+        return transaction {
+            PredictionTable.selectAll()
+                .where { (PredictionTable.matchId eq matchId.toInt()).and(PredictionTable.memberId eq requesterUserId) }
+                .firstOrNull()?.let { row ->
+                    Prediction(
+                        row[PredictionTable.homeScore],
+                        row[PredictionTable.awayScore],
+                        row[PredictionTable.matchId].toString(),
+                        row[PredictionTable.id].toString(),
+                        row[PredictionTable.memberId],
+                        row[PredictionTable.points],
+                    )
+                } ?: throw ApiResponseError(Response(Status.NOT_FOUND).body("Match does not exist"))
+        }
     }
 }

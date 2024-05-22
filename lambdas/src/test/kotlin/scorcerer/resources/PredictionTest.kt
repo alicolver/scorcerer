@@ -13,6 +13,7 @@ import scorcerer.server.ApiResponseError
 import scorcerer.server.db.tables.PredictionTable
 import scorcerer.server.resources.Prediction
 import java.time.OffsetDateTime
+import org.openapitools.server.models.Prediction as PredictionModel
 
 class PredictionTest : DatabaseTest() {
     @Test
@@ -62,6 +63,31 @@ class PredictionTest : DatabaseTest() {
             Prediction(RequestContexts()).createPrediction(
                 "userId",
                 CreatePredictionRequest(1, 2, matchId),
+            )
+        }
+    }
+
+    @Test
+    fun getPredictionGivenUserPredictionexists() {
+        givenUserExists("userId", "name")
+        val homeTeamId = givenTeamExists("England")
+        val awayTeamId = givenTeamExists("Scotland")
+        val matchId = givenMatchExists(homeTeamId, awayTeamId, OffsetDateTime.now().minusHours(1))
+        val predictionId = givenPredictionExists(matchId, "userId", 1, 1)
+
+        val prediction = Prediction(RequestContexts()).getPrediction("userId", matchId)
+
+        prediction shouldBe PredictionModel(1, 1, matchId, predictionId, "userId")
+    }
+
+    @Test
+    fun getPredictionGivenNoPredictionRaisesNotFound() {
+        givenUserExists("userId", "name")
+
+        assertThrows<ApiResponseError> {
+            Prediction(RequestContexts()).getPrediction(
+                "userId",
+                "1",
             )
         }
     }
