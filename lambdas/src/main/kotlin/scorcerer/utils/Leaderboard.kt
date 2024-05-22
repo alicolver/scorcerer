@@ -125,7 +125,7 @@ class LeaderboardS3Service(private val s3Client: S3Client, private val s3BucketN
         val latestMatchDay = listResponse.contents
             ?.mapNotNull { it.key?.substringAfter("matchDay")?.substringBefore(".json")?.toIntOrNull() }
             ?.maxOrNull()
-            ?: -1
+            ?: 0
         return latestMatchDay
     }
 

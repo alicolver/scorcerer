@@ -85,7 +85,7 @@ class TestLeaderboardS3Service {
 
             val latestMatchDay = leaderboardS3Service.getLatestLeaderboardMatchDay()
 
-            latestMatchDay shouldBe -1
+            latestMatchDay shouldBe 0
             coVerify { s3Client.listObjectsV2(any<ListObjectsV2Request>()) }
         }
     }

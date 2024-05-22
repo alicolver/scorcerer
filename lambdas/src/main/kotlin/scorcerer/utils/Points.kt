@@ -15,12 +15,14 @@ fun recalculateLivePoints() {
         val livePointsByUser = PredictionTable
             .select(PredictionTable.memberId, PredictionTable.points.sum())
             .where { PredictionTable.matchId inList liveMatchIds }
-            .groupBy(PredictionTable.memberId)
-            .map { row ->
+            .groupBy(PredictionTable.memberId).associate { row ->
                 row[PredictionTable.memberId] to (row[PredictionTable.points.sum()] ?: 0)
             }
 
-        livePointsByUser.forEach { (userId, totalLivePoints) ->
+        val allUserIds = MemberTable.selectAll().map { it[MemberTable.id] }
+
+        allUserIds.forEach { userId ->
+            val totalLivePoints = livePointsByUser[userId] ?: 0
             MemberTable.update({ MemberTable.id eq userId }) {
                 it[livePoints] = totalLivePoints
             }

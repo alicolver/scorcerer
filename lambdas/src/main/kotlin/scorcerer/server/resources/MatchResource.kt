@@ -86,6 +86,7 @@ class MatchResource(
             MatchTable.update({ MatchTable.id eq matchId.toInt() }) {
                 it[homeScore] = setMatchScoreRequest.homeScore
                 it[awayScore] = setMatchScoreRequest.awayScore
+                it[state] = MatchState.LIVE
             }
 
             val predictions = getPredictions(matchId)
@@ -130,7 +131,7 @@ class MatchResource(
         matchId: String,
         completeMatchRequest: CompleteMatchRequest,
     ) {
-        transaction {
+        val matchDay = transaction {
             val matchDay = getMatchDay(matchId)
                 ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("Match does not exist"))
 
@@ -153,12 +154,12 @@ class MatchResource(
                 updatePredictionPoints(prediction.predictionId.toInt(), points)
                 updateMemberFixedPoints(prediction.userId, points)
             }
-
-            recalculateLivePoints()
-            val leaderboardService = LeaderboardS3Service(s3Client, leaderboardBucketName)
-            runBlocking {
-                leaderboardService.updateGlobalLeaderboard(matchDay)
-            }
+            matchDay
+        }
+        recalculateLivePoints()
+        val leaderboardService = LeaderboardS3Service(s3Client, leaderboardBucketName)
+        runBlocking {
+            leaderboardService.updateGlobalLeaderboard(matchDay)
         }
     }
 }
