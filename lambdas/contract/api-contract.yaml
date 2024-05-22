@@ -131,6 +131,7 @@ components:
         type: object
         required:
           - position
+          - movement
           - user
         properties:
           position:
@@ -139,6 +140,12 @@ components:
             minimum: 1
           user:
             $ref: '#/components/schemas/user'
+          movement:
+            type: string
+            enum:
+              - IMPROVED
+              - WORSENED
+              - UNCHANGED
     user:
       type: object
       required:

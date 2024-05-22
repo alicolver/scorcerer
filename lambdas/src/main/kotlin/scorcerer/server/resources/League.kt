@@ -20,6 +20,7 @@ import scorcerer.server.db.tables.LeagueMembershipTable
 import scorcerer.server.db.tables.LeagueTable
 import scorcerer.server.db.tables.MemberTable
 import scorcerer.utils.LeaderboardS3Service
+import scorcerer.utils.calculateMovement
 import scorcerer.utils.filterLeaderboardToLeague
 import scorcerer.utils.throwDatabaseError
 
@@ -78,22 +79,29 @@ class League(context: RequestContexts, private val s3Client: S3Client, private v
     }
 
     override fun getLeagueLeaderboard(requesterUserId: String, leagueId: String): List<LeaderboardInner> {
-        // TODO: get previous matchDay leaderboard so that movement can be calculated
-        val globalLeaderboard = runBlocking {
-            val leaderboardService = LeaderboardS3Service(s3Client, leaderboardBucketName)
-            val latestLeaderboardMatchDay = leaderboardService.getLatestLeaderboardMatchDay()
-            leaderboardService.getLeaderboard(latestLeaderboardMatchDay)
+        val leaderboardService = LeaderboardS3Service(s3Client, leaderboardBucketName)
+
+        val (latestLeaderboardMatchDay, latestGlobalLeaderboard) = runBlocking {
+            val latestMatchDay = leaderboardService.getLatestLeaderboardMatchDay()
+            val latestLeaderboard = leaderboardService.getLeaderboard(latestMatchDay)
+            latestMatchDay to (
+                latestLeaderboard ?: throw ApiResponseError(
+                    Response(Status.NOT_FOUND).body("Leaderboard does not exist"),
+                )
+                )
         }
+
         if (leagueId == "global") {
-            return globalLeaderboard
+            return latestGlobalLeaderboard
         }
-        val leagueUsersIds = transaction {
-            (LeagueMembershipTable innerJoin MemberTable).select(MemberTable.id)
-                .where { LeagueMembershipTable.leagueId eq leagueId }.map {
-                    it[MemberTable.id]
-                }
-        }
-        return filterLeaderboardToLeague(globalLeaderboard, leagueUsersIds)
+
+        val leagueUsersIds = getLeagueUserIds(leagueId)
+        val previousGlobalLeaderboard =
+            runBlocking { leaderboardService.getPreviousLeaderboard(latestLeaderboardMatchDay) }
+        val filteredLeague = filterLeaderboardToLeague(latestGlobalLeaderboard, leagueUsersIds)
+        val previousFilteredLeague = filterLeaderboardToLeague(previousGlobalLeaderboard, leagueUsersIds)
+
+        return calculateMovement(filteredLeague, previousFilteredLeague)
     }
 
     override fun joinLeague(requesterUserId: String, leagueId: String) {
@@ -116,4 +124,11 @@ class League(context: RequestContexts, private val s3Client: S3Client, private v
             }
         }
     }
+}
+
+private fun getLeagueUserIds(leagueId: String): List<String> = transaction {
+    (LeagueMembershipTable innerJoin MemberTable)
+        .select(MemberTable.id)
+        .where { LeagueMembershipTable.leagueId eq leagueId }
+        .map { it[MemberTable.id] }
 }

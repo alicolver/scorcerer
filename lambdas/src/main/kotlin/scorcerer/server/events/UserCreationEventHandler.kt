@@ -16,7 +16,6 @@ import scorcerer.server.db.tables.LeagueTable
 import scorcerer.server.db.tables.MemberTable
 import scorcerer.server.log
 import scorcerer.utils.LeaderboardS3Service
-import scorcerer.utils.calculateGlobalLeaderboard
 
 data class UserCreationEvent(
     val id: String,
@@ -58,12 +57,11 @@ class UserCreationEventHandler : RequestHandler<SQSEvent, Unit> {
                 }
             }
 
-            val globalLeaderboard = calculateGlobalLeaderboard()
             val s3Client = S3Client { region = "eu-west-2" }
+            val leaderboardService = LeaderboardS3Service(s3Client, Environment.LeaderboardBucketName)
             runBlocking {
-                val leaderboardService = LeaderboardS3Service(s3Client, Environment.LeaderboardBucketName)
                 val latestLeaderboardMatchDay = leaderboardService.getLatestLeaderboardMatchDay()
-                leaderboardService.writeLeaderboard(globalLeaderboard, latestLeaderboardMatchDay)
+                leaderboardService.updateGlobalLeaderboard(latestLeaderboardMatchDay)
             }
         }
     }

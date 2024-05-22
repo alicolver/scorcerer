@@ -175,7 +175,7 @@ class GetMatchesOnNextNMatchDaysTest {
             Match("Team G", "flagG", "Team H", "flagH", "4", "Stadium D", OffsetDateTime.now(), 3),
         )
 
-        val filteredMatches = getMatchesOnNextNMatchDays(matches, 2)
+        val filteredMatches = getMatchesOnNextNMatchDays(matches)
         filteredMatches.size shouldBe 3
         filteredMatches.all { it.matchDay in listOf(1, 2) } shouldBe true
     }
@@ -187,7 +187,7 @@ class GetMatchesOnNextNMatchDaysTest {
             Match("Team C", "flagC", "Team D", "flagD", "2", "Stadium B", OffsetDateTime.now(), 1),
         )
 
-        val filteredMatches = getMatchesOnNextNMatchDays(matches, 2)
+        val filteredMatches = getMatchesOnNextNMatchDays(matches)
         filteredMatches.size shouldBe 2
         filteredMatches.all { it.matchDay == 1 } shouldBe true
     }
@@ -196,7 +196,7 @@ class GetMatchesOnNextNMatchDaysTest {
     fun testWithNoMatches() {
         val matches = emptyList<Match>()
 
-        val filteredMatches = getMatchesOnNextNMatchDays(matches, 2)
+        val filteredMatches = getMatchesOnNextNMatchDays(matches)
         filteredMatches.size shouldBe 0
     }
 }

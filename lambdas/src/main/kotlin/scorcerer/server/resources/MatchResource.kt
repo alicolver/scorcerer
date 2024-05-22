@@ -12,10 +12,10 @@ import org.openapitools.server.models.*
 import org.openapitools.server.models.Prediction
 import scorcerer.server.ApiResponseError
 import scorcerer.server.db.tables.*
+import scorcerer.server.log
 import scorcerer.utils.LeaderboardS3Service
 import scorcerer.utils.MatchResult
 import scorcerer.utils.PointsCalculator.calculatePoints
-import scorcerer.utils.calculateGlobalLeaderboard
 import scorcerer.utils.recalculateLivePoints
 
 class MatchResource(
@@ -69,7 +69,8 @@ class MatchResource(
             }
         }
         if (!filterType.isNullOrBlank() && MatchState.valueOf(filterType.uppercase()) == MatchState.UPCOMING) {
-            return getMatchesOnNextNMatchDays(matches, 2)
+            log.info("Filtering matches to next 2 match days")
+            return getMatchesOnNextNMatchDays(matches)
         }
         return matches
     }
@@ -79,53 +80,31 @@ class MatchResource(
         matchId: String,
         setMatchScoreRequest: SetMatchScoreRequest,
     ) {
-        val awayTeamTable = TeamTable.alias("awayTeam")
-        val homeTeamTable = TeamTable.alias("homeTeam")
-        val match = transaction {
-            val match =
-                MatchTable.join(awayTeamTable, JoinType.INNER, MatchTable.awayTeamId, awayTeamTable[TeamTable.id])
-                    .join(homeTeamTable, JoinType.INNER, MatchTable.homeTeamId, homeTeamTable[TeamTable.id]).selectAll()
-                    .where { MatchTable.id eq matchId.toInt() }.firstOrNull()?.let { row ->
-                        Match(
-                            row[homeTeamTable[TeamTable.name]],
-                            row[homeTeamTable[TeamTable.flagUri]],
-                            row[awayTeamTable[TeamTable.name]],
-                            row[awayTeamTable[TeamTable.flagUri]],
-                            row[MatchTable.id].toString(),
-                            row[MatchTable.venue],
-                            row[MatchTable.datetime],
-                            row[MatchTable.matchDay],
-                            setMatchScoreRequest.homeScore,
-                            setMatchScoreRequest.awayScore,
-                        )
-                    } ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("Match does not exist"))
+        transaction {
+            val matchDay = getMatchDay(matchId)
+                ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("Match does not exist"))
             MatchTable.update({ MatchTable.id eq matchId.toInt() }) {
                 it[homeScore] = setMatchScoreRequest.homeScore
                 it[awayScore] = setMatchScoreRequest.awayScore
             }
 
-            PredictionTable.selectAll().where { PredictionTable.matchId eq matchId.toInt() }.forEach { row ->
-                val prediction = Prediction(
-                    row[PredictionTable.homeScore],
-                    row[PredictionTable.awayScore],
-                    row[PredictionTable.matchId].toString(),
-                    row[PredictionTable.id].toString(),
-                    row[PredictionTable.memberId],
+            val predictions = getPredictions(matchId)
+
+            predictions.forEach { prediction ->
+                val points = calculatePoints(
+                    prediction,
+                    MatchResult(
+                        setMatchScoreRequest.homeScore,
+                        setMatchScoreRequest.awayScore,
+                    ),
                 )
-                val calculatedPoints = calculatePoints(prediction, MatchResult(setMatchScoreRequest.homeScore, setMatchScoreRequest.awayScore))
-
-                PredictionTable.update({ PredictionTable.id eq row[PredictionTable.id] }) {
-                    it[points] = calculatedPoints
-                }
+                updatePredictionPoints(prediction.predictionId.toInt(), points)
             }
-            match
-        }
-
-        recalculateLivePoints()
-
-        val globalLeaderboard = calculateGlobalLeaderboard()
-        runBlocking {
-            LeaderboardS3Service(s3Client, leaderboardBucketName).writeLeaderboard(globalLeaderboard, match.matchDay)
+            recalculateLivePoints()
+            val leaderboardService = LeaderboardS3Service(s3Client, leaderboardBucketName)
+            runBlocking {
+                leaderboardService.updateGlobalLeaderboard(matchDay)
+            }
         }
     }
 
@@ -152,10 +131,8 @@ class MatchResource(
         completeMatchRequest: CompleteMatchRequest,
     ) {
         transaction {
-            val matchDay =
-                MatchTable.select(MatchTable.matchDay).where { MatchTable.id eq matchId.toInt() }.firstOrNull()
-                    ?.let { row -> row[MatchTable.matchDay] }
-                    ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("Match does not exist"))
+            val matchDay = getMatchDay(matchId)
+                ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("Match does not exist"))
 
             MatchTable.update({ MatchTable.id eq matchId.toInt() }) {
                 it[state] = MatchState.COMPLETED
@@ -163,16 +140,7 @@ class MatchResource(
                 it[awayScore] = completeMatchRequest.awayScore
             }
 
-            val predictions =
-                PredictionTable.selectAll().where { PredictionTable.matchId eq matchId.toInt() }.map { row ->
-                    Prediction(
-                        row[PredictionTable.homeScore],
-                        row[PredictionTable.awayScore],
-                        row[PredictionTable.matchId].toString(),
-                        row[PredictionTable.id].toString(),
-                        row[PredictionTable.memberId],
-                    )
-                }
+            val predictions = getPredictions(matchId)
 
             predictions.forEach { prediction ->
                 val points = calculatePoints(
@@ -182,31 +150,56 @@ class MatchResource(
                         completeMatchRequest.awayScore,
                     ),
                 )
-                PredictionTable.update({ PredictionTable.id eq prediction.predictionId.toInt() }) {
-                    it[PredictionTable.points] = points
-                }
-                MemberTable.update({ MemberTable.id eq prediction.userId }) {
-                    with(SqlExpressionBuilder) {
-                        it.update(MemberTable.fixedPoints, MemberTable.fixedPoints + points)
-                    }
-                }
+                updatePredictionPoints(prediction.predictionId.toInt(), points)
+                updateMemberFixedPoints(prediction.userId, points)
+            }
 
-                recalculateLivePoints()
-                val globalLeaderboard = calculateGlobalLeaderboard()
-                runBlocking {
-                    LeaderboardS3Service(s3Client, leaderboardBucketName).writeLeaderboard(globalLeaderboard, matchDay)
-                }
+            recalculateLivePoints()
+            val leaderboardService = LeaderboardS3Service(s3Client, leaderboardBucketName)
+            runBlocking {
+                leaderboardService.updateGlobalLeaderboard(matchDay)
             }
         }
     }
 }
 
-fun getMatchesOnNextNMatchDays(matches: List<Match>, matchDays: Int): List<Match> {
+fun getMatchesOnNextNMatchDays(matches: List<Match>): List<Match> {
     val uniqueMatchDays = matches.map { it.matchDay }.distinct()
-    if (uniqueMatchDays.size < matchDays) {
+    if (uniqueMatchDays.size < 2) {
         val lowestMatchDay = uniqueMatchDays.minOrNull() ?: return emptyList()
         return matches.filter { it.matchDay == lowestMatchDay }
     }
-    val lowestMatchDays = uniqueMatchDays.sorted().take(matchDays)
+    val lowestMatchDays = uniqueMatchDays.sorted().take(2)
     return matches.filter { it.matchDay in lowestMatchDays }
+}
+
+private fun getMatchDay(matchId: String): Int? {
+    return MatchTable.select(MatchTable.matchDay).where { MatchTable.id eq matchId.toInt() }
+        .firstOrNull()?.let { row -> row[MatchTable.matchDay] }
+}
+
+private fun getPredictions(matchId: String): List<Prediction> {
+    return PredictionTable.selectAll().where { PredictionTable.matchId eq matchId.toInt() }.map { row ->
+        Prediction(
+            row[PredictionTable.homeScore],
+            row[PredictionTable.awayScore],
+            row[PredictionTable.matchId].toString(),
+            row[PredictionTable.id].toString(),
+            row[PredictionTable.memberId],
+        )
+    }
+}
+
+private fun updatePredictionPoints(predictionId: Int, points: Int) {
+    PredictionTable.update({ PredictionTable.id eq predictionId }) {
+        it[PredictionTable.points] = points
+    }
+}
+
+private fun updateMemberFixedPoints(userId: String, points: Int) {
+    MemberTable.update({ MemberTable.id eq userId }) {
+        with(SqlExpressionBuilder) {
+            it.update(MemberTable.fixedPoints, MemberTable.fixedPoints + points)
+        }
+    }
 }
