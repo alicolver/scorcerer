@@ -70,7 +70,7 @@ class MatchTest : DatabaseTest() {
         val anotherUserId = "anotherUser"
         givenUserExists(anotherUserId, "name")
 
-        val matchId = givenMatchExists("3", "4")
+        val matchId = givenMatchExists("3", "4", matchState = MatchState.LIVE)
         val predictionId = givenPredictionExists(matchId, userId, 1, 1)
         val anotherPredictionId = givenPredictionExists(matchId, anotherUserId, 1, 1)
 
@@ -98,7 +98,7 @@ class MatchTest : DatabaseTest() {
         givenUserExists(userId, "name", fixedPoints = 0, livePoints = 0)
         val anotherUserId = "anotherUser"
         givenUserExists(anotherUserId, "name", fixedPoints = 0, livePoints = 0)
-        val matchId = givenMatchExists("3", "4")
+        val matchId = givenMatchExists("3", "4", matchState = MatchState.LIVE)
 
         val predictionId = givenPredictionExists(matchId, userId, 1, 1)
         val leagueId = "test-league"
@@ -113,6 +113,29 @@ class MatchTest : DatabaseTest() {
         val matchPredictions = MatchResource(RequestContexts(), mockS3Client, "leaderboardBucketName").getMatchPredictions("", "1", leagueId)
         matchPredictions.size shouldBe 1
         matchPredictions[0].predictionId shouldBe predictionId
+    }
+
+    @Test
+    fun getMatchPredictionsWhenNoMatchRaisesError() {
+        assertThrows<ApiResponseError> {
+            MatchResource(RequestContexts(), mockS3Client, "leaderboardBucketName").getMatchPredictions(
+                "userId",
+                "1",
+                null,
+            )
+        }
+    }
+
+    @Test
+    fun getMatchPredictionsWhenMatchUpcomingRaisesError() {
+        val matchId = givenMatchExists("3", "4")
+        assertThrows<ApiResponseError> {
+            MatchResource(RequestContexts(), mockS3Client, "leaderboardBucketName").getMatchPredictions(
+                "userId",
+                matchId,
+                null,
+            )
+        }
     }
 
     @Test
