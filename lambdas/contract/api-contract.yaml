@@ -641,7 +641,7 @@ paths:
                   livePoints:
                     type: integer
                     format: int32
-  /user/{userId}/leagues:
+  /user/leagues:
     get:
       tags:
         - user
@@ -653,12 +653,6 @@ paths:
         uri: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${apiHandlerArn}/invocations"
         credentials: "${apiGatewayRoleArn}"
         payloadFormatVersion: "1.0"
-      parameters:
-        - in: path
-          required: true
-          name: userId
-          schema:
-            type: string
       responses:
         '200':
           description: Successful response

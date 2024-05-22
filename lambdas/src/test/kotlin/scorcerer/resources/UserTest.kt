@@ -59,7 +59,7 @@ class UserTest : DatabaseTest() {
         givenUserInLeague("user6", "league3")
         givenUserInLeague("user7", "league3")
 
-        val userLeagues = User(RequestContexts()).getUserLeagues("", "user1")
+        val userLeagues = User(RequestContexts()).getUserLeagues("user1")
         userLeagues shouldBe listOf(
             League(
                 "league1",

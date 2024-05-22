@@ -35,10 +35,10 @@ class User(context: RequestContexts) : UserApi(context) {
     private val cognitoClient = CognitoIdentityProviderClient { region = "eu-west-2" }
     private val sqsClient = SqsClient { region = "eu-west-2" }
 
-    override fun getUserLeagues(requesterUserId: String, userId: String): List<League> {
+    override fun getUserLeagues(requesterUserId: String): List<League> {
         return transaction {
             val userLeagueIds = LeagueMembershipTable
-                .select(LeagueMembershipTable.leagueId).where { LeagueMembershipTable.memberId eq userId }
+                .select(LeagueMembershipTable.leagueId).where { LeagueMembershipTable.memberId eq requesterUserId }
                 .map { it[LeagueMembershipTable.leagueId] }
 
             val leaguesWithUsers = (LeagueTable innerJoin LeagueMembershipTable innerJoin MemberTable)
