@@ -24,6 +24,16 @@ class MatchResource(
     private val leaderboardBucketName: String,
 ) : MatchApi(context) {
     override fun getMatchPredictions(requesterUserId: String, matchId: String, leagueId: String?): List<Prediction> {
+        val matchState = transaction {
+            MatchTable.select(MatchTable.state).where { MatchTable.id eq matchId.toInt() }.firstOrNull()
+                ?.let { row -> row[MatchTable.state] }
+                ?: throw ApiResponseError(Response(Status.NOT_FOUND).body("Match does not exist"))
+        }
+
+        if (matchState == MatchState.UPCOMING) {
+            throw ApiResponseError(Response(Status.BAD_REQUEST).body("Match does not exist"))
+        }
+
         return transaction {
             if (leagueId.isNullOrBlank()) {
                 PredictionTable.selectAll().where { (PredictionTable.matchId eq matchId.toInt()) }
