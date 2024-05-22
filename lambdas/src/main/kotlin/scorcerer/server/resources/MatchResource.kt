@@ -16,7 +16,6 @@ import scorcerer.server.log
 import scorcerer.utils.LeaderboardS3Service
 import scorcerer.utils.MatchResult
 import scorcerer.utils.PointsCalculator.calculatePoints
-import scorcerer.utils.calculateGlobalLeaderboard
 import scorcerer.utils.recalculateLivePoints
 
 class MatchResource(
@@ -102,7 +101,10 @@ class MatchResource(
                 updatePredictionPoints(prediction.predictionId.toInt(), points)
             }
             recalculateLivePoints()
-            updateGlobalLeaderboard(matchDay, s3Client, leaderboardBucketName)
+            val leaderboardService = LeaderboardS3Service(s3Client, leaderboardBucketName)
+            runBlocking {
+                leaderboardService.updateGlobalLeaderboard(matchDay)
+            }
         }
     }
 
@@ -153,7 +155,10 @@ class MatchResource(
             }
 
             recalculateLivePoints()
-            updateGlobalLeaderboard(matchDay, s3Client, leaderboardBucketName)
+            val leaderboardService = LeaderboardS3Service(s3Client, leaderboardBucketName)
+            runBlocking {
+                leaderboardService.updateGlobalLeaderboard(matchDay)
+            }
         }
     }
 }
@@ -196,19 +201,5 @@ private fun updateMemberFixedPoints(userId: String, points: Int) {
         with(SqlExpressionBuilder) {
             it.update(MemberTable.fixedPoints, MemberTable.fixedPoints + points)
         }
-    }
-}
-
-private fun updateGlobalLeaderboard(matchDay: Int, s3Client: S3Client, leaderboardBucketName: String) {
-    val leaderboardService = LeaderboardS3Service(s3Client, leaderboardBucketName)
-    val previousDayLeaderboard = runBlocking {
-        leaderboardService.getPreviousLeaderboard(matchDay)
-    }
-    val updatedGlobalLeaderboard = calculateGlobalLeaderboard(previousDayLeaderboard)
-    runBlocking {
-        leaderboardService.writeLeaderboard(
-            updatedGlobalLeaderboard,
-            matchDay,
-        )
     }
 }

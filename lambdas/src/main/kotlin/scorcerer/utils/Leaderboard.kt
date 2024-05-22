@@ -154,4 +154,10 @@ class LeaderboardS3Service(private val s3Client: S3Client, private val s3BucketN
             getLeaderboard(matchDay - 1)
         }
     }
+
+    suspend fun updateGlobalLeaderboard(matchDay: Int) {
+        val previousDayLeaderboard = getPreviousLeaderboard(matchDay)
+        val updatedGlobalLeaderboard = calculateGlobalLeaderboard(previousDayLeaderboard)
+        writeLeaderboard(updatedGlobalLeaderboard, matchDay)
+    }
 }
