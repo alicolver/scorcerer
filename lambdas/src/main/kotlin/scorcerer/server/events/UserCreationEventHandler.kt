@@ -58,12 +58,19 @@ class UserCreationEventHandler : RequestHandler<SQSEvent, Unit> {
                 }
             }
 
-            val globalLeaderboard = calculateGlobalLeaderboard()
             val s3Client = S3Client { region = "eu-west-2" }
+            val leaderboardService = LeaderboardS3Service(s3Client, Environment.LeaderboardBucketName)
+            val latestLeaderboardMatchDay = runBlocking { leaderboardService.getLatestLeaderboardMatchDay() }
+            val previousDayLeaderboard = runBlocking {
+                if (latestLeaderboardMatchDay == 0) {
+                    null
+                } else {
+                    leaderboardService.getLeaderboard(latestLeaderboardMatchDay - 1)
+                }
+            }
+            val updatedGlobalLeaderboard = calculateGlobalLeaderboard(previousDayLeaderboard)
             runBlocking {
-                val leaderboardService = LeaderboardS3Service(s3Client, Environment.LeaderboardBucketName)
-                val latestLeaderboardMatchDay = leaderboardService.getLatestLeaderboardMatchDay()
-                leaderboardService.writeLeaderboard(globalLeaderboard, latestLeaderboardMatchDay)
+                leaderboardService.writeLeaderboard(updatedGlobalLeaderboard, latestLeaderboardMatchDay)
             }
         }
     }
