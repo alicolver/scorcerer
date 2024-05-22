@@ -24,8 +24,11 @@ import scorcerer.utils.calculateMovement
 import scorcerer.utils.filterLeaderboardToLeague
 import scorcerer.utils.throwDatabaseError
 
-class League(context: RequestContexts, private val s3Client: S3Client, private val leaderboardBucketName: String) :
-    LeagueApi(context) {
+class League(
+    context: RequestContexts,
+    private val s3Client: S3Client,
+    private val leaderboardBucketName: String,
+) : LeagueApi(context) {
     override fun createLeague(
         requesterUserId: String,
         createLeagueRequest: CreateLeagueRequest,
@@ -41,7 +44,7 @@ class League(context: RequestContexts, private val s3Client: S3Client, private v
             throwDatabaseError(e, "League already exists")
         }
 
-        // Add the creating user as a member of the new league
+        // Add the created user as a member of the new league
         transaction {
             LeagueMembershipTable.insert {
                 it[this.memberId] = requesterUserId
