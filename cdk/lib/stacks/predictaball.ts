@@ -19,7 +19,7 @@ import { AnyPrincipal, Effect, PolicyStatement, Role, ServicePrincipal } from "a
 import { importApiDefinition } from "../config/api_definition"
 import { Queue } from "aws-cdk-lib/aws-sqs"
 import { SqsEventSource } from "aws-cdk-lib/aws-lambda-event-sources"
-import { BlockPublicAccess, Bucket, BucketEncryption } from "aws-cdk-lib/aws-s3"
+import {BlockPublicAccess, Bucket, BucketEncryption, HttpMethods} from "aws-cdk-lib/aws-s3"
 
 const dbUser = "postgres"
 const dbPort = 5432
@@ -71,6 +71,23 @@ export class Predictaball extends Stack {
     bastion.connections.allowFromAnyIpv4(Port.tcp(22)) // Allow ssh access
 
     const leaderboardBucket = new Bucket(this, "leaderboardBucket", {
+      publicReadAccess: true,
+      encryption: BucketEncryption.S3_MANAGED,
+      enforceSSL: true,
+      versioned: true,
+      removalPolicy: RemovalPolicy.RETAIN,
+      cors: [
+        {
+          allowedOrigins: ["*"],
+          allowedMethods: [
+            HttpMethods.GET
+          ],
+          allowedHeaders: ["*"]
+        }
+      ]
+    })
+
+    new Bucket(this, "teamFlagsBucket", {
       blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
       encryption: BucketEncryption.S3_MANAGED,
       enforceSSL: true,
