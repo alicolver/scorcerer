@@ -15,9 +15,11 @@ pip install -r requirements.txt
 ## Environment Variables
 Edit the following values in the .env file in the project directory:
 
-API_TOKEN: Your API token for authentication.
-BASE_URL: The base URL of the API.
-FLAGS_BUCKET_NAME: The name of the bucket where team flags are stored.
+| Variable | Description |
+| -------- | ------- |
+| API_TOKEN | Your API token for authentication. |
+| BASE_URL | The base URL of the API. |
+| FLAGS_BUCKET_NAME | The name of the bucket where team flags are stored. |
 
 ## Usage
 1. Create Teams
