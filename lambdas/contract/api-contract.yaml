@@ -235,7 +235,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/team'
-  /team/{teamName}:
+  /team/name/{teamName}:
     get:
       tags:
         - team
