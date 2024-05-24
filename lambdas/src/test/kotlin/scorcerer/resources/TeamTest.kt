@@ -35,7 +35,7 @@ class TeamTest : DatabaseTest() {
 
     @Test
     fun getTeamWhenTeamExists() {
-        val teamId = givenTeamExists("Scotland")
+        val teamId = givenTeamExists("scotland")
         Team(RequestContexts()).getTeam("userId", teamId).teamName shouldBe "Scotland"
     }
 
@@ -48,7 +48,7 @@ class TeamTest : DatabaseTest() {
 
     @Test
     fun getTeamByNAmeWhenTeamExists() {
-        val teamId = givenTeamExists("Scotland")
+        val teamId = givenTeamExists("scotland")
         Team(RequestContexts()).getTeamByName("userId", "Scotland").teamId shouldBe teamId
     }
 

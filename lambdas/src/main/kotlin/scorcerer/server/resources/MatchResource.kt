@@ -17,6 +17,7 @@ import scorcerer.utils.LeaderboardS3Service
 import scorcerer.utils.MatchResult
 import scorcerer.utils.PointsCalculator.calculatePoints
 import scorcerer.utils.recalculateLivePoints
+import scorcerer.utils.toTitleCase
 
 class MatchResource(
     context: RequestContexts,
@@ -67,9 +68,9 @@ class MatchResource(
                 matchTeamTable.selectAll().where { MatchTable.state eq MatchState.valueOf(filterType.uppercase()) }
             }.map { row ->
                 Match(
-                    row[homeTeamTable[TeamTable.name]],
+                    row[homeTeamTable[TeamTable.name]].toTitleCase(),
                     row[homeTeamTable[TeamTable.flagUri]],
-                    row[awayTeamTable[TeamTable.name]],
+                    row[awayTeamTable[TeamTable.name]].toTitleCase(),
                     row[awayTeamTable[TeamTable.flagUri]],
                     row[MatchTable.id].toString(),
                     row[MatchTable.venue],

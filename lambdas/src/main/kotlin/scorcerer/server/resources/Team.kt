@@ -12,12 +12,13 @@ import org.openapitools.server.models.CreateTeamRequest
 import org.openapitools.server.models.Team
 import scorcerer.server.ApiResponseError
 import scorcerer.server.db.tables.TeamTable
+import scorcerer.utils.toTitleCase
 
 class Team(context: RequestContexts) : TeamApi(context) {
     override fun createTeam(requesterUserId: String, createTeamRequest: CreateTeamRequest): CreateTeam200Response {
         val id = transaction {
             TeamTable.insert {
-                it[this.name] = createTeamRequest.teamName
+                it[this.name] = createTeamRequest.teamName.lowercase()
                 it[this.flagUri] = createTeamRequest.flagUri
             } get TeamTable.id
         }
@@ -28,7 +29,7 @@ class Team(context: RequestContexts) : TeamApi(context) {
         val team = transaction {
             TeamTable.selectAll().where { TeamTable.id eq teamId.toInt() }.firstOrNull()
                 ?.let { row ->
-                    Team(row[TeamTable.id].toString(), row[TeamTable.name], row[TeamTable.flagUri])
+                    Team(row[TeamTable.id].toString(), row[TeamTable.name].toTitleCase(), row[TeamTable.flagUri])
                 } ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("Team does not exist"))
         }
         return team
@@ -36,9 +37,9 @@ class Team(context: RequestContexts) : TeamApi(context) {
 
     override fun getTeamByName(requesterUserId: String, teamName: String): Team {
         val team = transaction {
-            TeamTable.selectAll().where { TeamTable.name eq teamName }.firstOrNull()
+            TeamTable.selectAll().where { TeamTable.name eq teamName.lowercase() }.firstOrNull()
                 ?.let { row ->
-                    Team(row[TeamTable.id].toString(), row[TeamTable.name], row[TeamTable.flagUri])
+                    Team(row[TeamTable.id].toString(), row[TeamTable.name].toTitleCase(), row[TeamTable.flagUri])
                 } ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("Team does not exist"))
         }
         return team
