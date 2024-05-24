@@ -33,4 +33,14 @@ class Team(context: RequestContexts) : TeamApi(context) {
         }
         return team
     }
+
+    override fun getTeamByName(requesterUserId: String, teamName: String): Team {
+        val team = transaction {
+            TeamTable.selectAll().where { TeamTable.name eq teamName }.firstOrNull()
+                ?.let { row ->
+                    Team(row[TeamTable.id].toString(), row[TeamTable.name], row[TeamTable.flagUri])
+                } ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("Team does not exist"))
+        }
+        return team
+    }
 }
