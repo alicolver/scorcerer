@@ -1,0 +1,254 @@
+[
+    {
+        "homeTeam": "Germany",
+        "awayTeam": "Scotland",
+        "venue": "Munich",
+        "datetime": "2024-06-14T21:00:00+01:00",
+        "matchDay": 1
+    },
+    {
+        "homeTeam": "Hungary",
+        "awayTeam": "Switzerland",
+        "venue": "Cologne",
+        "datetime": "2024-06-15T15:00:00+01:00",
+        "matchDay": 2
+    },
+    {
+        "homeTeam": "Spain",
+        "awayTeam": "Croatia",
+        "venue": "Berlin",
+        "datetime": "2024-06-15T18:00:00+01:00",
+        "matchDay": 2
+    },
+    {
+        "homeTeam": "Italy",
+        "awayTeam": "Albania",
+        "venue": "Dortmund",
+        "datetime": "2024-06-15T21:00:00+01:00",
+        "matchDay": 2
+    },
+    {
+        "homeTeam": "Poland",
+        "awayTeam": "Netherlands",
+        "venue": "Hamburg",
+        "datetime": "2024-06-16T15:00:00+01:00",
+        "matchDay": 3
+    },
+    {
+        "homeTeam": "Slovenia",
+        "awayTeam": "Denmark",
+        "venue": "Stuttgart",
+        "datetime": "2024-06-16T18:00:00+01:00",
+        "matchDay": 3
+    },
+    {
+        "homeTeam": "Serbia",
+        "awayTeam": "England",
+        "venue": "Gelsenkirchen",
+        "datetime": "2024-06-16T21:00:00+01:00",
+        "matchDay": 3
+    },
+    {
+        "homeTeam": "Romania",
+        "awayTeam": "Ukraine",
+        "venue": "Munich",
+        "datetime": "2024-06-17T15:00:00+01:00",
+        "matchDay": 4
+    },
+    {
+        "homeTeam": "Belgium",
+        "awayTeam": "Slovakia",
+        "venue": "Frankfurt",
+        "datetime": "2024-06-17T18:00:00+01:00",
+        "matchDay": 4
+    },
+    {
+        "homeTeam": "Austria",
+        "awayTeam": "France",
+        "venue": "Düsseldorf",
+        "datetime": "2024-06-17T21:00:00+01:00",
+        "matchDay": 4
+    },
+    {
+        "homeTeam": "Turkey",
+        "awayTeam": "Georgia",
+        "venue": "Dortmund",
+        "datetime": "2024-06-18T18:00:00+01:00",
+        "matchDay": 5
+    },
+    {
+        "homeTeam": "Portugal",
+        "awayTeam": "Czechia",
+        "venue": "Leipzig",
+        "datetime": "2024-06-18T21:00:00+01:00",
+        "matchDay": 5
+    },
+    {
+        "homeTeam": "Croatia",
+        "awayTeam": "Albania",
+        "venue": "Hamburg",
+        "datetime": "2024-06-19T15:00:00+01:00",
+        "matchDay": 6
+    },
+    {
+        "homeTeam": "Germany",
+        "awayTeam": "Hungary",
+        "venue": "Stuttgart",
+        "datetime": "2024-06-19T18:00:00+01:00",
+        "matchDay": 6
+    },
+    {
+        "homeTeam": "Scotland",
+        "awayTeam": "Switzerland",
+        "venue": "Cologne",
+        "datetime": "2024-06-19T21:00:00+01:00",
+        "matchDay": 6
+    },
+    {
+        "homeTeam": "Slovenia",
+        "awayTeam": "Serbia",
+        "venue": "Munich",
+        "datetime": "2024-06-20T15:00:00+01:00",
+        "matchDay": 7
+    },
+    {
+        "homeTeam": "Denmark",
+        "awayTeam": "England",
+        "venue": "Frankfurt",
+        "datetime": "2024-06-20T18:00:00+01:00",
+        "matchDay": 7
+    },
+    {
+        "homeTeam": "Spain",
+        "awayTeam": "Italy",
+        "venue": "Gelsenkirchen",
+        "datetime": "2024-06-20T21:00:00+01:00",
+        "matchDay": 7
+    },
+    {
+        "homeTeam": "Slovakia",
+        "awayTeam": "Ukraine",
+        "venue": "Düsseldorf",
+        "datetime": "2024-06-21T15:00:00+01:00",
+        "matchDay": 8
+    },
+    {
+        "homeTeam": "Poland",
+        "awayTeam": "Austria",
+        "venue": "Berlin",
+        "datetime": "2024-06-21T18:00:00+01:00",
+        "matchDay": 8
+    },
+    {
+        "homeTeam": "Netherlands",
+        "awayTeam": "France",
+        "venue": "Leipzig",
+        "datetime": "2024-06-21T21:00:00+01:00",
+        "matchDay": 8
+    },
+    {
+        "homeTeam": "Georgia",
+        "awayTeam": "Czechia",
+        "venue": "Hamburg",
+        "datetime": "2024-06-22T15:00:00+01:00",
+        "matchDay": 9
+    },
+    {
+        "homeTeam": "Turkey",
+        "awayTeam": "Portugal",
+        "venue": "Dortmund",
+        "datetime": "2024-06-22T18:00:00+01:00",
+        "matchDay": 9
+    },
+    {
+        "homeTeam": "Belgium",
+        "awayTeam": "Romania",
+        "venue": "Cologne",
+        "datetime": "2024-06-22T21:00:00+01:00",
+        "matchDay": 9
+    },
+    {
+        "homeTeam": "Switzerland",
+        "awayTeam": "Germany",
+        "venue": "Frankfurt",
+        "datetime": "2024-06-23T21:00:00+01:00",
+        "matchDay": 10
+    },
+    {
+        "homeTeam": "Scotland",
+        "awayTeam": "Hungary",
+        "venue": "Stuttgart",
+        "datetime": "2024-06-23T21:00:00+01:00",
+        "matchDay": 10
+    },
+    {
+        "homeTeam": "Croatia",
+        "awayTeam": "Italy",
+        "venue": "Leipzig",
+        "datetime": "2024-06-24T21:00:00+01:00",
+        "matchDay": 11
+    },
+    {
+        "homeTeam": "Albania",
+        "awayTeam": "Spain",
+        "venue": "Düsseldorf",
+        "datetime": "2024-06-24T21:00:00+01:00",
+        "matchDay": 11
+    },
+    {
+        "homeTeam": "Netherlands",
+        "awayTeam": "Austria",
+        "venue": "Berlin",
+        "datetime": "2024-06-25T18:00:00+01:00",
+        "matchDay": 12
+    },
+    {
+        "homeTeam": "France",
+        "awayTeam": "Poland",
+        "venue": "Dortmund",
+        "datetime": "2024-06-25T18:00:00+01:00",
+        "matchDay": 12
+    },
+    {
+        "homeTeam": "England",
+        "awayTeam": "Slovenia",
+        "venue": "Cologne",
+        "datetime": "2024-06-25T21:00:00+01:00",
+        "matchDay": 12
+    },
+    {
+        "homeTeam": "Denmark",
+        "awayTeam": "Serbia",
+        "venue": "Munich",
+        "datetime": "2024-06-25T21:00:00+01:00",
+        "matchDay": 12
+    },
+    {
+        "homeTeam": "Slovakia",
+        "awayTeam": "Romania",
+        "venue": "Frankfurt",
+        "datetime": "2024-06-26T18:00:00+01:00",
+        "matchDay": 13
+    },
+    {
+        "homeTeam": "Ukraine",
+        "awayTeam": "Belgium",
+        "venue": "Stuttgart",
+        "datetime": "2024-06-26T18:00:00+01:00",
+        "matchDay": 13
+    },
+    {
+        "homeTeam": "Czechia",
+        "awayTeam": "Turkey",
+        "venue": "Hamburg",
+        "datetime": "2024-06-26T21:00:00+01:00",
+        "matchDay": 13
+    },
+    {
+        "homeTeam": "Georgia",
+        "awayTeam": "Portugal",
+        "venue": "Gelsenkirchen",
+        "datetime": "2024-06-26T21:00:00+01:00",
+        "matchDay": 13
+    }
+]
