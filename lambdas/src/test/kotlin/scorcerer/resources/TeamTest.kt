@@ -45,4 +45,17 @@ class TeamTest : DatabaseTest() {
             Team(RequestContexts()).getTeam("", "1")
         }
     }
+
+    @Test
+    fun getTeamByNAmeWhenTeamExists() {
+        val teamId = givenTeamExists("Scotland")
+        Team(RequestContexts()).getTeamByName("userId", "Scotland").teamId shouldBe teamId
+    }
+
+    @Test
+    fun getTeamByNameWhenTeamDoesNotExistRaises() {
+        assertThrows<ApiResponseError> {
+            Team(RequestContexts()).getTeamByName("", "teamName")
+        }
+    }
 }
