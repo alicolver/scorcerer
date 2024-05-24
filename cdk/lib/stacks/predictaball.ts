@@ -71,6 +71,14 @@ export class Predictaball extends Stack {
     bastion.connections.allowFromAnyIpv4(Port.tcp(22)) // Allow ssh access
 
     const leaderboardBucket = new Bucket(this, "leaderboardBucket", {
+      blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
+      encryption: BucketEncryption.S3_MANAGED,
+      enforceSSL: true,
+      versioned: true,
+      removalPolicy: RemovalPolicy.RETAIN
+    })
+
+    new Bucket(this, "teamFlagsBucket", {
       publicReadAccess: true,
       encryption: BucketEncryption.S3_MANAGED,
       enforceSSL: true,
@@ -85,14 +93,6 @@ export class Predictaball extends Stack {
           allowedHeaders: ["*"]
         }
       ]
-    })
-
-    new Bucket(this, "teamFlagsBucket", {
-      blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
-      encryption: BucketEncryption.S3_MANAGED,
-      enforceSSL: true,
-      versioned: true,
-      removalPolicy: RemovalPolicy.RETAIN,
     })
 
     const userCreateDLQ = new Queue(this, "userCreationDLQ")
