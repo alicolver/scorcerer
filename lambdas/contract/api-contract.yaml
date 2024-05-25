@@ -173,6 +173,11 @@ components:
         - AWAY
 security:
   - CognitoAuthorizer: []
+x-amazon-apigateway-request-validator: DefaultValidator
+x-amazon-apigateway-request-validators:
+  DefaultValidator:
+    validateRequestParameters: true
+    validateRequestBody: true
 paths:
   /team:
     post:
