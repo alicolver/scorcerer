@@ -1,6 +1,5 @@
 package scorcerer.server.resources
 
-import aws.sdk.kotlin.services.s3.S3Client
 import kotlinx.coroutines.runBlocking
 import org.http4k.core.RequestContexts
 import org.http4k.core.Response
@@ -21,8 +20,7 @@ import scorcerer.utils.toTitleCase
 
 class MatchResource(
     context: RequestContexts,
-    private val s3Client: S3Client,
-    private val leaderboardBucketName: String,
+    private val leaderboardService: LeaderboardS3Service,
 ) : MatchApi(context) {
     override fun getMatchPredictions(requesterUserId: String, matchId: String, leagueId: String?): List<Prediction> {
         val matchState = transaction {
@@ -113,7 +111,6 @@ class MatchResource(
                 updatePredictionPoints(prediction.predictionId.toInt(), points)
             }
             recalculateLivePoints()
-            val leaderboardService = LeaderboardS3Service(s3Client, leaderboardBucketName)
             runBlocking {
                 leaderboardService.updateGlobalLeaderboard(matchDay)
             }
@@ -168,7 +165,6 @@ class MatchResource(
             matchDay
         }
         recalculateLivePoints()
-        val leaderboardService = LeaderboardS3Service(s3Client, leaderboardBucketName)
         runBlocking {
             leaderboardService.updateGlobalLeaderboard(matchDay)
         }

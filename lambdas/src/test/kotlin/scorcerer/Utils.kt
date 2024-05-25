@@ -22,6 +22,7 @@ fun givenMatchExists(
     awayTeamId: String,
     matchDatetime: OffsetDateTime = OffsetDateTime.now(),
     matchState: MatchState = MatchState.UPCOMING,
+    matchDay: Int = 1,
 ): String {
     return (
         transaction {
@@ -31,7 +32,7 @@ fun givenMatchExists(
                 it[this.datetime] = matchDatetime
                 it[this.state] = matchState
                 it[this.venue] = "Test Venue"
-                it[this.matchDay] = 1
+                it[this.matchDay] = matchDay
             }
         } get MatchTable.id
         ).toString()

@@ -15,6 +15,7 @@ import scorcerer.givenUserExists
 import scorcerer.givenUserInLeague
 import scorcerer.server.ApiResponseError
 import scorcerer.server.resources.League
+import scorcerer.utils.LeaderboardS3Service
 
 class LeagueTest : DatabaseTest() {
     @BeforeEach
@@ -23,10 +24,11 @@ class LeagueTest : DatabaseTest() {
     }
 
     private val mockS3Client: S3Client = mock(S3Client::class.java)
+    private val mockLeaderboardService = LeaderboardS3Service(mockS3Client, "bucketName")
 
     @Test
     fun createLeague() {
-        val league = League(RequestContexts(), mockS3Client, "leaderboardBucketName").createLeague(
+        val league = League(RequestContexts(), mockLeaderboardService).createLeague(
             "userId",
             CreateLeagueRequest(
                 "Test League",
@@ -38,7 +40,7 @@ class LeagueTest : DatabaseTest() {
     @Test
     fun getLeagueWhenNoUsersInLeague() {
         givenLeagueExists("test-league", "Test League")
-        val league = League(RequestContexts(), mockS3Client, "leaderboardBucketName").getLeague(
+        val league = League(RequestContexts(), mockLeaderboardService).getLeague(
             "userId",
             "test-league",
         )
@@ -56,7 +58,7 @@ class LeagueTest : DatabaseTest() {
         givenUserInLeague("userId", leagueId)
         givenUserInLeague("anotherUserId", leagueId)
 
-        val league = League(RequestContexts(), mockS3Client, "leaderboardBucketName").getLeague(
+        val league = League(RequestContexts(), mockLeaderboardService).getLeague(
             "userId",
             "test-league",
         )
@@ -72,7 +74,7 @@ class LeagueTest : DatabaseTest() {
     @Test
     fun getLeagueRaisesWhenLeagueDoesNotExist() {
         assertThrows<ApiResponseError> {
-            League(RequestContexts(), mockS3Client, "leaderboardBucketName").getLeague(
+            League(RequestContexts(), mockLeaderboardService).getLeague(
                 "userId",
                 "invalid-league",
             )
@@ -81,7 +83,7 @@ class LeagueTest : DatabaseTest() {
 
     @Test
     fun leaveLeague() {
-        League(RequestContexts(), mockS3Client, "leaderboardBucketName").leaveLeague(
+        League(RequestContexts(), mockLeaderboardService).leaveLeague(
             "userId",
             "another-league",
         )
@@ -92,7 +94,7 @@ class LeagueTest : DatabaseTest() {
     fun joinLeague() {
         givenLeagueExists("test-league", "Test League")
         givenUserExists("anotherUser", "test", fixedPoints = 0, livePoints = 0)
-        League(RequestContexts(), mockS3Client, "leaderboardBucketName").joinLeague(
+        League(RequestContexts(), mockLeaderboardService).joinLeague(
             "anotherUser",
             "test-league",
         )
@@ -103,7 +105,7 @@ class LeagueTest : DatabaseTest() {
     fun createLeagueRaisesExceptionWhenLeagueExists() {
         givenLeagueExists("test-league", "Test League")
         assertThrows<Exception> {
-            League(RequestContexts(), mockS3Client, "leaderboardBucketName").createLeague(
+            League(RequestContexts(), mockLeaderboardService).createLeague(
                 "userId",
                 CreateLeagueRequest("Test League"),
             )
