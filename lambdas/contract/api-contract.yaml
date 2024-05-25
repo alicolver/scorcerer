@@ -173,6 +173,14 @@ components:
         - AWAY
 security:
   - CognitoAuthorizer: []
+x-amazon-apigateway-gateway-responses:
+  BAD_REQUEST_BODY:
+    statusCode: 400
+    responseTemplates:
+      application/json: |
+        {
+            "message": "$context.error.validationErrorString"
+        }
 x-amazon-apigateway-request-validator: DefaultValidator
 x-amazon-apigateway-request-validators:
   DefaultValidator:
