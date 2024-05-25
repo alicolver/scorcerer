@@ -23,6 +23,7 @@ import scorcerer.server.resources.MatchResource
 import scorcerer.server.resources.Prediction
 import scorcerer.server.resources.Team
 import scorcerer.server.resources.User
+import scorcerer.utils.LeaderboardS3Service
 
 data class ApiResponseError(val response: Response) : Exception("API failed while executing request handler and provided error response")
 
@@ -60,8 +61,8 @@ val s3Client = S3Client { region = "eu-west-2" }
 
 private val routes = allRoutes(
     Auth(requestContext),
-    League(requestContext, s3Client, Environment.LeaderboardBucketName),
-    MatchResource(requestContext, s3Client, Environment.LeaderboardBucketName),
+    League(requestContext, LeaderboardS3Service(s3Client, Environment.LeaderboardBucketName)),
+    MatchResource(requestContext, LeaderboardS3Service(s3Client, Environment.LeaderboardBucketName)),
     Prediction(requestContext),
     Team(requestContext),
     User(requestContext),

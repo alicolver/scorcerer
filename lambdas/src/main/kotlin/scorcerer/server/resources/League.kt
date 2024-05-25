@@ -1,6 +1,5 @@
 package scorcerer.server.resources
 
-import aws.sdk.kotlin.services.s3.S3Client
 import kotlinx.coroutines.runBlocking
 import org.http4k.core.RequestContexts
 import org.http4k.core.Response
@@ -26,8 +25,7 @@ import scorcerer.utils.throwDatabaseError
 
 class League(
     context: RequestContexts,
-    private val s3Client: S3Client,
-    private val leaderboardBucketName: String,
+    private val leaderboardService: LeaderboardS3Service,
 ) : LeagueApi(context) {
     override fun createLeague(
         requesterUserId: String,
@@ -82,8 +80,6 @@ class League(
     }
 
     override fun getLeagueLeaderboard(requesterUserId: String, leagueId: String): List<LeaderboardInner> {
-        val leaderboardService = LeaderboardS3Service(s3Client, leaderboardBucketName)
-
         val (latestLeaderboardMatchDay, latestGlobalLeaderboard) = runBlocking {
             val latestMatchDay = leaderboardService.getLatestLeaderboardMatchDay()
             val latestLeaderboard = leaderboardService.getLeaderboard(latestMatchDay)
