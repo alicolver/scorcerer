@@ -1,6 +1,12 @@
 val {{nickname}}Handler: RoutingHttpHandler = "{{path}}" bind Method.{{httpMethod}} to { req ->
         {{#hasAuthMethods}}
-        val requesterUserId = context.extract(req).get<Authorizer>(LAMBDA_AUTHORIZER_KEY)?.claims?.get("sub")!!
+        val authorizer = context.extract(req).get<Authorizer>(LAMBDA_AUTHORIZER_KEY)
+        val requesterUserId = authorizer?.claims?.get("sub")!!
+        val isAdmin = authorizer?.claims?.get("custom:isAdmin")?.toBoolean() ?: false
+        val adminProtected = listOf("completeMatch", "setMatchScore", "createMatch", "createTeam")
+        if ("{{nickname}}" in adminProtected && !isAdmin) {
+            return@to Response(Status.FORBIDDEN).body("Admin privileges are required for this operation.")
+        }
         {{/hasAuthMethods}}
         {{#allParams}}{{#isPathParam}}val {{paramName}}: {{{dataType}}}{{^required}}?{{/required}} = req.path("{{paramName}}"){{#required}}!!{{/required}}{{/isPathParam}}{{/allParams}}
         {{#allParams}}{{#isQueryParam}}val {{paramName}}: {{{dataType}}}{{^required}}?{{/required}} = req.query("{{paramName}}"){{#required}}!!{{/required}}{{/isQueryParam}}{{/allParams}}
