@@ -95,23 +95,6 @@ export class Predictaball extends Stack {
       ]
     })
 
-    new Bucket(this, "teamCrestsBucket", {
-      publicReadAccess: true,
-      encryption: BucketEncryption.S3_MANAGED,
-      enforceSSL: true,
-      versioned: true,
-      removalPolicy: RemovalPolicy.RETAIN,
-      cors: [
-        {
-          allowedOrigins: ["*"],
-          allowedMethods: [
-            HttpMethods.GET
-          ],
-          allowedHeaders: ["*"]
-        }
-      ]
-    })
-
     const userCreateDLQ = new Queue(this, "userCreationDLQ")
 
     const userCreationQueue = new Queue(this, "userCreationQueue", {
