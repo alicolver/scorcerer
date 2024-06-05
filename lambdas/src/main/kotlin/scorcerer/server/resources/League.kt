@@ -144,7 +144,7 @@ private fun paginateLeaderboard(leaderboard: List<LeaderboardInner>, page: Strin
     val start = pageSizeNum * (pageNum - 1)
     val end = start + pageSizeNum
 
-    if (end > leaderboard.size) throw ApiResponseError(Response(Status.BAD_REQUEST).body("Page size too large"))
+    if (start > leaderboard.size) throw ApiResponseError(Response(Status.BAD_REQUEST).body("Page too high"))
 
     return GetLeagueLeaderboard200Response(
         leaderboard.subList(start, min(end, leaderboard.size)),
