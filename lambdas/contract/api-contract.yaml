@@ -777,13 +777,28 @@ paths:
           required: true
           schema:
             type: string
+        - in: query
+          name: pageSize
+          schema:
+            type: string
+        - in: query
+          name: page
+          schema:
+            type: string
       responses:
         '200':
           description: Successful response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/leaderboard'
+                type: object
+                required:
+                  - leaderboard
+                properties:
+                  nextPage:
+                    type: string
+                  leaderboard:
+                    $ref: '#/components/schemas/leaderboard'
   /league/{leagueId}/join:
     post:
       tags:

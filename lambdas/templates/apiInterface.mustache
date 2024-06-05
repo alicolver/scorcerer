@@ -9,7 +9,9 @@ val {{nickname}}Handler: RoutingHttpHandler = "{{path}}" bind Method.{{httpMetho
         }
         {{/hasAuthMethods}}
         {{#allParams}}{{#isPathParam}}val {{paramName}}: {{{dataType}}}{{^required}}?{{/required}} = req.path("{{paramName}}"){{#required}}!!{{/required}}{{/isPathParam}}{{/allParams}}
-        {{#allParams}}{{#isQueryParam}}val {{paramName}}: {{{dataType}}}{{^required}}?{{/required}} = req.query("{{paramName}}"){{#required}}!!{{/required}}{{/isQueryParam}}{{/allParams}}
+        {{#allParams}}
+        {{#isQueryParam}}val {{paramName}}: {{{dataType}}}{{^required}}?{{/required}} = req.query("{{paramName}}"){{#required}}!!{{/required}}{{/isQueryParam}}
+        {{/allParams}}
         {{#allParams}}{{#isBodyParam}}val {{paramName}}: {{{dataType}}} = req.bodyString().fromJson(){{/isBodyParam}}{{/allParams}}
         {{#returnType}}val response: {{{returnType}}} = {{/returnType}}{{nickname}}({{#hasAuthMethods}}requesterUserId{{#allParams.0}},{{/allParams.0}}{{/hasAuthMethods}}{{#allParams}}{{paramName}}{{^-last}}, {{/-last}}{{/allParams}})
         Response(Status.OK){{#returnType}}.body(response.toJson()){{/returnType}}

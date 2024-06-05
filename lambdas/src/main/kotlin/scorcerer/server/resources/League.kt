@@ -22,6 +22,7 @@ import scorcerer.utils.LeaderboardS3Service
 import scorcerer.utils.calculateMovement
 import scorcerer.utils.filterLeaderboardToLeague
 import scorcerer.utils.throwDatabaseError
+import kotlin.math.min
 
 class League(
     context: RequestContexts,
@@ -79,7 +80,12 @@ class League(
         return League(leagueId, leagueName, users)
     }
 
-    override fun getLeagueLeaderboard(requesterUserId: String, leagueId: String): List<LeaderboardInner> {
+    override fun getLeagueLeaderboard(
+        requesterUserId: String,
+        leagueId: String,
+        pageSize: String?,
+        page: String?,
+    ): GetLeagueLeaderboard200Response {
         val (latestLeaderboardMatchDay, latestGlobalLeaderboard) = runBlocking {
             val latestMatchDay = leaderboardService.getLatestLeaderboardMatchDay()
             val latestLeaderboard = leaderboardService.getLeaderboard(latestMatchDay)
@@ -91,7 +97,7 @@ class League(
         }
 
         if (leagueId == "global") {
-            return latestGlobalLeaderboard
+            return paginateLeaderboard(latestGlobalLeaderboard, page, pageSize)
         }
 
         val leagueUsersIds = getLeagueUserIds(leagueId)
@@ -100,7 +106,8 @@ class League(
         val filteredLeague = filterLeaderboardToLeague(latestGlobalLeaderboard, leagueUsersIds)
         val previousFilteredLeague = filterLeaderboardToLeague(previousGlobalLeaderboard, leagueUsersIds)
 
-        return calculateMovement(filteredLeague, previousFilteredLeague)
+        val leaderboard = calculateMovement(filteredLeague, previousFilteredLeague)
+        return paginateLeaderboard(leaderboard, page, pageSize)
     }
 
     override fun joinLeague(requesterUserId: String, leagueId: String) {
@@ -123,6 +130,26 @@ class League(
             }
         }
     }
+}
+
+private const val DEFAULT_PAGE_SIZE = "50"
+private const val DEFAULT_PAGE = "1"
+
+private fun paginateLeaderboard(leaderboard: List<LeaderboardInner>, page: String?, pageSize: String?): GetLeagueLeaderboard200Response {
+    val pageSizeNum =
+        (pageSize ?: DEFAULT_PAGE_SIZE).toIntOrNull() ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("Invalid pageSize"))
+    val pageNum =
+        (page ?: DEFAULT_PAGE).toIntOrNull() ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("Invalid page"))
+
+    val start = pageSizeNum * (pageNum - 1)
+    val end = start + pageSizeNum
+
+    if (end > leaderboard.size) throw ApiResponseError(Response(Status.BAD_REQUEST).body("Page size too large"))
+
+    return GetLeagueLeaderboard200Response(
+        leaderboard.subList(start, min(end, leaderboard.size)),
+        nextPage = if (end < leaderboard.size) page + 1 else null,
+    )
 }
 
 private fun getLeagueUserIds(leagueId: String): List<String> = transaction {
