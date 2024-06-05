@@ -148,7 +148,7 @@ private fun paginateLeaderboard(leaderboard: List<LeaderboardInner>, page: Strin
 
     return GetLeagueLeaderboard200Response(
         leaderboard.subList(start, min(end, leaderboard.size)),
-        nextPage = if (end < leaderboard.size) page + 1 else null,
+        nextPage = if (end < leaderboard.size) (pageNum + 1).toString() else null,
     )
 }
 
