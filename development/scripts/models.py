@@ -20,8 +20,8 @@ class Team(BaseModel):
 
 
 class Match(BaseModel):
-    home_team_id: int
-    away_team_id: int
+    home_team_id: str
+    away_team_id: str
     venue: str
     datetime: datetime
     match_day: int

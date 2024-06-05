@@ -17,7 +17,7 @@ Edit the following values in the .env file in the project directory:
 
 | Variable | Description |
 | -------- | ------- |
-| API_TOKEN | Your API token for authentication. |
+| API_TOKEN | Your API token for authentication. Must be admin. |
 | BASE_URL | The base URL of the API. |
 | FLAGS_BUCKET_NAME | The name of the bucket where team flags are stored. |
 

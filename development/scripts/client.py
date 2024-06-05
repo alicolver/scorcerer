@@ -12,7 +12,7 @@ class Client:
         }
 
     def get_team_id(self, team_name: str) -> int:
-        url = f"{self.base_url}/team/name/{team_name.casefold()}"
+        url = f"{self.base_url}/team/name/{team_name.lower()}"
         response = requests.get(url, headers=self.headers)
         json = self._handle_response(response)
         return int(json["teamId"])
