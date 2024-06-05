@@ -91,6 +91,9 @@ components:
           description: Match day of the game
           type: integer
           format: int32
+        prediction:
+          $ref: '#/components/schemas/prediction'
+
     league:
       type: object
       required:

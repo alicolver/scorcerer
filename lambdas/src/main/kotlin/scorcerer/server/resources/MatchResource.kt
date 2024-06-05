@@ -57,13 +57,20 @@ class MatchResource(
         val matches = transaction {
             val awayTeamTable = TeamTable.alias("awayTeam")
             val homeTeamTable = TeamTable.alias("homeTeam")
+
+            val predictions = PredictionTable.selectAll().where { PredictionTable.memberId eq requesterUserId }.alias("predictions")
+
             val matchTeamTable =
-                MatchTable.join(awayTeamTable, JoinType.INNER, MatchTable.awayTeamId, awayTeamTable[TeamTable.id])
+                MatchTable
+                    .join(awayTeamTable, JoinType.INNER, MatchTable.awayTeamId, awayTeamTable[TeamTable.id])
                     .join(homeTeamTable, JoinType.INNER, MatchTable.homeTeamId, homeTeamTable[TeamTable.id])
+                    .join(predictions, JoinType.LEFT, MatchTable.id, predictions[PredictionTable.matchId])
+                    .selectAll()
+
             if (filterType.isNullOrBlank()) {
-                matchTeamTable.selectAll()
+                matchTeamTable
             } else {
-                matchTeamTable.selectAll().where { MatchTable.state eq MatchState.valueOf(filterType.uppercase()) }
+                matchTeamTable.where { MatchTable.state eq MatchState.valueOf(filterType.uppercase()) }
             }.map { row ->
                 Match(
                     row[homeTeamTable[TeamTable.name]].toTitleCase(),
@@ -74,13 +81,27 @@ class MatchResource(
                     row[MatchTable.venue],
                     row[MatchTable.datetime],
                     row[MatchTable.matchDay],
+                    row[MatchTable.homeScore],
+                    row[MatchTable.awayScore],
+                    row.getOrNull(predictions[PredictionTable.id])?.let {
+                        Prediction(
+                            row[predictions[PredictionTable.homeScore]],
+                            row[predictions[PredictionTable.awayScore]],
+                            row[MatchTable.id].toString(),
+                            row[predictions[PredictionTable.id]].toString(),
+                            row[predictions[PredictionTable.memberId]],
+                            row[predictions[PredictionTable.points]],
+                        )
+                    },
                 )
             }
         }
+
         if (!filterType.isNullOrBlank() && MatchState.valueOf(filterType.uppercase()) == MatchState.UPCOMING) {
             log.info("Filtering matches to next 2 match days")
             return getMatchesOnNextNMatchDays(matches)
         }
+
         return matches
     }
 

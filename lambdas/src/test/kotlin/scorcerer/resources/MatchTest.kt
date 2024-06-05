@@ -14,6 +14,7 @@ import org.junit.jupiter.api.assertThrows
 import org.openapitools.server.models.CompleteMatchRequest
 import org.openapitools.server.models.CreateMatchRequest
 import org.openapitools.server.models.Match
+import org.openapitools.server.models.Prediction
 import org.openapitools.server.models.SetMatchScoreRequest
 import scorcerer.*
 import scorcerer.server.ApiResponseError
@@ -59,7 +60,15 @@ class MatchTest : DatabaseTest() {
         givenMatchExists("1", "2")
         givenMatchExists("3", "4")
 
-        MatchResource(RequestContexts(), mockLeaderboardService).listMatches("", null).size shouldBe 2
+        givenUserExists("test", "Test")
+        givenPredictionExists("1", "test", 3, 4)
+
+        val unfilteredMatches = MatchResource(RequestContexts(), mockLeaderboardService).listMatches("test", null)
+        unfilteredMatches.size shouldBe 2
+
+        val prediction = unfilteredMatches.first().prediction
+        prediction shouldBe Prediction(3, 4, "1", "1", "test", null)
+
         MatchResource(RequestContexts(), mockLeaderboardService).listMatches(
             "",
             MatchState.UPCOMING.toString(),
