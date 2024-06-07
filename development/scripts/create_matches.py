@@ -20,7 +20,8 @@ if __name__ == "__main__":
                 "awayTeamId": away_team_id,
                 "venue": match['venue'],
                 "datetime": match['datetime'],
-                "matchDay": match['matchDay']
+                "matchDay": match['matchDay'],
+                "matchRound": match["matchRound"]
             }
 
             client.post_match(Match.model_validate(match_request))

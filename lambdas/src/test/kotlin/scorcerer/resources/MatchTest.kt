@@ -11,11 +11,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import org.openapitools.server.models.CompleteMatchRequest
-import org.openapitools.server.models.CreateMatchRequest
-import org.openapitools.server.models.Match
-import org.openapitools.server.models.Prediction
-import org.openapitools.server.models.SetMatchScoreRequest
+import org.openapitools.server.models.*
 import scorcerer.*
 import scorcerer.server.ApiResponseError
 import scorcerer.server.db.tables.MatchState
@@ -49,6 +45,7 @@ class MatchTest : DatabaseTest() {
                 OffsetDateTime.now(),
                 "Allianz",
                 1,
+                MatchRound.GROUP_STAGE,
             ),
         )
 
@@ -304,10 +301,10 @@ class GetMatchesOnNextNMatchDaysTest {
     @Test
     fun testWithMultipleMatchDays() {
         val matches = listOf(
-            Match("Team A", "flagA", "Team B", "flagB", "1", "Stadium A", OffsetDateTime.now(), 1),
-            Match("Team C", "flagC", "Team D", "flagD", "2", "Stadium B", OffsetDateTime.now(), 2),
-            Match("Team E", "flagE", "Team F", "flagF", "3", "Stadium C", OffsetDateTime.now(), 2),
-            Match("Team G", "flagG", "Team H", "flagH", "4", "Stadium D", OffsetDateTime.now(), 3),
+            Match("Team A", "flagA", "Team B", "flagB", "1", "Stadium A", OffsetDateTime.now(), 1, Round.GROUP_STAGE),
+            Match("Team C", "flagC", "Team D", "flagD", "2", "Stadium B", OffsetDateTime.now(), 2, Round.GROUP_STAGE),
+            Match("Team E", "flagE", "Team F", "flagF", "3", "Stadium C", OffsetDateTime.now(), 2, Round.GROUP_STAGE),
+            Match("Team G", "flagG", "Team H", "flagH", "4", "Stadium D", OffsetDateTime.now(), 3, Round.GROUP_STAGE),
         )
 
         val filteredMatches = getMatchesOnNextNMatchDays(matches)
@@ -318,8 +315,8 @@ class GetMatchesOnNextNMatchDaysTest {
     @Test
     fun testWithLessThanNMatchDays() {
         val matches = listOf(
-            Match("Team A", "flagA", "Team B", "flagB", "1", "Stadium A", OffsetDateTime.now(), 1),
-            Match("Team C", "flagC", "Team D", "flagD", "2", "Stadium B", OffsetDateTime.now(), 1),
+            Match("Team A", "flagA", "Team B", "flagB", "1", "Stadium A", OffsetDateTime.now(), 1, Round.GROUP_STAGE),
+            Match("Team C", "flagC", "Team D", "flagD", "2", "Stadium B", OffsetDateTime.now(), 1, Round.GROUP_STAGE),
         )
 
         val filteredMatches = getMatchesOnNextNMatchDays(matches)

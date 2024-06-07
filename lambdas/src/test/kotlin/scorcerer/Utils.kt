@@ -33,6 +33,7 @@ fun givenMatchExists(
                 it[this.state] = matchState
                 it[this.venue] = "Test Venue"
                 it[this.matchDay] = matchDay
+                it[this.round] = MatchRound.GROUP_STAGE
             }
         } get MatchTable.id
         ).toString()
