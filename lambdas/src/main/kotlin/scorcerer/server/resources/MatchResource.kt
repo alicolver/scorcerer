@@ -11,6 +11,7 @@ import org.openapitools.server.models.*
 import org.openapitools.server.models.Prediction
 import scorcerer.server.ApiResponseError
 import scorcerer.server.db.tables.*
+import scorcerer.server.db.tables.MatchRound
 import scorcerer.server.log
 import scorcerer.utils.LeaderboardS3Service
 import scorcerer.utils.MatchResult
@@ -81,6 +82,7 @@ class MatchResource(
                     row[MatchTable.venue],
                     row[MatchTable.datetime],
                     row[MatchTable.matchDay],
+                    Round.valueOf(row[MatchTable.round].value),
                     row[MatchTable.homeScore],
                     row[MatchTable.awayScore],
                     row.getOrNull(predictions[PredictionTable.id])?.let {
@@ -150,6 +152,7 @@ class MatchResource(
                 it[this.state] = MatchState.UPCOMING
                 it[this.venue] = createMatchRequest.venue
                 it[this.matchDay] = createMatchRequest.matchDay
+                it[this.round] = MatchRound.valueOf(createMatchRequest.matchRound.value)
             } get MatchTable.id
         }
         return CreateMatch200Response(id.toString())

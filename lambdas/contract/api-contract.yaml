@@ -56,6 +56,7 @@ components:
         - venue
         - datetime
         - matchDay
+        - round
       properties:
         homeTeam:
           description: Home team
@@ -91,6 +92,15 @@ components:
           description: Match day of the game
           type: integer
           format: int32
+        round:
+          description: Round of match
+          type: string
+          enum:
+            - GROUP_STAGE
+            - ROUND_OF_SIXTEEN
+            - QUARTER_FINAL
+            - SEMI_FINAL
+            - FINAL
         prediction:
           $ref: '#/components/schemas/prediction'
 
@@ -386,12 +396,22 @@ paths:
                 matchDay:
                   description: Match day
                   type: integer
+                matchRound:
+                  description: Round of match
+                  type: string
+                  enum:
+                    - GROUP_STAGE
+                    - ROUND_OF_SIXTEEN
+                    - QUARTER_FINAL
+                    - SEMI_FINAL
+                    - FINAL
               required:
                 - homeTeamId
                 - awayTeamId
                 - datetime
                 - venue
                 - matchDay
+                - matchRound
       responses:
         '200':
           description: Successful response

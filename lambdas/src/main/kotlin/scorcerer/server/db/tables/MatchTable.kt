@@ -14,6 +14,14 @@ enum class MatchResult(val value: String) {
     AWAY("AWAY"),
 }
 
+enum class MatchRound(val value: String) {
+    GROUP_STAGE("GROUP_STAGE"),
+    ROUND_OF_SIXTEEN("ROUND_OF_SIXTEEN"),
+    QUARTER_FINAL("QUARTER_FINAL"),
+    SEMI_FINAL("SEMI_FINAL"),
+    FINAL("FINAL"),
+}
+
 object MatchTable : Table("match") {
     val id = integer("id").uniqueIndex().autoIncrement()
     val homeTeamId = integer("home_team_id").references(TeamTable.id)
@@ -25,4 +33,5 @@ object MatchTable : Table("match") {
     val state = enumerationByName<MatchState>("state", 10)
     val venue = varchar("venue", 30)
     val matchDay = integer("match_day").check { it.greaterEq(1) }
+    val round = enumerationByName<MatchRound>("round", 15)
 }
