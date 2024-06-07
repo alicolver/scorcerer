@@ -33,5 +33,5 @@ object MatchTable : Table("match") {
     val state = enumerationByName<MatchState>("state", 10)
     val venue = varchar("venue", 30)
     val matchDay = integer("match_day").check { it.greaterEq(1) }
-    val round = enumerationByName<MatchRound>("round", 15)
+    val round = enumerationByName<MatchRound>("round", 20)
 }
