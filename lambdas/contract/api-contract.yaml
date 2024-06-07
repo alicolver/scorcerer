@@ -605,7 +605,67 @@ paths:
 
         '401':
           description: Unauthorized
+  /auth/reset:
+    post:
+      tags:
+        - auth
+      operationId: resetPassword
+      description: Request to reset the users password
+      security: []
+      x-amazon-apigateway-integration:
+        type: "aws_proxy"
+        httpMethod: "POST"
+        uri: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${apiAuthHandlerArn}/invocations"
+        credentials: "${apiGatewayRoleArn}"
+        payloadFormatVersion: "1.0"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+              required:
+                - email
+      responses:
+        '200':
+          description: Successful response
 
+  /auth/reset-confirm:
+    post:
+      tags:
+        - auth
+      operationId: resetPasswordConfirm
+      description: Confirm password reset using otp
+      security: []
+      x-amazon-apigateway-integration:
+        type: "aws_proxy"
+        httpMethod: "POST"
+        uri: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${apiAuthHandlerArn}/invocations"
+        credentials: "${apiGatewayRoleArn}"
+        payloadFormatVersion: "1.0"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                otp:
+                  type: string
+                password:
+                  type: string
+              required:
+                - email
+                - otp
+                - password
+      responses:
+        '200':
+          description: Successful response
 
   /user:
     post:
