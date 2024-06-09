@@ -86,6 +86,10 @@ class League(
         pageSize: String?,
         page: String?,
     ): GetLeagueLeaderboard200Response {
+        val leagueName = transaction {
+            LeagueTable.select(LeagueTable.name).where { LeagueTable.id eq leagueId }.singleOrNull()
+                ?.get(LeagueTable.name)
+        } ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("League does not exist"))
         val (latestLeaderboardMatchDay, latestGlobalLeaderboard) = runBlocking {
             val latestMatchDay = leaderboardService.getLatestLeaderboardMatchDay()
             val latestLeaderboard = leaderboardService.getLeaderboard(latestMatchDay)
@@ -97,7 +101,7 @@ class League(
         }
 
         if (leagueId == "global") {
-            return paginateLeaderboard(latestGlobalLeaderboard, page, pageSize)
+            return paginateLeaderboard(leagueName, latestGlobalLeaderboard, page, pageSize)
         }
 
         val leagueUsersIds = getLeagueUserIds(leagueId)
@@ -107,7 +111,7 @@ class League(
         val previousFilteredLeague = filterLeaderboardToLeague(previousGlobalLeaderboard, leagueUsersIds)
 
         val leaderboard = calculateMovement(filteredLeague, previousFilteredLeague)
-        return paginateLeaderboard(leaderboard, page, pageSize)
+        return paginateLeaderboard(leagueName, leaderboard, page, pageSize)
     }
 
     override fun joinLeague(requesterUserId: String, leagueId: String) {
@@ -135,7 +139,7 @@ class League(
 private const val DEFAULT_PAGE_SIZE = "50"
 private const val DEFAULT_PAGE = "1"
 
-private fun paginateLeaderboard(leaderboard: List<LeaderboardInner>, page: String?, pageSize: String?): GetLeagueLeaderboard200Response {
+private fun paginateLeaderboard(leagueName: String, leaderboard: List<LeaderboardInner>, page: String?, pageSize: String?): GetLeagueLeaderboard200Response {
     val pageSizeNum =
         (pageSize ?: DEFAULT_PAGE_SIZE).toIntOrNull() ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("Invalid pageSize"))
     val pageNum =
@@ -147,6 +151,7 @@ private fun paginateLeaderboard(leaderboard: List<LeaderboardInner>, page: Strin
     if (start > leaderboard.size) throw ApiResponseError(Response(Status.BAD_REQUEST).body("Page too high"))
 
     return GetLeagueLeaderboard200Response(
+        leagueName,
         leaderboard.subList(start, min(end, leaderboard.size)),
         nextPage = if (end < leaderboard.size) (pageNum + 1).toString() else null,
     )

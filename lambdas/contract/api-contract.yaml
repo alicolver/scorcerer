@@ -877,8 +877,11 @@ paths:
                 type: object
                 required:
                   - leaderboard
+                  - leagueName
                 properties:
                   nextPage:
+                    type: string
+                  leagueName:
                     type: string
                   leaderboard:
                     $ref: '#/components/schemas/leaderboard'
