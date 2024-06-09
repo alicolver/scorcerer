@@ -77,6 +77,7 @@ val cors = Cors(
             "access-control-allow-headers",
             "access-control-allow-methods",
             "access-control-allow-credentials",
+            "authorization"
         ),
         Method.values().toList(),
         true,
