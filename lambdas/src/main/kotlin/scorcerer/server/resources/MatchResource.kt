@@ -83,9 +83,9 @@ class MatchResource(
                     row[MatchTable.datetime],
                     row[MatchTable.matchDay],
                     Round.valueOf(row[MatchTable.round].value),
+                    row[MatchTable.state],
                     row[MatchTable.homeScore],
                     row[MatchTable.awayScore],
-                    row[MatchTable.state],
                     row.getOrNull(predictions[PredictionTable.id])?.let {
                         Prediction(
                             row[predictions[PredictionTable.homeScore]],

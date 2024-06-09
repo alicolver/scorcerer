@@ -57,6 +57,7 @@ components:
         - datetime
         - matchDay
         - round
+        - state
       properties:
         homeTeam:
           description: Home team
