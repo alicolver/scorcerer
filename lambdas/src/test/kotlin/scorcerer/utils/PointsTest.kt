@@ -6,8 +6,8 @@ import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.jupiter.api.Test
 import scorcerer.*
-import scorcerer.server.db.tables.MatchState
 import scorcerer.server.db.tables.MemberTable
+import scorcerer.server.db.tables.State
 
 class PointsTest : DatabaseTest() {
     @Test
@@ -17,9 +17,9 @@ class PointsTest : DatabaseTest() {
         givenUserExists("test3", "name")
         val homeTeamId = givenTeamExists("Scotland")
         val awayTeamId = givenTeamExists("England")
-        val matchId = givenMatchExists(homeTeamId, awayTeamId, matchState = MatchState.LIVE)
-        val anotherMatchId = givenMatchExists(homeTeamId, awayTeamId, matchState = MatchState.LIVE)
-        val matchInPast = givenMatchExists(homeTeamId, awayTeamId, matchState = MatchState.COMPLETED)
+        val matchId = givenMatchExists(homeTeamId, awayTeamId, matchState = State.LIVE)
+        val anotherMatchId = givenMatchExists(homeTeamId, awayTeamId, matchState = State.LIVE)
+        val matchInPast = givenMatchExists(homeTeamId, awayTeamId, matchState = State.COMPLETED)
 
         givenPredictionExists(matchId, "test1", 1, 1, 2)
         givenPredictionExists(matchId, "test2", 1, 1, 3)

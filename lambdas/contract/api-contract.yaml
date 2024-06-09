@@ -101,6 +101,13 @@ components:
             - QUARTER_FINAL
             - SEMI_FINAL
             - FINAL
+        state:
+          description: State of the match
+          type: string
+          enum:
+            - LIVE
+            - UPCOMING
+            - COMPLETED
         prediction:
           $ref: '#/components/schemas/prediction'
 

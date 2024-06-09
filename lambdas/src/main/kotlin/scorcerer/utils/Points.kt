@@ -3,14 +3,14 @@ package scorcerer.utils
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
-import scorcerer.server.db.tables.MatchState
+import org.openapitools.server.models.State
 import scorcerer.server.db.tables.MatchTable
 import scorcerer.server.db.tables.MemberTable
 import scorcerer.server.db.tables.PredictionTable
 
 fun recalculateLivePoints() {
     transaction {
-        val liveMatchIds = MatchTable.selectAll().where { MatchTable.state eq MatchState.LIVE }.map { it[MatchTable.id] }
+        val liveMatchIds = MatchTable.selectAll().where { MatchTable.state eq State.LIVE }.map { it[MatchTable.id] }
 
         val livePointsByUser = PredictionTable
             .select(PredictionTable.memberId, PredictionTable.points.sum())

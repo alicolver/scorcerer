@@ -21,7 +21,7 @@ fun givenMatchExists(
     homeTeamId: String,
     awayTeamId: String,
     matchDatetime: OffsetDateTime = OffsetDateTime.now(),
-    matchState: MatchState = MatchState.UPCOMING,
+    matchState: State = State.UPCOMING,
     matchDay: Int = 1,
 ): String {
     return (

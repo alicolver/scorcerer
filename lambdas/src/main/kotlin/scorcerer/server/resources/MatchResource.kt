@@ -30,7 +30,7 @@ class MatchResource(
                 ?: throw ApiResponseError(Response(Status.NOT_FOUND).body("Match does not exist"))
         }
 
-        if (matchState == MatchState.UPCOMING) {
+        if (matchState == State.UPCOMING) {
             throw ApiResponseError(Response(Status.BAD_REQUEST).body("Match does not exist"))
         }
 
@@ -71,7 +71,7 @@ class MatchResource(
             if (filterType.isNullOrBlank()) {
                 matchTeamTable
             } else {
-                matchTeamTable.where { MatchTable.state eq MatchState.valueOf(filterType.uppercase()) }
+                matchTeamTable.where { MatchTable.state eq State.valueOf(filterType.uppercase()) }
             }.map { row ->
                 Match(
                     row[homeTeamTable[TeamTable.name]].toTitleCase(),
@@ -85,6 +85,7 @@ class MatchResource(
                     Round.valueOf(row[MatchTable.round].value),
                     row[MatchTable.homeScore],
                     row[MatchTable.awayScore],
+                    row[MatchTable.state],
                     row.getOrNull(predictions[PredictionTable.id])?.let {
                         Prediction(
                             row[predictions[PredictionTable.homeScore]],
@@ -99,7 +100,7 @@ class MatchResource(
             }
         }
 
-        if (!filterType.isNullOrBlank() && MatchState.valueOf(filterType.uppercase()) == MatchState.UPCOMING) {
+        if (!filterType.isNullOrBlank() && State.valueOf(filterType.uppercase()) == State.UPCOMING) {
             log.info("Filtering matches to next 2 match days")
             return getMatchesOnNextNMatchDays(matches)
         }
@@ -118,7 +119,7 @@ class MatchResource(
             MatchTable.update({ MatchTable.id eq matchId.toInt() }) {
                 it[homeScore] = setMatchScoreRequest.homeScore
                 it[awayScore] = setMatchScoreRequest.awayScore
-                it[state] = MatchState.LIVE
+                it[state] = State.LIVE
             }
 
             val predictions = getPredictions(matchId)
@@ -149,7 +150,7 @@ class MatchResource(
                 it[this.homeTeamId] = createMatchRequest.homeTeamId.toInt()
                 it[this.awayTeamId] = createMatchRequest.awayTeamId.toInt()
                 it[this.datetime] = createMatchRequest.datetime
-                it[this.state] = MatchState.UPCOMING
+                it[this.state] = State.UPCOMING
                 it[this.venue] = createMatchRequest.venue
                 it[this.matchDay] = createMatchRequest.matchDay
                 it[this.round] = MatchRound.valueOf(createMatchRequest.matchRound.value)
@@ -168,7 +169,7 @@ class MatchResource(
                 ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("Match does not exist"))
 
             MatchTable.update({ MatchTable.id eq matchId.toInt() }) {
-                it[state] = MatchState.COMPLETED
+                it[state] = State.COMPLETED
                 it[homeScore] = completeMatchRequest.homeScore
                 it[awayScore] = completeMatchRequest.awayScore
             }

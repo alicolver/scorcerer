@@ -14,7 +14,6 @@ import org.junit.jupiter.api.assertThrows
 import org.openapitools.server.models.*
 import scorcerer.*
 import scorcerer.server.ApiResponseError
-import scorcerer.server.db.tables.MatchState
 import scorcerer.server.db.tables.MatchTable
 import scorcerer.server.db.tables.MemberTable
 import scorcerer.server.db.tables.PredictionTable
@@ -68,17 +67,17 @@ class MatchTest : DatabaseTest() {
 
         MatchResource(RequestContexts(), mockLeaderboardService).listMatches(
             "",
-            MatchState.UPCOMING.toString(),
+            State.UPCOMING.toString(),
         ).size shouldBe 2
 
         // There should be no matches which are LIVE or COMPLETED
         MatchResource(RequestContexts(), mockLeaderboardService).listMatches(
             "",
-            MatchState.COMPLETED.toString(),
+            State.COMPLETED.toString(),
         ).size shouldBe 0
         MatchResource(RequestContexts(), mockLeaderboardService).listMatches(
             "",
-            MatchState.LIVE.toString(),
+            State.LIVE.toString(),
         ).size shouldBe 0
     }
 
@@ -89,7 +88,7 @@ class MatchTest : DatabaseTest() {
         val anotherUserId = "anotherUser"
         givenUserExists(anotherUserId, "name")
 
-        val matchId = givenMatchExists("3", "4", matchState = MatchState.LIVE)
+        val matchId = givenMatchExists("3", "4", matchState = State.LIVE)
         val predictionId = givenPredictionExists(matchId, userId, 1, 1)
         val anotherPredictionId = givenPredictionExists(matchId, anotherUserId, 1, 1)
 
@@ -118,7 +117,7 @@ class MatchTest : DatabaseTest() {
         givenUserExists(userId, "name", fixedPoints = 0, livePoints = 0)
         val anotherUserId = "anotherUser"
         givenUserExists(anotherUserId, "name", fixedPoints = 0, livePoints = 0)
-        val matchId = givenMatchExists("3", "4", matchState = MatchState.LIVE)
+        val matchId = givenMatchExists("3", "4", matchState = State.LIVE)
 
         val predictionId = givenPredictionExists(matchId, userId, 1, 1)
         val leagueId = "test-league"
@@ -260,7 +259,7 @@ class MatchTest : DatabaseTest() {
         transaction {
             MatchTable.select(MatchTable.state).where { MatchTable.id eq matchId.toInt() }
                 .map { row -> row[MatchTable.state] }[0]
-        } shouldBe MatchState.COMPLETED
+        } shouldBe State.COMPLETED
         coVerify { mockLeaderboardService.updateGlobalLeaderboard(1) }
     }
 
@@ -292,7 +291,7 @@ class MatchTest : DatabaseTest() {
         transaction {
             MatchTable.select(MatchTable.state).where { MatchTable.id eq matchId.toInt() }
                 .map { row -> row[MatchTable.state] }[0]
-        } shouldBe MatchState.COMPLETED
+        } shouldBe State.COMPLETED
         coVerify { mockLeaderboardService.updateGlobalLeaderboard(1) }
     }
 }

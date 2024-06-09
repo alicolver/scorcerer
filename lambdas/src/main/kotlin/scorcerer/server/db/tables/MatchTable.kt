@@ -2,12 +2,7 @@ package scorcerer.server.db.tables
 
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.kotlin.datetime.timestampWithTimeZone
-
-enum class MatchState(val value: String) {
-    LIVE("LIVE"),
-    UPCOMING("UPCOMING"),
-    COMPLETED("COMPLETED"),
-}
+import org.openapitools.server.models.State
 
 enum class MatchResult(val value: String) {
     HOME("HOME"),
@@ -30,7 +25,7 @@ object MatchTable : Table("match") {
     val homeScore = integer("home_score").nullable()
     val awayScore = integer("away_score").nullable()
     val result = enumerationByName<MatchResult>("result", 10).nullable()
-    val state = enumerationByName<MatchState>("state", 10)
+    val state = enumerationByName<State>("state", 10)
     val venue = varchar("venue", 30)
     val matchDay = integer("match_day").check { it.greaterEq(1) }
     val round = enumerationByName<MatchRound>("round", 20)
