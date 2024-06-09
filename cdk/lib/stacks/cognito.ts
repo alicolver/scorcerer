@@ -9,9 +9,9 @@ export class Cognito {
   constructor(scope: Stack) {
     this.userPool = new UserPool(scope, "userPool", {
       selfSignUpEnabled: true,
-      // autoVerify: {
-      //     email: true
-      // },
+      autoVerify: {
+          email: true
+      },
       userPoolName: "predictaballUserPool",
       customAttributes: {
         givenName: new StringAttribute({ mutable: false }),
