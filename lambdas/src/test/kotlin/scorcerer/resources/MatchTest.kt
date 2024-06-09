@@ -300,10 +300,10 @@ class GetMatchesOnNextNMatchDaysTest {
     @Test
     fun testWithMultipleMatchDays() {
         val matches = listOf(
-            Match("Team A", "flagA", "Team B", "flagB", "1", "Stadium A", OffsetDateTime.now(), 1, Round.GROUP_STAGE),
-            Match("Team C", "flagC", "Team D", "flagD", "2", "Stadium B", OffsetDateTime.now(), 2, Round.GROUP_STAGE),
-            Match("Team E", "flagE", "Team F", "flagF", "3", "Stadium C", OffsetDateTime.now(), 2, Round.GROUP_STAGE),
-            Match("Team G", "flagG", "Team H", "flagH", "4", "Stadium D", OffsetDateTime.now(), 3, Round.GROUP_STAGE),
+            Match("Team A", "flagA", "Team B", "flagB", "1", "Stadium A", OffsetDateTime.now(), 1, Round.GROUP_STAGE, State.UPCOMING),
+            Match("Team C", "flagC", "Team D", "flagD", "2", "Stadium B", OffsetDateTime.now(), 2, Round.GROUP_STAGE, State.UPCOMING),
+            Match("Team E", "flagE", "Team F", "flagF", "3", "Stadium C", OffsetDateTime.now(), 2, Round.GROUP_STAGE, State.UPCOMING),
+            Match("Team G", "flagG", "Team H", "flagH", "4", "Stadium D", OffsetDateTime.now(), 3, Round.GROUP_STAGE, State.UPCOMING),
         )
 
         val filteredMatches = getMatchesOnNextNMatchDays(matches)
@@ -314,8 +314,8 @@ class GetMatchesOnNextNMatchDaysTest {
     @Test
     fun testWithLessThanNMatchDays() {
         val matches = listOf(
-            Match("Team A", "flagA", "Team B", "flagB", "1", "Stadium A", OffsetDateTime.now(), 1, Round.GROUP_STAGE),
-            Match("Team C", "flagC", "Team D", "flagD", "2", "Stadium B", OffsetDateTime.now(), 1, Round.GROUP_STAGE),
+            Match("Team A", "flagA", "Team B", "flagB", "1", "Stadium A", OffsetDateTime.now(), 1, Round.GROUP_STAGE, State.UPCOMING),
+            Match("Team C", "flagC", "Team D", "flagD", "2", "Stadium B", OffsetDateTime.now(), 1, Round.GROUP_STAGE, State.UPCOMING),
         )
 
         val filteredMatches = getMatchesOnNextNMatchDays(matches)

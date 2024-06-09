@@ -5,9 +5,9 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.jupiter.api.Test
+import org.openapitools.server.models.State
 import scorcerer.*
 import scorcerer.server.db.tables.MemberTable
-import scorcerer.server.db.tables.State
 
 class PointsTest : DatabaseTest() {
     @Test

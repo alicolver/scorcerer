@@ -2,6 +2,7 @@ package scorcerer
 
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.openapitools.server.models.State
 import scorcerer.server.db.tables.*
 import java.time.OffsetDateTime
 
