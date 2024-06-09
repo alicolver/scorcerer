@@ -38,6 +38,17 @@ class LeagueTest : DatabaseTest() {
     }
 
     @Test
+    fun createLeagueWithExtraWhitespace() {
+        val league = League(RequestContexts(), mockLeaderboardService).createLeague(
+            "userId",
+            CreateLeagueRequest(
+                " Test    League ",
+            ),
+        )
+        league.leagueId shouldBe "test-league"
+    }
+
+    @Test
     fun getLeagueWhenNoUsersInLeague() {
         givenLeagueExists("test-league", "Test League")
         val league = League(RequestContexts(), mockLeaderboardService).getLeague(

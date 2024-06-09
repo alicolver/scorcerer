@@ -36,7 +36,7 @@ class League(
             transaction {
                 LeagueTable.insert {
                     it[this.name] = createLeagueRequest.leagueName
-                    it[this.id] = createLeagueRequest.leagueName.lowercase().replace(" ", "-")
+                    it[this.id] = createLeagueRequest.leagueName.trim().lowercase().replace("\\s+".toRegex(), "-")
                 } get LeagueTable.id
             }
         } catch (e: PSQLException) {
