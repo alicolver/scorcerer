@@ -109,6 +109,10 @@ class User(context: RequestContexts) : UserApi(context) {
                     name = "family_name"
                     value = signupRequest.familyName
                 },
+                AttributeType {
+                    name = "email_verified"
+                    value = "true"
+                },
             )
         }
 
