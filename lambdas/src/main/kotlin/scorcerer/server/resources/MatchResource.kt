@@ -67,6 +67,7 @@ class MatchResource(
                     .join(homeTeamTable, JoinType.INNER, MatchTable.homeTeamId, homeTeamTable[TeamTable.id])
                     .join(predictions, JoinType.LEFT, MatchTable.id, predictions[PredictionTable.matchId])
                     .selectAll()
+                    .orderBy(MatchTable.datetime)
 
             if (filterType.isNullOrBlank()) {
                 matchTeamTable
