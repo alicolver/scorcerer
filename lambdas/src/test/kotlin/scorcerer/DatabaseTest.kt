@@ -8,7 +8,7 @@ import scorcerer.server.db.Database as ServerDatabase
 open class DatabaseTest {
     init {
         Database.connect(
-            "jdbc:h2:mem:test;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;DB_CLOSE_DELAY=1",
+            "jdbc:h2:mem:test;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;DB_CLOSE_DELAY=2",
             driver = "org.h2.Driver",
         )
     }
