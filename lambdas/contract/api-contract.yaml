@@ -674,6 +674,22 @@ paths:
       responses:
         '200':
           description: Successful response
+  /auth/ping:
+    get:
+      tags:
+        - auth
+      operationId: authPing
+      description: Keep auth lambda warm
+      security: []
+      x-amazon-apigateway-integration:
+        type: "aws_proxy"
+        httpMethod: "POST"
+        uri: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${apiAuthHandlerArn}/invocations"
+        credentials: "${apiGatewayRoleArn}"
+        payloadFormatVersion: "1.0"
+      responses:
+        '200':
+          description: Successful response
 
   /user:
     post:
@@ -932,6 +948,22 @@ paths:
           required: true
           schema:
             type: string
+      responses:
+        '200':
+          description: Successful response
+  /ping:
+    get:
+      tags:
+        - misc
+      operationId: ping
+      description: Keep lambda warm
+      security: [ ]
+      x-amazon-apigateway-integration:
+        type: "aws_proxy"
+        httpMethod: "POST"
+        uri: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${apiHandlerArn}/invocations"
+        credentials: "${apiGatewayRoleArn}"
+        payloadFormatVersion: "1.0"
       responses:
         '200':
           description: Successful response

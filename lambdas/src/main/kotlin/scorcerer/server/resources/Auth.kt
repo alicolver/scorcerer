@@ -21,6 +21,7 @@ import scorcerer.server.log
 
 class Auth(context: RequestContexts) : AuthApi(context) {
     private val cognitoClient = CognitoIdentityProviderClient { region = "eu-west-2" }
+    override fun authPing() {}
 
     override fun login(loginRequest: LoginRequest): Login200Response {
         val request = InitiateAuthRequest {

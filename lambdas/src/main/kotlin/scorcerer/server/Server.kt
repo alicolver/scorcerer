@@ -20,6 +20,7 @@ import scorcerer.server.db.Database
 import scorcerer.server.resources.Auth
 import scorcerer.server.resources.League
 import scorcerer.server.resources.MatchResource
+import scorcerer.server.resources.Misc
 import scorcerer.server.resources.Prediction
 import scorcerer.server.resources.Team
 import scorcerer.server.resources.User
@@ -63,6 +64,7 @@ private val routes = allRoutes(
     Auth(requestContext),
     League(requestContext, LeaderboardS3Service(s3Client, Environment.LeaderboardBucketName)),
     MatchResource(requestContext, LeaderboardS3Service(s3Client, Environment.LeaderboardBucketName)),
+    Misc(requestContext),
     Prediction(requestContext),
     Team(requestContext),
     User(requestContext),
