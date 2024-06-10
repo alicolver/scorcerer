@@ -92,6 +92,9 @@ class User(context: RequestContexts) : UserApi(context) {
     }
 
     override fun signup(signupRequest: SignupRequest) {
+        val firstName = signupRequest.firstName.trim()
+        val familyName = signupRequest.familyName.trim()
+
         val request = AdminCreateUserRequest {
             username = signupRequest.email
             userPoolId = Environment.CognitoUserPoolId
@@ -103,11 +106,11 @@ class User(context: RequestContexts) : UserApi(context) {
                 },
                 AttributeType {
                     name = "given_name"
-                    value = signupRequest.firstName
+                    value = firstName
                 },
                 AttributeType {
                     name = "family_name"
-                    value = signupRequest.familyName
+                    value = familyName
                 },
                 AttributeType {
                     name = "email_verified"
@@ -154,7 +157,7 @@ class User(context: RequestContexts) : UserApi(context) {
             sqsClient.sendMessage(
                 SendMessageRequest {
                     queueUrl = Environment.UserCreationQueueUrl
-                    messageBody = UserCreationEvent(userId, signupRequest.firstName, signupRequest.familyName).toJson()
+                    messageBody = UserCreationEvent(userId, firstName, familyName).toJson()
                 },
             )
         }
