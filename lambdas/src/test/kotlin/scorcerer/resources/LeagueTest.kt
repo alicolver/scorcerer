@@ -4,6 +4,10 @@ import aws.sdk.kotlin.services.s3.S3Client
 import io.kotlintest.inspectors.forOne
 import io.kotlintest.shouldBe
 import org.http4k.core.RequestContexts
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -14,6 +18,7 @@ import scorcerer.givenLeagueExists
 import scorcerer.givenUserExists
 import scorcerer.givenUserInLeague
 import scorcerer.server.ApiResponseError
+import scorcerer.server.db.tables.LeagueMembershipTable
 import scorcerer.server.resources.League
 import scorcerer.utils.LeaderboardS3Service
 
@@ -110,6 +115,29 @@ class LeagueTest : DatabaseTest() {
             "test-league",
         )
         // TODO: Assert on users in league once endpoint exists
+    }
+
+    @Test
+    fun joinLeagueTwice() {
+        givenLeagueExists("test-league", "Test League")
+        givenUserExists("anotherUser", "test", fixedPoints = 0, livePoints = 0)
+        League(RequestContexts(), mockLeaderboardService).joinLeague(
+            "anotherUser",
+            "test-league",
+        )
+
+        League(RequestContexts(), mockLeaderboardService).joinLeague(
+            "anotherUser",
+            "test-league",
+        )
+
+        val memberships = transaction {
+            LeagueMembershipTable
+                .selectAll()
+                .where { (LeagueMembershipTable.leagueId eq "test-league") and (LeagueMembershipTable.memberId eq "anotherUser") }
+                .count()
+        }
+        memberships shouldBe 1
     }
 
     @Test

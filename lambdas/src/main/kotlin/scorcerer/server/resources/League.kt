@@ -8,6 +8,7 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.openapitools.server.apis.LeagueApi
 import org.openapitools.server.models.*
@@ -115,6 +116,13 @@ class League(
     }
 
     override fun joinLeague(requesterUserId: String, leagueId: String) {
+        transaction {
+            LeagueMembershipTable
+                .selectAll()
+                .where { (LeagueMembershipTable.leagueId eq leagueId) and (LeagueMembershipTable.memberId eq requesterUserId) }
+                .singleOrNull()
+        }?.let { return }
+
         try {
             transaction {
                 LeagueMembershipTable.insert {
