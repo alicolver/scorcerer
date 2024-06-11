@@ -13,7 +13,7 @@ import {
 import { Credentials, DatabaseInstance, DatabaseInstanceEngine, StorageType } from "aws-cdk-lib/aws-rds"
 import { dbPassword } from "../environment"
 import { Code, Function, Runtime } from "aws-cdk-lib/aws-lambda"
-import { LogGroupLogDestination, MethodLoggingLevel, SpecRestApi } from "aws-cdk-lib/aws-apigateway"
+import { AccessLogFormat, LogGroupLogDestination, MethodLoggingLevel, SpecRestApi } from "aws-cdk-lib/aws-apigateway"
 import { Cognito } from "./cognito"
 import { AnyPrincipal, Effect, PolicyStatement, Role, ServicePrincipal } from "aws-cdk-lib/aws-iam"
 import { importApiDefinition } from "../config/api_definition"
@@ -192,6 +192,7 @@ export class Predictaball extends Stack {
       apiDefinition: apiDefinition,
       deployOptions: {
         accessLogDestination: new LogGroupLogDestination(gatewayAccessLogs),
+        accessLogFormat: AccessLogFormat.jsonWithStandardFields(),
         methodOptions: {
           "/*/*": {
             metricsEnabled: true,
