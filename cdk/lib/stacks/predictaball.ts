@@ -13,13 +13,14 @@ import {
 import { Credentials, DatabaseInstance, DatabaseInstanceEngine, StorageType } from "aws-cdk-lib/aws-rds"
 import { dbPassword } from "../environment"
 import { Code, Function, Runtime } from "aws-cdk-lib/aws-lambda"
-import { SpecRestApi } from "aws-cdk-lib/aws-apigateway"
+import { LogGroupLogDestination, MethodLoggingLevel, SpecRestApi } from "aws-cdk-lib/aws-apigateway"
 import { Cognito } from "./cognito"
 import { AnyPrincipal, Effect, PolicyStatement, Role, ServicePrincipal } from "aws-cdk-lib/aws-iam"
 import { importApiDefinition } from "../config/api_definition"
 import { Queue } from "aws-cdk-lib/aws-sqs"
 import { SqsEventSource } from "aws-cdk-lib/aws-lambda-event-sources"
 import {BlockPublicAccess, Bucket, BucketEncryption, HttpMethods} from "aws-cdk-lib/aws-s3"
+import { LogGroup } from "aws-cdk-lib/aws-logs";
 
 const dbUser = "postgres"
 const dbPort = 5432
@@ -185,8 +186,19 @@ export class Predictaball extends Stack {
     apiHandler.grantInvoke(gatewayRole)
     apiAuthHandler.grantInvoke(gatewayRole)
 
+    const gatewayAccessLogs = new LogGroup(this, "ApiGatewayLogs")
+
     new SpecRestApi(this, "apiGateway", {
       apiDefinition: apiDefinition,
+      deployOptions: {
+        accessLogDestination: new LogGroupLogDestination(gatewayAccessLogs),
+        methodOptions: {
+          "/*/*": {
+            metricsEnabled: true,
+            loggingLevel: MethodLoggingLevel.INFO,
+          },
+        }
+      }
     })
   }
 }
