@@ -13,7 +13,7 @@ import {
 import { Credentials, DatabaseInstance, DatabaseInstanceEngine, StorageType } from "aws-cdk-lib/aws-rds"
 import { dbPassword } from "../environment"
 import { Code, Function, Runtime } from "aws-cdk-lib/aws-lambda"
-import { AccessLogFormat, LogGroupLogDestination, MethodLoggingLevel, SpecRestApi } from "aws-cdk-lib/aws-apigateway"
+import { LogGroupLogDestination, MethodLoggingLevel, SpecRestApi } from "aws-cdk-lib/aws-apigateway"
 import { Cognito } from "./cognito"
 import { AnyPrincipal, Effect, PolicyStatement, Role, ServicePrincipal } from "aws-cdk-lib/aws-iam"
 import { importApiDefinition } from "../config/api_definition"
@@ -21,6 +21,7 @@ import { Queue } from "aws-cdk-lib/aws-sqs"
 import { SqsEventSource } from "aws-cdk-lib/aws-lambda-event-sources"
 import {BlockPublicAccess, Bucket, BucketEncryption, HttpMethods} from "aws-cdk-lib/aws-s3"
 import { LogGroup } from "aws-cdk-lib/aws-logs";
+import { gatewayLogFormat } from "../config/gateway_logs";
 
 const dbUser = "postgres"
 const dbPort = 5432
@@ -192,7 +193,7 @@ export class Predictaball extends Stack {
       apiDefinition: apiDefinition,
       deployOptions: {
         accessLogDestination: new LogGroupLogDestination(gatewayAccessLogs),
-        accessLogFormat: AccessLogFormat.jsonWithStandardFields(),
+        accessLogFormat: gatewayLogFormat,
         methodOptions: {
           "/*/*": {
             metricsEnabled: true,
