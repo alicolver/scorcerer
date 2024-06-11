@@ -83,7 +83,10 @@ fun calculateGlobalLeaderboard(previousGlobalLeaderboard: List<LeaderboardInner>
     }
 
     val sortedGlobalUsers =
-        globalUsers.sortedWith(compareByDescending<User> { it.livePoints + it.fixedPoints }.thenBy { it.familyName })
+        globalUsers.sortedWith(
+            compareByDescending<User> { it.livePoints + it.fixedPoints }.thenBy { it.familyName }
+                .thenBy { it.firstName }.thenBy { it.userId },
+        )
     var currentPosition = 0
     var previousPoints = Int.MAX_VALUE
     val previousPositions = previousGlobalLeaderboard?.associateBy { it.user.userId } ?: emptyMap()
