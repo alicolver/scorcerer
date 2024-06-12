@@ -12,7 +12,7 @@ import {
 } from "aws-cdk-lib/aws-ec2"
 import { Credentials, DatabaseInstance, DatabaseInstanceEngine, StorageType } from "aws-cdk-lib/aws-rds"
 import { dbPassword } from "../environment"
-import { Code, Function, Runtime } from "aws-cdk-lib/aws-lambda"
+import { Alias, Code, Function, Runtime } from "aws-cdk-lib/aws-lambda"
 import { LogGroupLogDestination, MethodLoggingLevel, SpecRestApi } from "aws-cdk-lib/aws-apigateway"
 import { Cognito } from "./cognito"
 import { AnyPrincipal, Effect, PolicyStatement, Role, ServicePrincipal } from "aws-cdk-lib/aws-iam"
@@ -148,8 +148,16 @@ export class Predictaball extends Stack {
       vpc: vpc,
       allowPublicSubnet: true,
     })
+
+    const alias = new Alias(this, "UserCreationHandlerAlias", {
+      aliasName: "prod",
+      version: userCreationHandler.currentVersion,
+      provisionedConcurrentExecutions: 1,
+    })
+
+
     const eventSource = new SqsEventSource(userCreationQueue)
-    userCreationHandler.addEventSource(eventSource)
+    alias.addEventSource(eventSource)
 
 
     userCreationQueue.grantSendMessages(apiAuthHandler)
