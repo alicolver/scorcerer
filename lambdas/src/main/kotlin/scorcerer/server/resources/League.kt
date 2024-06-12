@@ -38,6 +38,7 @@ class League(
                 LeagueTable.insert {
                     it[this.name] = createLeagueRequest.leagueName
                     it[this.id] = createLeagueRequest.leagueName.trim().lowercase().replace("\\s+".toRegex(), "-")
+                        .replace("[^a-zA-Z0-9-]".toRegex(), "")
                 } get LeagueTable.id
             }
         } catch (e: PSQLException) {
@@ -147,11 +148,18 @@ class League(
 private const val DEFAULT_PAGE_SIZE = "100"
 private const val DEFAULT_PAGE = "1"
 
-private fun paginateLeaderboard(leagueName: String, leaderboard: List<LeaderboardInner>, page: String?, pageSize: String?): GetLeagueLeaderboard200Response {
+private fun paginateLeaderboard(
+    leagueName: String,
+    leaderboard: List<LeaderboardInner>,
+    page: String?,
+    pageSize: String?,
+): GetLeagueLeaderboard200Response {
     val pageSizeNum =
-        (pageSize ?: DEFAULT_PAGE_SIZE).toIntOrNull() ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("Invalid pageSize"))
+        (pageSize ?: DEFAULT_PAGE_SIZE).toIntOrNull()
+            ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("Invalid pageSize"))
     val pageNum =
-        (page ?: DEFAULT_PAGE).toIntOrNull() ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("Invalid page"))
+        (page ?: DEFAULT_PAGE).toIntOrNull()
+            ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("Invalid page"))
 
     val start = pageSizeNum * (pageNum - 1)
     val end = start + pageSizeNum

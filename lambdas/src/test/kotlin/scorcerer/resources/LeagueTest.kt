@@ -54,6 +54,17 @@ class LeagueTest : DatabaseTest() {
     }
 
     @Test
+    fun createLeagueWithSpecialCharacter() {
+        val league = League(RequestContexts(), mockLeaderboardService).createLeague(
+            "userId",
+            CreateLeagueRequest(
+                "Alex's Minions",
+            ),
+        )
+        league.leagueId shouldBe "alexs-minions"
+    }
+
+    @Test
     fun getLeagueWhenNoUsersInLeague() {
         givenLeagueExists("test-league", "Test League")
         val league = League(RequestContexts(), mockLeaderboardService).getLeague(
