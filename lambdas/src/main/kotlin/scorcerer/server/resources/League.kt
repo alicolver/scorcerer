@@ -144,7 +144,7 @@ class League(
     }
 }
 
-private const val DEFAULT_PAGE_SIZE = "50"
+private const val DEFAULT_PAGE_SIZE = "100"
 private const val DEFAULT_PAGE = "1"
 
 private fun paginateLeaderboard(leagueName: String, leaderboard: List<LeaderboardInner>, page: String?, pageSize: String?): GetLeagueLeaderboard200Response {
