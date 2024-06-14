@@ -117,11 +117,12 @@ export class Predictaball extends Stack {
       USER_POOL_CLIENT_ID: cognito.poolClient.userPoolClientId,
       USER_POOL_ID: cognito.userPool.userPoolId,
       USER_CREATION_QUEUE_URL: userCreationQueue.queueUrl,
-      LEADERBOARD_BUCKET_NAME: leaderboardBucket.bucketName
+      LEADERBOARD_BUCKET_NAME: leaderboardBucket.bucketName,
+      "JAVA_TOOL_OPTIONS": "-XX:+TieredCompilation -XX:TieredStopAtLevel=1"
     }
 
     const apiHandler = new Function(this, "apiHandler", {
-      runtime: Runtime.JAVA_11,
+      runtime: Runtime.JAVA_21,
       code: Code.fromAsset("../lambdas/build/distributions/scorcerer-1.0.0.zip"),
       handler: "scorcerer.server.ApiLambdaHandler",
       timeout: Duration.seconds(15),
@@ -132,7 +133,7 @@ export class Predictaball extends Stack {
     })
 
     const apiAuthHandler = new Function(this, "apiAuthHandler", {
-      runtime: Runtime.JAVA_11,
+      runtime: Runtime.JAVA_21,
       code: Code.fromAsset("../lambdas/build/distributions/scorcerer-1.0.0.zip"),
       handler: "scorcerer.server.ApiAuthLambdaHandler",
       timeout: Duration.seconds(25),
@@ -141,7 +142,7 @@ export class Predictaball extends Stack {
     })
 
     const userCreationHandler = new Function(this, "userCreationHandler", {
-      runtime: Runtime.JAVA_11,
+      runtime: Runtime.JAVA_21,
       code: Code.fromAsset("../lambdas/build/distributions/scorcerer-1.0.0.zip"),
       handler: "scorcerer.server.events.UserCreationEventHandler",
       timeout: Duration.seconds(25),
@@ -160,7 +161,7 @@ export class Predictaball extends Stack {
     alias.addEventSource(eventSource)
 
     const matchStarter = new Function(this, "matchStarter", {
-      runtime: Runtime.JAVA_11,
+      runtime: Runtime.JAVA_21,
       code: Code.fromAsset("../lambdas/build/distributions/scorcerer-1.0.0.zip"),
       handler: "scorcerer.server.schedule.MatchStarter",
       timeout: Duration.seconds(25),

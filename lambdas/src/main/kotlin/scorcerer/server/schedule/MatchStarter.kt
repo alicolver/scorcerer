@@ -14,7 +14,6 @@ import scorcerer.server.db.tables.MatchTable
 import scorcerer.server.log
 import java.time.Clock
 import java.time.OffsetDateTime
-import java.time.ZoneId
 
 // Entrypoint for match starter lambda
 class MatchStarter : RequestHandler<Unit, Unit> {
