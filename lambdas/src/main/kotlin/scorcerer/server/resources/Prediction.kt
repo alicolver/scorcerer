@@ -46,11 +46,7 @@ class Prediction(context: RequestContexts) : PredictionApi(context) {
                 PredictionTable.update({ PredictionTable.id eq id }) {
                     it[homeScore] = createPredictionRequest.homeScore
                     it[awayScore] = createPredictionRequest.awayScore
-                    it[result] = if (createPredictionRequest.toGoThrough != null) {
-                        MatchResult.valueOf(createPredictionRequest.toGoThrough.value)
-                    } else {
-                        null
-                    }
+                    it[result] = createPredictionRequest.toGoThrough?.let { MatchResult.valueOf(createPredictionRequest.toGoThrough.value) }
                 }
             }
         } ?: run {

@@ -22,6 +22,8 @@ import { SqsEventSource } from "aws-cdk-lib/aws-lambda-event-sources"
 import {BlockPublicAccess, Bucket, BucketEncryption, HttpMethods} from "aws-cdk-lib/aws-s3"
 import { LogGroup } from "aws-cdk-lib/aws-logs";
 import { gatewayLogFormat } from "../config/gateway_logs";
+import { Rule, Schedule } from "aws-cdk-lib/aws-events";
+import { LambdaFunction } from "aws-cdk-lib/aws-events-targets";
 
 const dbUser = "postgres"
 const dbPort = 5432
@@ -152,13 +154,26 @@ export class Predictaball extends Stack {
     const alias = new Alias(this, "UserCreationHandlerAlias", {
       aliasName: "prod",
       version: userCreationHandler.currentVersion,
-      provisionedConcurrentExecutions: 1,
     })
-
 
     const eventSource = new SqsEventSource(userCreationQueue)
     alias.addEventSource(eventSource)
 
+    const matchStarter = new Function(this, "matchStarter", {
+      runtime: Runtime.JAVA_11,
+      code: Code.fromAsset("../lambdas/build/distributions/scorcerer-1.0.0.zip"),
+      handler: "scorcerer.server.schedule.MatchStarter",
+      timeout: Duration.seconds(25),
+      memorySize: 512,
+      environment: lambdaEnvironment,
+      vpc: vpc,
+      allowPublicSubnet: true,
+    })
+
+    const starterRule = new Rule(this, "MatchStarterRule", {
+      schedule: Schedule.cron({minute: "1"})
+    })
+    starterRule.addTarget(new LambdaFunction(matchStarter))
 
     userCreationQueue.grantSendMessages(apiAuthHandler)
 
@@ -180,6 +195,7 @@ export class Predictaball extends Stack {
 
     db.connections.allowFrom(apiHandler, Port.tcp(dbPort))
     db.connections.allowFrom(userCreationHandler, Port.tcp(dbPort))
+    db.connections.allowFrom(matchStarter, Port.tcp(dbPort))
 
     const gatewayRole = new Role(this, "gatewayRole", {
       assumedBy: new ServicePrincipal("apigateway.amazonaws.com")
