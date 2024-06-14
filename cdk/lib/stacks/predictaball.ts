@@ -12,7 +12,7 @@ import {
 } from "aws-cdk-lib/aws-ec2"
 import { Credentials, DatabaseInstance, DatabaseInstanceEngine, StorageType } from "aws-cdk-lib/aws-rds"
 import { dbPassword } from "../environment"
-import { Alias, Code, Function, Runtime } from "aws-cdk-lib/aws-lambda"
+import {Alias, CfnFunction, Code, Function, Runtime} from "aws-cdk-lib/aws-lambda"
 import { LogGroupLogDestination, MethodLoggingLevel, SpecRestApi } from "aws-cdk-lib/aws-apigateway"
 import { Cognito } from "./cognito"
 import { AnyPrincipal, Effect, PolicyStatement, Role, ServicePrincipal } from "aws-cdk-lib/aws-iam"
@@ -131,6 +131,8 @@ export class Predictaball extends Stack {
       vpc: vpc,
       allowPublicSubnet: true,
     })
+    const cfnFunction = apiHandler.node.defaultChild as CfnFunction
+    cfnFunction.addPropertyOverride("SnapStart", { ApplyOn: "PublishedVersions" })
 
     const apiAuthHandler = new Function(this, "apiAuthHandler", {
       runtime: Runtime.JAVA_21,

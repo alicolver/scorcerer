@@ -4,6 +4,8 @@ import com.amazonaws.services.lambda.runtime.Context
 import com.squareup.moshi.Moshi
 import okio.buffer
 import okio.source
+import org.crac.Core
+import org.crac.Resource
 import org.http4k.core.Filter
 import org.http4k.core.HttpHandler
 import org.http4k.core.RequestContexts
@@ -18,15 +20,20 @@ import org.http4k.serverless.FnHandler
 import org.http4k.serverless.FnLoader
 import org.openapitools.server.apis.Authorizer
 import org.openapitools.server.apis.LAMBDA_AUTHORIZER_KEY
+import scorcerer.server.db.Database
 import java.io.InputStream
 
 class AuthorizerLoader(
     private val requestAdapter: AwsHttpAdapter<Map<String, Any>, Map<String, Any>>,
     private val contexts: RequestContexts,
     private val appLoader: AppLoaderWithContexts,
-) : FnLoader<Context> {
+) : FnLoader<Context>, Resource {
     private val moshi = Moshi.Builder().build()
     private val coreFilter = ServerFilters.CatchAll().then(ServerFilters.InitialiseRequestContext(contexts))
+
+    init {
+        Core.getGlobalContext().register(this)
+    }
 
     override fun invoke(env: Map<String, String>): FnHandler<InputStream, Context, InputStream> {
         val app = appLoader(env, contexts)
@@ -42,6 +49,15 @@ class AuthorizerLoader(
                 ),
             )
         }
+    }
+
+    override fun beforeCheckpoint(p0: org.crac.Context<out Resource>?) {
+        log.info("Cooling down before snap start")
+    }
+
+    override fun afterRestore(p0: org.crac.Context<out Resource>?) {
+        log.info("Snap Start")
+        Database.connectAndGenerateTables()
     }
 }
 
