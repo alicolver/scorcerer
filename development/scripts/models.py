@@ -25,3 +25,4 @@ class Match(BaseModel):
     venue: str
     datetime: datetime
     match_day: int
+    match_round: str

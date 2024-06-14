@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 
 if __name__ == "__main__":
-    load_dotenv()
+    load_dotenv(override=True)
     client = Client(base_url=environ["BASE_URL"], token=environ["API_TOKEN"])
     with open("matches.json", "r") as file:
         data = json.load(file)

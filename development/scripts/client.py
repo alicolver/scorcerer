@@ -33,4 +33,5 @@ class Client:
         if response.status_code in range(200, 300):
             return response.json()
         else:
+            print(response.content)
             response.raise_for_status()

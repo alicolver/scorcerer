@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 
 if __name__ == "__main__":
-    load_dotenv()
+    load_dotenv(override = True)
     client = Client(base_url=environ.get("BASE_URL"), token=environ.get("API_TOKEN"))
     with open("teams.json", "r") as file:
         data = json.load(file)
