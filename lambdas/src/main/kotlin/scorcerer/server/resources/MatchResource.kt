@@ -54,12 +54,14 @@ class MatchResource(
         }
     }
 
-    override fun listMatches(requesterUserId: String, filterType: String?): List<Match> {
+    override fun listMatches(requesterUserId: String, filterType: String?, userId: String?): List<Match> {
         val matches = transaction {
             val awayTeamTable = TeamTable.alias("awayTeam")
             val homeTeamTable = TeamTable.alias("homeTeam")
 
-            val predictions = PredictionTable.selectAll().where { PredictionTable.memberId eq requesterUserId }.alias("predictions")
+            val userIdFilter = userId ?: requesterUserId
+
+            val predictions = PredictionTable.selectAll().where { PredictionTable.memberId eq userIdFilter }.alias("predictions")
 
             val matchTeamTable =
                 MatchTable

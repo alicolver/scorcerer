@@ -449,6 +449,10 @@ paths:
           schema:
             type: string
             enum: [live, upcoming, completed]
+        - in: query
+          name: userId
+          schema:
+            type: string
       responses:
         '200':
           description: Successful response

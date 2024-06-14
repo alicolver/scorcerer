@@ -59,7 +59,7 @@ class MatchTest : DatabaseTest() {
         givenUserExists("test", "Test")
         givenPredictionExists("1", "test", 3, 4)
 
-        val unfilteredMatches = MatchResource(RequestContexts(), mockLeaderboardService).listMatches("test", null)
+        val unfilteredMatches = MatchResource(RequestContexts(), mockLeaderboardService).listMatches("test", null, null)
         unfilteredMatches.size shouldBe 2
 
         val prediction = unfilteredMatches.first().prediction
@@ -68,16 +68,19 @@ class MatchTest : DatabaseTest() {
         MatchResource(RequestContexts(), mockLeaderboardService).listMatches(
             "",
             State.UPCOMING.toString(),
+            null,
         ).size shouldBe 2
 
         // There should be no matches which are LIVE or COMPLETED
         MatchResource(RequestContexts(), mockLeaderboardService).listMatches(
             "",
             State.COMPLETED.toString(),
+            null,
         ).size shouldBe 0
         MatchResource(RequestContexts(), mockLeaderboardService).listMatches(
             "",
             State.LIVE.toString(),
+            null,
         ).size shouldBe 0
     }
 
