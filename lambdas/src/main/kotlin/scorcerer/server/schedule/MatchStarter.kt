@@ -26,7 +26,7 @@ class MatchStarter : RequestHandler<Unit, Unit> {
         log.info("Checking for games which have started")
 
         val clock = Clock.system(ZoneId.of("Europe/London"))
-        val now = OffsetDateTime.now(clock)
+        val now = OffsetDateTime.now(clock).plusMinutes(1)
         log.info("Using now - $now")
 
         transaction {

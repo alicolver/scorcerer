@@ -171,7 +171,7 @@ export class Predictaball extends Stack {
     })
 
     const starterRule = new Rule(this, "MatchStarterRule", {
-      schedule: Schedule.cron({minute: "1"})
+      schedule: Schedule.cron({minute: "0"})
     })
     starterRule.addTarget(new LambdaFunction(matchStarter))
 
