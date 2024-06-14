@@ -25,7 +25,8 @@ class MatchStarter : RequestHandler<Unit, Unit> {
     override fun handleRequest(input: Unit?, context: Context?) {
         log.info("Checking for games which have started")
 
-        val clock = Clock.system(ZoneId.of("Europe/London"))
+        val clock = Clock.systemDefaultZone()
+        // Add 1 minute to avoid missing any games which might be just starting
         val now = OffsetDateTime.now(clock).plusMinutes(1)
         log.info("Using now - $now")
 
