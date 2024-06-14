@@ -59,7 +59,7 @@ class MatchResource(
             val awayTeamTable = TeamTable.alias("awayTeam")
             val homeTeamTable = TeamTable.alias("homeTeam")
 
-            if (userId != null && userId != requesterUserId && filterType?.let { State.valueOf(it) } == State.UPCOMING) {
+            if (userId != null && userId != requesterUserId && filterType?.let { State.valueOf(it.uppercase()) } == State.UPCOMING) {
                 throw ApiResponseError(Response(Status.BAD_REQUEST).body("Cannot view other users upcoming predictions"))
             }
 
