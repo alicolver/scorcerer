@@ -614,6 +614,10 @@ paths:
                 properties:
                   idToken:
                     type: string
+                  accessToken:
+                    type: string
+                required:
+                  - idToken
 
         '401':
           description: Unauthorized

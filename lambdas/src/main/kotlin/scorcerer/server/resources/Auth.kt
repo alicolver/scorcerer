@@ -44,7 +44,8 @@ class Auth(context: RequestContexts) : AuthApi(context) {
 
         val result = response.authenticationResult ?: throw ApiResponseError(Response(Status.UNAUTHORIZED))
 
-        return Login200Response(result.idToken)
+        if (result.idToken == null) throw Exception("Cognito did not return an ID token")
+        return Login200Response(result.idToken!!, result.accessToken)
     }
 
     override fun resetPassword(resetPasswordRequest: ResetPasswordRequest) {
