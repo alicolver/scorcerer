@@ -2,6 +2,7 @@ package scorcerer.resources
 
 import io.kotlintest.inspectors.forOne
 import io.kotlintest.shouldBe
+import io.kotlintest.shouldThrow
 import io.mockk.coVerify
 import io.mockk.coVerifySequence
 import io.mockk.mockk
@@ -11,8 +12,21 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import org.openapitools.server.models.*
-import scorcerer.*
+import org.openapitools.server.models.CompleteMatchRequest
+import org.openapitools.server.models.CreateMatchRequest
+import org.openapitools.server.models.Match
+import org.openapitools.server.models.MatchRound
+import org.openapitools.server.models.Prediction
+import org.openapitools.server.models.Round
+import org.openapitools.server.models.SetMatchScoreRequest
+import org.openapitools.server.models.State
+import scorcerer.DatabaseTest
+import scorcerer.givenLeagueExists
+import scorcerer.givenMatchExists
+import scorcerer.givenPredictionExists
+import scorcerer.givenTeamExists
+import scorcerer.givenUserExists
+import scorcerer.givenUserInLeague
 import scorcerer.server.ApiResponseError
 import scorcerer.server.db.tables.MatchTable
 import scorcerer.server.db.tables.MemberTable
@@ -49,6 +63,18 @@ class MatchTest : DatabaseTest() {
         )
 
         match.matchId shouldBe "1"
+    }
+
+    @Test
+    fun errorWhenViewingOtherUsersPredictions() {
+        shouldThrow<ApiResponseError> {
+            MatchResource(RequestContexts(), mockLeaderboardService).listMatches("user-1", State.UPCOMING.toString(), "user-2")
+        }
+    }
+
+    @Test
+    fun notErrorWhenPassingOwnUserId() {
+        MatchResource(RequestContexts(), mockLeaderboardService).listMatches("user-1", State.UPCOMING.toString(), "user-1")
     }
 
     @Test
