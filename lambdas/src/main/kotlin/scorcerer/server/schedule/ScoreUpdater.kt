@@ -9,8 +9,6 @@ import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestHandler
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import kotlinx.coroutines.runBlocking
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import org.http4k.client.OkHttp
 import org.http4k.core.Method
 import org.http4k.core.Request
@@ -18,6 +16,9 @@ import org.openapitools.server.fromJson
 import org.openapitools.server.toJson
 import scorcerer.server.Environment
 import scorcerer.server.log
+import java.time.Clock
+import java.time.Instant
+import java.util.UUID
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class Team(
@@ -55,6 +56,8 @@ data class ScoreUpdate(
     val datetime: Instant,
 )
 
+val liveMatchesKey = "live-matches.json"
+
 class ScoreUpdater : RequestHandler<Unit, Unit> {
     private val client = OkHttp()
     private val s3Client = S3Client { region = "eu-west-2" }
@@ -67,7 +70,7 @@ class ScoreUpdater : RequestHandler<Unit, Unit> {
 
         val getObjectRequest = GetObjectRequest {
             bucket = Environment.LeaderboardBucketName
-            key = "live-matches.json"
+            key = liveMatchesKey
         }
 
         val liveMatches = runBlocking {
@@ -101,7 +104,7 @@ class ScoreUpdater : RequestHandler<Unit, Unit> {
                 log.info("Match is not live")
                 return
             }
-            val now = Clock.System.now()
+            val now = Clock.systemDefaultZone().instant()
 
             val homeScore = fotmobResponse.header.teams.first().score
             val awayScore = fotmobResponse.header.teams.last().score
@@ -112,13 +115,11 @@ class ScoreUpdater : RequestHandler<Unit, Unit> {
                     SendMessageRequest {
                         queueUrl = Environment.ScoreUpdateQueueUrl
                         messageBody = ScoreUpdate(it.matchId, homeScore, awayScore, now).toJson()
+                        messageGroupId = it.matchId
+                        messageDeduplicationId = UUID.randomUUID().toString()
                     },
                 )
             }
         }
     }
-}
-
-fun main() {
-    ScoreUpdater().handleRequest(null, null)
 }

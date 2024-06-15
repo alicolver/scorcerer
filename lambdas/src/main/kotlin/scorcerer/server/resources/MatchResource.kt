@@ -13,6 +13,7 @@ import scorcerer.server.ApiResponseError
 import scorcerer.server.db.tables.*
 import scorcerer.server.db.tables.MatchRound
 import scorcerer.server.log
+import scorcerer.server.schedule.updateLiveMatches
 import scorcerer.utils.LeaderboardS3Service
 import scorcerer.utils.MatchResult
 import scorcerer.utils.PointsCalculator.calculatePoints
@@ -219,6 +220,7 @@ class MatchResource(
         recalculateLivePoints()
         runBlocking {
             leaderboardService.updateGlobalLeaderboard(matchDay)
+            updateLiveMatches(leaderboardService)
         }
     }
 }

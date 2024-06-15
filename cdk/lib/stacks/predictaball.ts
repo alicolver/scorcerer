@@ -108,7 +108,7 @@ export class Predictaball extends Stack {
       }
     })
 
-    const scoreUpdateDLQ = new Queue(this, "scoreUpdateDLQ")
+    const scoreUpdateDLQ = new Queue(this, "scoreUpdateDLQ", { fifo: true })
 
     const scoreUpdateQueue = new Queue(this, "scoreUpdateQueue", {
       deadLetterQueue: {
@@ -209,6 +209,11 @@ export class Predictaball extends Stack {
       memorySize: 512,
       environment: lambdaEnvironment,
     })
+
+    const scoreCheckerRule = new Rule(this, "ScoreCheckerRule", {
+      schedule: Schedule.cron({minute: "*/2"})
+    })
+    scoreCheckerRule.addTarget(new LambdaFunction(scoreUpdater))
 
     scoreUpdateQueue.grantSendMessages(scoreUpdater)
     userCreationQueue.grantSendMessages(apiAuthHandler)
