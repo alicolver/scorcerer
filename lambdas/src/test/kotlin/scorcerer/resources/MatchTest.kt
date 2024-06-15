@@ -132,11 +132,13 @@ class MatchTest : DatabaseTest() {
         val predictions =
             MatchResource(RequestContexts(), mockLeaderboardService).getMatchPredictions("", "1", null)
         predictions.size shouldBe 2
-        predictions.forOne { prediction ->
-            prediction.predictionId shouldBe predictionId
+        predictions.forOne { predictionWithUser ->
+            predictionWithUser.prediction.predictionId shouldBe predictionId
+            predictionWithUser.user.userId shouldBe anotherUserId
         }
-        predictions.forOne { prediction ->
-            prediction.predictionId shouldBe anotherPredictionId
+        predictions.forOne { predictionWithUser ->
+            predictionWithUser.prediction.predictionId shouldBe anotherPredictionId
+            predictionWithUser.user.userId shouldBe anotherUserId
         }
     }
 
@@ -165,7 +167,8 @@ class MatchTest : DatabaseTest() {
                 leagueId,
             )
         matchPredictions.size shouldBe 1
-        matchPredictions[0].predictionId shouldBe predictionId
+        matchPredictions[0].prediction.predictionId shouldBe predictionId
+        matchPredictions[0].user.userId shouldBe userId
     }
 
     @Test

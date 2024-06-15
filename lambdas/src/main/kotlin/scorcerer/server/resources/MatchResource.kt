@@ -26,7 +26,7 @@ class MatchResource(
     override fun getMatchPredictions(
         requesterUserId: String,
         matchId: String,
-        leagueId: String?
+        leagueId: String?,
     ): List<PredictionWithUser> {
         val matchState = transaction {
             MatchTable.select(MatchTable.state).where { MatchTable.id eq matchId.toInt() }.firstOrNull()
@@ -53,15 +53,15 @@ class MatchResource(
                         row[PredictionTable.matchId].toString(),
                         row[PredictionTable.id].toString(),
                         row[PredictionTable.memberId],
-                        row[PredictionTable.points]
+                        row[PredictionTable.points],
                     ),
                     User(
                         row[MemberTable.firstName],
                         row[MemberTable.familyName],
                         row[MemberTable.id],
                         row[MemberTable.fixedPoints],
-                        row[MemberTable.livePoints]
-                    )
+                        row[MemberTable.livePoints],
+                    ),
                 )
             }
         }
