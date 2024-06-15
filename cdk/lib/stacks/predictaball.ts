@@ -183,8 +183,6 @@ export class Predictaball extends Stack {
       timeout: Duration.seconds(25),
       memorySize: 512,
       environment: lambdaEnvironment,
-      vpc: vpc,
-      allowPublicSubnet: true,
     })
 
     userCreationQueue.grantSendMessages(apiAuthHandler)
@@ -205,12 +203,9 @@ export class Predictaball extends Stack {
     leaderboardBucket.grantReadWrite(apiHandler)
     leaderboardBucket.grantReadWrite(userCreationHandler)
     leaderboardBucket.grantReadWrite(matchStarter)
-    leaderboardBucket.grantReadWrite(scoreUpdater)
-
     db.connections.allowFrom(apiHandler, Port.tcp(dbPort))
     db.connections.allowFrom(userCreationHandler, Port.tcp(dbPort))
     db.connections.allowFrom(matchStarter, Port.tcp(dbPort))
-    db.connections.allowFrom(scoreUpdater, Port.tcp(dbPort))
 
     const gatewayRole = new Role(this, "gatewayRole", {
       assumedBy: new ServicePrincipal("apigateway.amazonaws.com")
