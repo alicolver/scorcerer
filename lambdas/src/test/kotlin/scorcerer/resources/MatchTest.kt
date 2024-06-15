@@ -113,9 +113,9 @@ class MatchTest : DatabaseTest() {
     @Test
     fun getMatchPredictionsWithNoLeagueFilter() {
         val userId = "userId"
-        givenUserExists(userId, "name")
+        givenUserExists(userId, "name", familyName = "test", fixedPoints = 0, livePoints = 0)
         val anotherUserId = "anotherUser"
-        givenUserExists(anotherUserId, "name")
+        givenUserExists(anotherUserId, "name", familyName = "test", fixedPoints = 0, livePoints = 0)
 
         val matchId = givenMatchExists("3", "4", matchState = State.LIVE)
         val predictionId = givenPredictionExists(matchId, userId, 1, 1)
@@ -134,7 +134,7 @@ class MatchTest : DatabaseTest() {
         predictions.size shouldBe 2
         predictions.forOne { predictionWithUser ->
             predictionWithUser.prediction.predictionId shouldBe predictionId
-            predictionWithUser.user.userId shouldBe anotherUserId
+            predictionWithUser.user.userId shouldBe userId
         }
         predictions.forOne { predictionWithUser ->
             predictionWithUser.prediction.predictionId shouldBe anotherPredictionId
