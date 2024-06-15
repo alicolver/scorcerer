@@ -103,7 +103,7 @@ class League(
         }
 
         if (leagueId == "global") {
-            return paginateLeaderboard(leagueName, latestGlobalLeaderboard, page, pageSize)
+            return paginateLeaderboard(leagueName, sortLeaderboard(latestGlobalLeaderboard), page, pageSize)
         }
 
         val leagueUsersIds = getLeagueUserIds(leagueId)
@@ -113,7 +113,7 @@ class League(
         val previousFilteredLeague = filterLeaderboardToLeague(previousGlobalLeaderboard, leagueUsersIds)
 
         val leaderboard = calculateMovement(filteredLeague, previousFilteredLeague)
-        return paginateLeaderboard(leagueName, leaderboard, page, pageSize)
+        return paginateLeaderboard(leagueName, sortLeaderboard(leaderboard), page, pageSize)
     }
 
     override fun joinLeague(requesterUserId: String, leagueId: String) {
@@ -178,4 +178,11 @@ private fun getLeagueUserIds(leagueId: String): List<String> = transaction {
         .select(MemberTable.id)
         .where { LeagueMembershipTable.leagueId eq leagueId }
         .map { it[MemberTable.id] }
+}
+
+private fun sortLeaderboard(leaderboard: List<LeaderboardInner>): List<LeaderboardInner> {
+    return leaderboard.sortedWith(
+        compareBy<LeaderboardInner> { it.position }.thenBy { it.movement }
+            .thenBy { it.user.familyName }.thenBy { it.user.firstName }.thenBy { it.user.userId },
+    )
 }

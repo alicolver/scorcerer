@@ -22,8 +22,7 @@ fun filterLeaderboardToLeague(
 ): List<LeaderboardInner> {
     val leagueUsers = (globalLeaderboard ?: emptyList()).filter { it.user.userId in leagueUserIds }
 
-    val sortedLeague =
-        leagueUsers.sortedWith(compareByDescending<LeaderboardInner> { it.user.livePoints + it.user.fixedPoints }.thenBy { it.user.familyName })
+    val sortedLeague = leagueUsers.sortedWith(compareBy { it.position })
     var currentPosition = 1
     val lastFixedPoints = sortedLeague.firstOrNull()?.user?.fixedPoints ?: 0
     val lastLivePoints = sortedLeague.firstOrNull()?.user?.livePoints ?: 0
@@ -84,8 +83,7 @@ fun calculateGlobalLeaderboard(previousGlobalLeaderboard: List<LeaderboardInner>
 
     val sortedGlobalUsers =
         globalUsers.sortedWith(
-            compareByDescending<User> { it.livePoints + it.fixedPoints }.thenBy { it.familyName }
-                .thenBy { it.firstName }.thenBy { it.userId },
+            compareByDescending { it.livePoints + it.fixedPoints },
         )
     var currentPosition = 0
     var previousPoints = Int.MAX_VALUE
