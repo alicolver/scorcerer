@@ -107,7 +107,7 @@ fun calculateGlobalLeaderboard(previousGlobalLeaderboard: List<LeaderboardInner>
     return leaderboard
 }
 
-class LeaderboardS3Service(private val s3Client: S3Client, private val s3BucketName: String) {
+class LeaderboardS3Service(val s3Client: S3Client, val s3BucketName: String) {
     suspend fun writeLeaderboard(leaderboard: List<LeaderboardInner>, matchDay: Int) {
         val request = PutObjectRequest {
             bucket = s3BucketName
