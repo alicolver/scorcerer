@@ -368,31 +368,6 @@ paths:
                 properties:
                   predictionId:
                     type: string
-  /match/{matchId}:
-    get:
-      tags:
-        - match
-      operationId: getMatch
-      description: Get a match
-      x-amazon-apigateway-integration:
-        type: "aws_proxy"
-        httpMethod: "POST"
-        uri: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${apiHandlerArn}/invocations"
-        credentials: "${apiGatewayRoleArn}"
-        payloadFormatVersion: "1.0"
-      parameters:
-        - in: path
-          name: matchId
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/match'
 
   /match:
     post:
