@@ -113,9 +113,9 @@ class MatchTest : DatabaseTest() {
     @Test
     fun getMatchPredictionsWithNoLeagueFilter() {
         val userId = "userId"
-        givenUserExists(userId, "name", familyName = "test", fixedPoints = 0, livePoints = 0)
+        givenUserExists(userId, "name")
         val anotherUserId = "anotherUser"
-        givenUserExists(anotherUserId, "name", familyName = "test", fixedPoints = 0, livePoints = 0)
+        givenUserExists(anotherUserId, "name")
 
         val matchId = givenMatchExists("3", "4", matchState = State.LIVE)
         val predictionId = givenPredictionExists(matchId, userId, 1, 1)
