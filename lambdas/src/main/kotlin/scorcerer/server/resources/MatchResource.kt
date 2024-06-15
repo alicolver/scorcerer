@@ -24,7 +24,11 @@ class MatchResource(
     context: RequestContexts,
     private val leaderboardService: LeaderboardS3Service,
 ) : MatchApi(context) {
-    override fun getMatchPredictions(requesterUserId: String, matchId: String, leagueId: String?): List<Prediction> {
+    override fun getMatchPredictions(
+        requesterUserId: String,
+        matchId: String,
+        leagueId: String?,
+    ): List<PredictionWithUser> {
         val matchState = transaction {
             MatchTable.select(MatchTable.state).where { MatchTable.id eq matchId.toInt() }.firstOrNull()
                 ?.let { row -> row[MatchTable.state] }
@@ -36,20 +40,30 @@ class MatchResource(
         }
 
         return transaction {
+            val predictions = PredictionTable innerJoin MemberTable
             if (leagueId.isNullOrBlank()) {
-                PredictionTable.selectAll().where { (PredictionTable.matchId eq matchId.toInt()) }
+                predictions.selectAll().where { (PredictionTable.matchId eq matchId.toInt()) }
             } else {
-                (PredictionTable innerJoin MemberTable innerJoin LeagueMembershipTable).selectAll().where {
+                (predictions innerJoin LeagueMembershipTable).selectAll().where {
                     (PredictionTable.matchId eq matchId.toInt()).and(LeagueMembershipTable.leagueId eq leagueId)
                 }
             }.map { row ->
-                Prediction(
-                    row[PredictionTable.homeScore],
-                    row[PredictionTable.awayScore],
-                    row[PredictionTable.matchId].toString(),
-                    row[PredictionTable.id].toString(),
-                    row[PredictionTable.memberId],
-                    row[PredictionTable.points],
+                PredictionWithUser(
+                    Prediction(
+                        row[PredictionTable.homeScore],
+                        row[PredictionTable.awayScore],
+                        row[PredictionTable.matchId].toString(),
+                        row[PredictionTable.id].toString(),
+                        row[PredictionTable.memberId],
+                        row[PredictionTable.points],
+                    ),
+                    User(
+                        row[MemberTable.firstName],
+                        row[MemberTable.familyName],
+                        row[MemberTable.id],
+                        row[MemberTable.fixedPoints],
+                        row[MemberTable.livePoints],
+                    ),
                 )
             }
         }
