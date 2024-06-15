@@ -65,14 +65,13 @@ class MatchResource(
 
             val userIdFilter = userId ?: requesterUserId
 
-            val predictions = PredictionTable.selectAll().where { PredictionTable.memberId eq userIdFilter }.alias("predictions")
+            val predictions =
+                PredictionTable.selectAll().where { PredictionTable.memberId eq userIdFilter }.alias("predictions")
 
             val matchTeamTable =
-                MatchTable
-                    .join(awayTeamTable, JoinType.INNER, MatchTable.awayTeamId, awayTeamTable[TeamTable.id])
+                MatchTable.join(awayTeamTable, JoinType.INNER, MatchTable.awayTeamId, awayTeamTable[TeamTable.id])
                     .join(homeTeamTable, JoinType.INNER, MatchTable.homeTeamId, homeTeamTable[TeamTable.id])
-                    .join(predictions, JoinType.LEFT, MatchTable.id, predictions[PredictionTable.matchId])
-                    .selectAll()
+                    .join(predictions, JoinType.LEFT, MatchTable.id, predictions[PredictionTable.matchId]).selectAll()
                     .orderBy(MatchTable.datetime)
 
             if (filterType.isNullOrBlank()) {
@@ -116,8 +115,8 @@ class MatchResource(
     }
 
     override fun setMatchScore(requesterUserId: String, matchId: String, setMatchScoreRequest: SetMatchScoreRequest) {
-        val matchDay = getMatchDay(matchId)
-            ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("Match does not exist"))
+        val matchDay =
+            getMatchDay(matchId) ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("Match does not exist"))
 
         setScore(matchId, matchDay, setMatchScoreRequest.homeScore, setMatchScoreRequest.awayScore, leaderboardService)
     }
@@ -140,14 +139,47 @@ class MatchResource(
         return CreateMatch200Response(id.toString())
     }
 
+    override fun getMatch(
+        requesterUserId: String,
+        matchId: String,
+    ): Match {
+        return transaction {
+            val awayTeamTable = TeamTable.alias("awayTeam")
+            val homeTeamTable = TeamTable.alias("homeTeam")
+
+            val matchTeamTable =
+                MatchTable.join(awayTeamTable, JoinType.INNER, MatchTable.awayTeamId, awayTeamTable[TeamTable.id])
+                    .join(homeTeamTable, JoinType.INNER, MatchTable.homeTeamId, homeTeamTable[TeamTable.id]).selectAll()
+                    .orderBy(MatchTable.datetime)
+
+            matchTeamTable.where { MatchTable.id eq matchId.toInt() }.singleOrNull()?.let { row ->
+                Match(
+                    row[homeTeamTable[TeamTable.name]].toTitleCase(),
+                    row[homeTeamTable[TeamTable.flagUri]],
+                    row[awayTeamTable[TeamTable.name]].toTitleCase(),
+                    row[awayTeamTable[TeamTable.flagUri]],
+                    row[MatchTable.id].toString(),
+                    row[MatchTable.venue],
+                    row[MatchTable.datetime],
+                    row[MatchTable.matchDay],
+                    Round.valueOf(row[MatchTable.round].value),
+                    row[MatchTable.state],
+                    row[MatchTable.homeScore],
+                    row[MatchTable.awayScore],
+                )
+            } ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("Match does not exist"))
+        }
+    }
+
     override fun completeMatch(
         requesterUserId: String,
         matchId: String,
         completeMatchRequest: CompleteMatchRequest,
     ) {
         val matchDay = transaction {
-            val matchDay = getMatchDay(matchId)
-                ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("Match does not exist"))
+            val matchDay =
+                getMatchDay(matchId)
+                    ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("Match does not exist"))
 
             MatchTable.update({ MatchTable.id eq matchId.toInt() }) {
                 it[state] = State.COMPLETED
@@ -177,30 +209,31 @@ class MatchResource(
     }
 }
 
-fun setScore(matchId: String, matchDay: Int, homeScore: Int, awayScore: Int, leaderboardService: LeaderboardS3Service) = transaction {
-    MatchTable.update({ MatchTable.id eq matchId.toInt() }) {
-        it[MatchTable.homeScore] = homeScore
-        it[MatchTable.awayScore] = awayScore
-        it[state] = State.LIVE
-    }
+fun setScore(matchId: String, matchDay: Int, homeScore: Int, awayScore: Int, leaderboardService: LeaderboardS3Service) =
+    transaction {
+        MatchTable.update({ MatchTable.id eq matchId.toInt() }) {
+            it[MatchTable.homeScore] = homeScore
+            it[MatchTable.awayScore] = awayScore
+            it[state] = State.LIVE
+        }
 
-    val predictions = getPredictions(matchId)
+        val predictions = getPredictions(matchId)
 
-    predictions.forEach { prediction ->
-        val points = calculatePoints(
-            prediction,
-            MatchResult(
-                homeScore,
-                awayScore,
-            ),
-        )
-        updatePredictionPoints(prediction.predictionId.toInt(), points)
+        predictions.forEach { prediction ->
+            val points = calculatePoints(
+                prediction,
+                MatchResult(
+                    homeScore,
+                    awayScore,
+                ),
+            )
+            updatePredictionPoints(prediction.predictionId.toInt(), points)
+        }
+        recalculateLivePoints()
+        runBlocking {
+            leaderboardService.updateGlobalLeaderboard(matchDay)
+        }
     }
-    recalculateLivePoints()
-    runBlocking {
-        leaderboardService.updateGlobalLeaderboard(matchDay)
-    }
-}
 
 fun getMatchesOnNextNMatchDays(matches: List<Match>): List<Match> {
     val uniqueMatchDays = matches.map { it.matchDay }.distinct()
@@ -213,9 +246,7 @@ fun getMatchesOnNextNMatchDays(matches: List<Match>): List<Match> {
 }
 
 fun getMatchDay(matchId: String): Int? = transaction {
-    MatchTable
-        .select(MatchTable.matchDay).where { MatchTable.id eq matchId.toInt() }
-        .firstOrNull()
+    MatchTable.select(MatchTable.matchDay).where { MatchTable.id eq matchId.toInt() }.firstOrNull()
         ?.let { row -> row[MatchTable.matchDay] }
 }
 
