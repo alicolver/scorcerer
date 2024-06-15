@@ -115,37 +115,11 @@ class MatchResource(
         return matches
     }
 
-    override fun setMatchScore(
-        requesterUserId: String,
-        matchId: String,
-        setMatchScoreRequest: SetMatchScoreRequest,
-    ) {
-        transaction {
-            val matchDay = getMatchDay(matchId)
-                ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("Match does not exist"))
-            MatchTable.update({ MatchTable.id eq matchId.toInt() }) {
-                it[homeScore] = setMatchScoreRequest.homeScore
-                it[awayScore] = setMatchScoreRequest.awayScore
-                it[state] = State.LIVE
-            }
+    override fun setMatchScore(requesterUserId: String, matchId: String, setMatchScoreRequest: SetMatchScoreRequest) {
+        val matchDay = getMatchDay(matchId)
+            ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("Match does not exist"))
 
-            val predictions = getPredictions(matchId)
-
-            predictions.forEach { prediction ->
-                val points = calculatePoints(
-                    prediction,
-                    MatchResult(
-                        setMatchScoreRequest.homeScore,
-                        setMatchScoreRequest.awayScore,
-                    ),
-                )
-                updatePredictionPoints(prediction.predictionId.toInt(), points)
-            }
-            recalculateLivePoints()
-            runBlocking {
-                leaderboardService.updateGlobalLeaderboard(matchDay)
-            }
-        }
+        setScore(matchId, matchDay, setMatchScoreRequest.homeScore, setMatchScoreRequest.awayScore, leaderboardService)
     }
 
     override fun createMatch(
@@ -203,6 +177,31 @@ class MatchResource(
     }
 }
 
+fun setScore(matchId: String, matchDay: Int, homeScore: Int, awayScore: Int, leaderboardService: LeaderboardS3Service) = transaction {
+    MatchTable.update({ MatchTable.id eq matchId.toInt() }) {
+        it[MatchTable.homeScore] = homeScore
+        it[MatchTable.awayScore] = awayScore
+        it[state] = State.LIVE
+    }
+
+    val predictions = getPredictions(matchId)
+
+    predictions.forEach { prediction ->
+        val points = calculatePoints(
+            prediction,
+            MatchResult(
+                homeScore,
+                awayScore,
+            ),
+        )
+        updatePredictionPoints(prediction.predictionId.toInt(), points)
+    }
+    recalculateLivePoints()
+    runBlocking {
+        leaderboardService.updateGlobalLeaderboard(matchDay)
+    }
+}
+
 fun getMatchesOnNextNMatchDays(matches: List<Match>): List<Match> {
     val uniqueMatchDays = matches.map { it.matchDay }.distinct()
     if (uniqueMatchDays.size < 2) {
@@ -213,9 +212,11 @@ fun getMatchesOnNextNMatchDays(matches: List<Match>): List<Match> {
     return matches.filter { it.matchDay in lowestMatchDays }
 }
 
-private fun getMatchDay(matchId: String): Int? {
-    return MatchTable.select(MatchTable.matchDay).where { MatchTable.id eq matchId.toInt() }
-        .firstOrNull()?.let { row -> row[MatchTable.matchDay] }
+fun getMatchDay(matchId: String): Int? = transaction {
+    MatchTable
+        .select(MatchTable.matchDay).where { MatchTable.id eq matchId.toInt() }
+        .firstOrNull()
+        ?.let { row -> row[MatchTable.matchDay] }
 }
 
 private fun getPredictions(matchId: String): List<Prediction> {

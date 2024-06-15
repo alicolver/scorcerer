@@ -1,5 +1,6 @@
 package scorcerer.server.schedule
 
+import aws.sdk.kotlin.services.s3.S3Client
 import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestHandler
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
@@ -7,16 +8,21 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.jetbrains.exposed.sql.update
 import org.openapitools.server.models.State
+import scorcerer.server.Environment
 import scorcerer.server.db.Database
 import scorcerer.server.db.tables.MatchTable
 import scorcerer.server.log
+import scorcerer.server.resources.getMatchDay
+import scorcerer.server.resources.setScore
+import scorcerer.utils.LeaderboardS3Service
 import java.time.Clock
 import java.time.OffsetDateTime
 
 // Entrypoint for match starter lambda
 class MatchStarter : RequestHandler<Unit, Unit> {
+    private val leaderboardService = LeaderboardS3Service(S3Client { region = "eu-west-2" }, Environment.LeaderboardBucketName)
+
     init {
         Database.connectAndGenerateTables()
     }
@@ -37,14 +43,14 @@ class MatchStarter : RequestHandler<Unit, Unit> {
             log.info("Found ${matchesWhichHaveStarted.count()} games which have already started")
 
             matchesWhichHaveStarted.forEach {
+                val matchId = it[MatchTable.id].toString()
                 log.info("Starting match ${it[MatchTable.id]}")
-                MatchTable.update({ MatchTable.id eq it[MatchTable.id] }) {
-                    it[state] = State.LIVE
-                    it[homeScore] = 0
-                    it[awayScore] = 0
-                }
+
+                val matchDay = getMatchDay(matchId)!!
+                setScore(matchId, matchDay, 0, 0, leaderboardService)
             }
         }
+
         log.info("All required matches started")
     }
 }
