@@ -2,15 +2,20 @@ package scorcerer.server.schedule
 
 import aws.sdk.kotlin.services.s3.S3Client
 import aws.sdk.kotlin.services.s3.model.GetObjectRequest
+import aws.sdk.kotlin.services.sqs.SqsClient
+import aws.sdk.kotlin.services.sqs.model.SendMessageRequest
 import aws.smithy.kotlin.runtime.content.decodeToString
 import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestHandler
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import kotlinx.coroutines.runBlocking
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 import org.http4k.client.OkHttp
 import org.http4k.core.Method
 import org.http4k.core.Request
 import org.openapitools.server.fromJson
+import org.openapitools.server.toJson
 import scorcerer.server.Environment
 import scorcerer.server.log
 
@@ -43,9 +48,17 @@ data class LiveMatch(
     val fotmobMatchId: String,
 )
 
+data class ScoreUpdate(
+    val matchId: String,
+    val homeScore: Int,
+    val awayScore: Int,
+    val datetime: Instant,
+)
+
 class ScoreUpdater : RequestHandler<Unit, Unit> {
     private val client = OkHttp()
     private val s3Client = S3Client { region = "eu-west-2" }
+    private val sqsClient = SqsClient { region = "eu-west-2" }
 
     private val endpoint = "https://www.fotmob.com/api/matchDetails?matchId="
 
@@ -88,10 +101,20 @@ class ScoreUpdater : RequestHandler<Unit, Unit> {
                 log.info("Match is not live")
                 return
             }
+            val now = Clock.System.now()
 
             val homeScore = fotmobResponse.header.teams.first().score
             val awayScore = fotmobResponse.header.teams.last().score
             log.info("Home score ($homeScore) Away score ($awayScore) for matchId (${it.matchId})")
+
+            runBlocking {
+                sqsClient.sendMessage(
+                    SendMessageRequest {
+                        queueUrl = Environment.ScoreUpdateQueueUrl
+                        messageBody = ScoreUpdate(it.matchId, homeScore, awayScore, now).toJson()
+                    },
+                )
+            }
         }
     }
 }
