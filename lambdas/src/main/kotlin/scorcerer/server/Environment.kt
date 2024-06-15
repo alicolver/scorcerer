@@ -14,6 +14,7 @@ object Environment {
     val CognitoUserPoolId = getEnvVarOrFail("USER_POOL_ID")
 
     val UserCreationQueueUrl = getEnvVarOrFail("USER_CREATION_QUEUE_URL")
+    val ScoreUpdateQueueUrl = getEnvVarOrFail("SCORE_UPDATE_QUEUE_URL")
 
     private fun getEnvVarOrFail(name: String) = System.getenv(name) ?: throw Exception("Expected environment variable $name to be set")
 

@@ -108,6 +108,16 @@ export class Predictaball extends Stack {
       }
     })
 
+    const scoreUpdateDLQ = new Queue(this, "scoreUpdateDLQ")
+
+    const scoreUpdateQueue = new Queue(this, "scoreUpdateQueue", {
+      deadLetterQueue: {
+        queue: scoreUpdateDLQ,
+        maxReceiveCount: 1,
+      },
+      fifo: true
+    })
+
     const lambdaEnvironment = {
       DB_USER: dbUser,
       DB_PASSWORD: dbPassword,
@@ -117,6 +127,7 @@ export class Predictaball extends Stack {
       USER_POOL_CLIENT_ID: cognito.poolClient.userPoolClientId,
       USER_POOL_ID: cognito.userPool.userPoolId,
       USER_CREATION_QUEUE_URL: userCreationQueue.queueUrl,
+      SCORE_UPDATE_QUEUE_URL: scoreUpdateQueue.queueUrl,
       LEADERBOARD_BUCKET_NAME: leaderboardBucket.bucketName,
       "JAVA_TOOL_OPTIONS": "-XX:+TieredCompilation -XX:TieredStopAtLevel=1"
     }
@@ -157,8 +168,22 @@ export class Predictaball extends Stack {
       version: userCreationHandler.currentVersion,
     })
 
-    const eventSource = new SqsEventSource(userCreationQueue)
-    alias.addEventSource(eventSource)
+    const userCreationEventSource = new SqsEventSource(userCreationQueue)
+    alias.addEventSource(userCreationEventSource)
+
+    const scoreUpdateHandler = new Function(this, "scoreUpdateHandler", {
+      runtime: Runtime.JAVA_21,
+      code: Code.fromAsset("../lambdas/build/distributions/scorcerer-1.0.0.zip"),
+      handler: "scorcerer.server.events.ScoreUpdateEventHandler",
+      timeout: Duration.seconds(25),
+      memorySize: 512,
+      environment: lambdaEnvironment,
+      vpc: vpc,
+      allowPublicSubnet: true,
+    })
+
+    const scoreUpdateEventSource = new SqsEventSource(scoreUpdateQueue)
+    scoreUpdateHandler.addEventSource(scoreUpdateEventSource)
 
     const matchStarter = new Function(this, "matchStarter", {
       runtime: Runtime.JAVA_21,
@@ -185,6 +210,7 @@ export class Predictaball extends Stack {
       environment: lambdaEnvironment,
     })
 
+    scoreUpdateQueue.grantSendMessages(scoreUpdater)
     userCreationQueue.grantSendMessages(apiAuthHandler)
 
     apiAuthHandler.addToRolePolicy(
@@ -203,11 +229,13 @@ export class Predictaball extends Stack {
     leaderboardBucket.grantReadWrite(apiHandler)
     leaderboardBucket.grantReadWrite(userCreationHandler)
     leaderboardBucket.grantReadWrite(matchStarter)
+    leaderboardBucket.grantReadWrite(scoreUpdateHandler)
     leaderboardBucket.grantRead(scoreUpdater)
 
     db.connections.allowFrom(apiHandler, Port.tcp(dbPort))
     db.connections.allowFrom(userCreationHandler, Port.tcp(dbPort))
     db.connections.allowFrom(matchStarter, Port.tcp(dbPort))
+    db.connections.allowFrom(scoreUpdateHandler, Port.tcp(dbPort))
 
     const gatewayRole = new Role(this, "gatewayRole", {
       assumedBy: new ServicePrincipal("apigateway.amazonaws.com")
