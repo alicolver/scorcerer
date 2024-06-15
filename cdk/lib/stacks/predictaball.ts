@@ -176,6 +176,17 @@ export class Predictaball extends Stack {
     })
     starterRule.addTarget(new LambdaFunction(matchStarter))
 
+    const scoreUpdater = new Function(this, "scoreUpdater", {
+      runtime: Runtime.JAVA_21,
+      code: Code.fromAsset("../lambdas/build/distributions/scorcerer-1.0.0.zip"),
+      handler: "scorcerer.server.schedule.ScoreUpdater",
+      timeout: Duration.seconds(25),
+      memorySize: 512,
+      environment: lambdaEnvironment,
+      vpc: vpc,
+      allowPublicSubnet: true,
+    })
+
     userCreationQueue.grantSendMessages(apiAuthHandler)
 
     apiAuthHandler.addToRolePolicy(
@@ -194,10 +205,12 @@ export class Predictaball extends Stack {
     leaderboardBucket.grantReadWrite(apiHandler)
     leaderboardBucket.grantReadWrite(userCreationHandler)
     leaderboardBucket.grantReadWrite(matchStarter)
+    leaderboardBucket.grantReadWrite(scoreUpdater)
 
     db.connections.allowFrom(apiHandler, Port.tcp(dbPort))
     db.connections.allowFrom(userCreationHandler, Port.tcp(dbPort))
     db.connections.allowFrom(matchStarter, Port.tcp(dbPort))
+    db.connections.allowFrom(scoreUpdater, Port.tcp(dbPort))
 
     const gatewayRole = new Role(this, "gatewayRole", {
       assumedBy: new ServicePrincipal("apigateway.amazonaws.com")

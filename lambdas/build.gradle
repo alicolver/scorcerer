@@ -81,6 +81,7 @@ dependencies {
     implementation(platform("org.http4k:http4k-connect-bom:3.35.0.0"))
     implementation("org.http4k:http4k-format-jackson:5.20.0.0")
     implementation("org.http4k:http4k-serverless-lambda")
+    implementation("org.http4k:http4k-client-okhttp:5.23.0.0")
     implementation("org.postgresql:postgresql:42.7.3")
     implementation("org.slf4j:slf4j-simple:2.0.6")
     implementation("aws.sdk.kotlin:cognitoidentityprovider:1.2.5")
