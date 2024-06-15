@@ -39,10 +39,11 @@ class MatchResource(
         }
 
         return transaction {
+            val predictions = PredictionTable innerJoin MemberTable
             if (leagueId.isNullOrBlank()) {
-                PredictionTable.selectAll().where { (PredictionTable.matchId eq matchId.toInt()) }
+                predictions.selectAll().where { (PredictionTable.matchId eq matchId.toInt()) }
             } else {
-                (PredictionTable innerJoin MemberTable innerJoin LeagueMembershipTable).selectAll().where {
+                (predictions innerJoin LeagueMembershipTable).selectAll().where {
                     (PredictionTable.matchId eq matchId.toInt()).and(LeagueMembershipTable.leagueId eq leagueId)
                 }
             }.map { row ->
