@@ -84,8 +84,7 @@ fun calculateGlobalLeaderboard(previousGlobalLeaderboard: List<LeaderboardInner>
 
     val sortedGlobalUsers =
         globalUsers.sortedWith(
-            compareByDescending<User> { it.livePoints + it.fixedPoints }.thenBy { it.familyName }
-                .thenBy { it.firstName }.thenBy { it.userId },
+            compareByDescending { it.livePoints + it.fixedPoints },
         )
     var currentPosition = 0
     var previousPoints = Int.MAX_VALUE
@@ -106,7 +105,10 @@ fun calculateGlobalLeaderboard(previousGlobalLeaderboard: List<LeaderboardInner>
 
         LeaderboardInner(currentPosition, user, movement)
     }
-    return leaderboard
+    return leaderboard.sortedWith(
+        compareByDescending<LeaderboardInner> { it.position }.thenBy { it.movement }
+            .thenBy { it.user.familyName }.thenBy { it.user.firstName }.thenBy { it.user.userId },
+    )
 }
 
 class LeaderboardS3Service(private val s3Client: S3Client, private val s3BucketName: String) {
