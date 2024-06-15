@@ -203,6 +203,8 @@ export class Predictaball extends Stack {
     leaderboardBucket.grantReadWrite(apiHandler)
     leaderboardBucket.grantReadWrite(userCreationHandler)
     leaderboardBucket.grantReadWrite(matchStarter)
+    leaderboardBucket.grantRead(scoreUpdater)
+
     db.connections.allowFrom(apiHandler, Port.tcp(dbPort))
     db.connections.allowFrom(userCreationHandler, Port.tcp(dbPort))
     db.connections.allowFrom(matchStarter, Port.tcp(dbPort))
