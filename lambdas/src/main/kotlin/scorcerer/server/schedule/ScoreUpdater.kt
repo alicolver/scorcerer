@@ -35,7 +35,7 @@ class ScoreUpdater : RequestHandler<Unit, Unit> {
         val request = Request(Method.GET, endpoint + eventId)
         val response = client(request)
 
-        val score = response.toString().fromJson<SofaScoreResponse>()
+        val score = response.body.toString().fromJson<SofaScoreResponse>()
         log.info("Fetch live score with home score (${score.event.homeScore.current}) and away score (${score.event.awayScore.current})")
     }
 }
