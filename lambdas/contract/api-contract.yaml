@@ -368,7 +368,7 @@ paths:
                 properties:
                   predictionId:
                     type: string
-  /match/{matchId}:
+  /match/data/{matchId}:
     get:
       tags:
         - match
