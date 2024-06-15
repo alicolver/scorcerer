@@ -22,8 +22,7 @@ fun filterLeaderboardToLeague(
 ): List<LeaderboardInner> {
     val leagueUsers = (globalLeaderboard ?: emptyList()).filter { it.user.userId in leagueUserIds }
 
-    val sortedLeague =
-        leagueUsers.sortedWith(compareByDescending<LeaderboardInner> { it.user.livePoints + it.user.fixedPoints }.thenBy { it.user.familyName })
+    val sortedLeague = leagueUsers.sortedWith(compareBy { it.position })
     var currentPosition = 1
     val lastFixedPoints = sortedLeague.firstOrNull()?.user?.fixedPoints ?: 0
     val lastLivePoints = sortedLeague.firstOrNull()?.user?.livePoints ?: 0
@@ -105,10 +104,7 @@ fun calculateGlobalLeaderboard(previousGlobalLeaderboard: List<LeaderboardInner>
 
         LeaderboardInner(currentPosition, user, movement)
     }
-    return leaderboard.sortedWith(
-        compareByDescending<LeaderboardInner> { it.position }.thenBy { it.movement }
-            .thenBy { it.user.familyName }.thenBy { it.user.firstName }.thenBy { it.user.userId },
-    )
+    return leaderboard
 }
 
 class LeaderboardS3Service(private val s3Client: S3Client, private val s3BucketName: String) {
