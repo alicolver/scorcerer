@@ -190,43 +190,54 @@ class MatchResource(
         requesterUserId: String,
         matchId: String,
         completeMatchRequest: CompleteMatchRequest,
-    ) {
-        val matchDay = transaction {
-            val matchDay =
-                getMatchDay(matchId)
-                    ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("Match does not exist"))
+    ) = endMatch(matchId, completeMatchRequest.homeScore, completeMatchRequest.awayScore, leaderboardService)
+}
 
-            MatchTable.update({ MatchTable.id eq matchId.toInt() }) {
-                it[state] = State.COMPLETED
-                it[homeScore] = completeMatchRequest.homeScore
-                it[awayScore] = completeMatchRequest.awayScore
-            }
+fun endMatch(matchId: String, homeScore: Int, awayScore: Int, leaderboardService: LeaderboardS3Service) = transaction {
+    val matchDay = getMatchDay(matchId)
+            ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("Match does not exist"))
 
-            val predictions = getPredictions(matchId)
+    val matchState = MatchTable.selectAll().where { MatchTable.id eq matchId.toInt() }.first()[MatchTable.state]
+    if (matchState != State.LIVE) {
+        log.info("Cannot complete match as it is not live")
+        throw ApiResponseError(Response(Status.BAD_REQUEST).body("Match is not live"))
+    }
 
-            predictions.forEach { prediction ->
-                val points = calculatePoints(
-                    prediction,
-                    MatchResult(
-                        completeMatchRequest.homeScore,
-                        completeMatchRequest.awayScore,
-                    ),
-                )
-                updatePredictionPoints(prediction.predictionId.toInt(), points)
-                updateMemberFixedPoints(prediction.userId, points)
-            }
-            matchDay
-        }
-        recalculateLivePoints()
-        runBlocking {
-            leaderboardService.updateGlobalLeaderboard(matchDay)
-            updateLiveMatches(leaderboardService)
-        }
+    MatchTable.update({ MatchTable.id eq matchId.toInt() }) {
+        it[state] = State.COMPLETED
+        it[MatchTable.homeScore] = homeScore
+        it[MatchTable.awayScore] = awayScore
+    }
+
+    val predictions = getPredictions(matchId)
+
+    predictions.forEach { prediction ->
+        val points = calculatePoints(
+            prediction,
+            MatchResult(
+                homeScore,
+                awayScore,
+            ),
+        )
+        updatePredictionPoints(prediction.predictionId.toInt(), points)
+        updateMemberFixedPoints(prediction.userId, points)
+    }
+
+    recalculateLivePoints()
+    runBlocking {
+        leaderboardService.updateGlobalLeaderboard(matchDay)
+        updateLiveMatches(leaderboardService)
     }
 }
 
 fun setScore(matchId: String, matchDay: Int, homeScore: Int, awayScore: Int, leaderboardService: LeaderboardS3Service) =
     transaction {
+        val matchState = MatchTable.selectAll().where { MatchTable.id eq matchId.toInt() }.first()[MatchTable.state]
+        if (matchState == State.COMPLETED) {
+            log.info("Cannot update score for completed match")
+            return@transaction
+        }
+
         MatchTable.update({ MatchTable.id eq matchId.toInt() }) {
             it[MatchTable.homeScore] = homeScore
             it[MatchTable.awayScore] = awayScore
@@ -287,7 +298,7 @@ private fun updatePredictionPoints(predictionId: Int, points: Int) {
 private fun updateMemberFixedPoints(userId: String, points: Int) {
     MemberTable.update({ MemberTable.id eq userId }) {
         with(SqlExpressionBuilder) {
-            it.update(MemberTable.fixedPoints, MemberTable.fixedPoints + points)
+            it.update(fixedPoints, fixedPoints + points)
         }
     }
 }
