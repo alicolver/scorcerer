@@ -54,6 +54,7 @@ data class ScoreUpdate(
     val homeScore: Int,
     val awayScore: Int,
     val datetime: Instant,
+    val ended: Boolean,
 )
 
 val liveMatchesKey = "live-matches.json"
@@ -93,16 +94,16 @@ class ScoreUpdater : RequestHandler<Unit, Unit> {
             if (!response.status.successful) {
                 log.info(response.bodyString())
                 log.info("Response status not good, exiting")
-                return
+                return@forEach
             }
 
             val fotmobResponse = response.body.toString().fromJson<FotMobResponse>()
 
             log.info(fotmobResponse.general.matchName)
 
-            if (!fotmobResponse.general.started || fotmobResponse.general.finished) {
-                log.info("Match is not live")
-                return
+            if (!fotmobResponse.general.started) {
+                log.info("Match has not started yet")
+                return@forEach
             }
             val now = Clock.systemDefaultZone().instant()
 
@@ -114,7 +115,7 @@ class ScoreUpdater : RequestHandler<Unit, Unit> {
                 sqsClient.sendMessage(
                     SendMessageRequest {
                         queueUrl = Environment.ScoreUpdateQueueUrl
-                        messageBody = ScoreUpdate(it.matchId, homeScore, awayScore, now).toJson()
+                        messageBody = ScoreUpdate(it.matchId, homeScore, awayScore, now, fotmobResponse.general.finished).toJson()
                         messageGroupId = it.matchId
                         messageDeduplicationId = UUID.randomUUID().toString()
                     },

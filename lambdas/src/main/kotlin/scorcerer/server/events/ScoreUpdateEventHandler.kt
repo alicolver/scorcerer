@@ -8,6 +8,7 @@ import org.openapitools.server.fromJson
 import scorcerer.server.Environment
 import scorcerer.server.db.Database
 import scorcerer.server.log
+import scorcerer.server.resources.endMatch
 import scorcerer.server.resources.getMatchDay
 import scorcerer.server.resources.setScore
 import scorcerer.server.schedule.ScoreUpdate
@@ -26,8 +27,13 @@ class ScoreUpdateEventHandler : RequestHandler<SQSEvent, Unit> {
         val scoreUpdate = input?.records?.map { it.body.fromJson<ScoreUpdate>() }?.maxByOrNull { it.datetime } ?: return
         log.info("Processing $scoreUpdate")
 
-        val matchDay = getMatchDay(scoreUpdate.matchId)!!
-        setScore(scoreUpdate.matchId, matchDay, scoreUpdate.homeScore, scoreUpdate.awayScore, leaderboardService)
-        log.info("Score updated")
+        if (scoreUpdate.ended) {
+            endMatch(scoreUpdate.matchId, scoreUpdate.homeScore, scoreUpdate.awayScore, leaderboardService)
+            log.info("Match ended")
+        } else {
+            val matchDay = getMatchDay(scoreUpdate.matchId)!!
+            setScore(scoreUpdate.matchId, matchDay, scoreUpdate.homeScore, scoreUpdate.awayScore, leaderboardService)
+            log.info("Score updated")
+        }
     }
 }

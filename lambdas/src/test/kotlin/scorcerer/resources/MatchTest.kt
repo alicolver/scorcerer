@@ -283,6 +283,7 @@ class MatchTest : DatabaseTest() {
         givenPredictionExists(matchId, "userId", 2, 1)
         givenPredictionExists(matchId, "anotherUser", 1, 0)
 
+        matchResource.setMatchScore("", matchId, SetMatchScoreRequest(1, 1))
         matchResource.completeMatch("", matchId, CompleteMatchRequest(2, 1))
         getLivePoints("userId") shouldBe 0
         getLivePoints("anotherUser") shouldBe 0

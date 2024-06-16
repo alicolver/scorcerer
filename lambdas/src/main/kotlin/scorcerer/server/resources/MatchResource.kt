@@ -195,7 +195,7 @@ class MatchResource(
 
 fun endMatch(matchId: String, homeScore: Int, awayScore: Int, leaderboardService: LeaderboardS3Service) = transaction {
     val matchDay = getMatchDay(matchId)
-            ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("Match does not exist"))
+        ?: throw ApiResponseError(Response(Status.BAD_REQUEST).body("Match does not exist"))
 
     val matchState = MatchTable.selectAll().where { MatchTable.id eq matchId.toInt() }.first()[MatchTable.state]
     if (matchState != State.LIVE) {
