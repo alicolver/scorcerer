@@ -24,16 +24,24 @@ class ScoreUpdateEventHandler : RequestHandler<SQSEvent, Unit> {
     override fun handleRequest(input: SQSEvent?, context: Context?) {
         log.info("Handling ${input?.records?.size} records")
 
-        val scoreUpdate = input?.records?.map { it.body.fromJson<ScoreUpdate>() }?.maxByOrNull { it.datetime } ?: return
-        log.info("Processing $scoreUpdate")
+        val scoreUpdates = input?.records
+            ?.map { it.body.fromJson<ScoreUpdate>() }
+            ?.groupBy { it.matchId }
+            ?.mapValues { it.value.maxBy { it.datetime } } ?: return
+        log.info("Processing ${scoreUpdates.size} updates")
 
-        if (scoreUpdate.ended) {
-            endMatch(scoreUpdate.matchId, scoreUpdate.homeScore, scoreUpdate.awayScore, leaderboardService)
-            log.info("Match ended")
-        } else {
-            val matchDay = getMatchDay(scoreUpdate.matchId)!!
-            setScore(scoreUpdate.matchId, matchDay, scoreUpdate.homeScore, scoreUpdate.awayScore, leaderboardService)
-            log.info("Score updated")
+        scoreUpdates.forEach {
+            val scoreUpdate = it.value
+            log.info("Processing $scoreUpdate")
+
+            if (scoreUpdate.ended) {
+                endMatch(scoreUpdate.matchId, scoreUpdate.homeScore, scoreUpdate.awayScore, leaderboardService)
+                log.info("Match ended")
+            } else {
+                val matchDay = getMatchDay(scoreUpdate.matchId)!!
+                setScore(scoreUpdate.matchId, matchDay, scoreUpdate.homeScore, scoreUpdate.awayScore, leaderboardService)
+                log.info("Score updated")
+            }
         }
     }
 }
