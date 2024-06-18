@@ -32,7 +32,7 @@ import scorcerer.server.db.tables.MatchTable
 import scorcerer.server.db.tables.MemberTable
 import scorcerer.server.db.tables.PredictionTable
 import scorcerer.server.resources.MatchResource
-import scorcerer.server.resources.getMatchesOnNextNMatchDays
+import scorcerer.server.resources.getMatchesOnNextThreeDays
 import scorcerer.utils.LeaderboardS3Service
 import scorcerer.utils.MatchResult
 import java.time.OffsetDateTime
@@ -329,7 +329,7 @@ class MatchTest : DatabaseTest() {
     }
 }
 
-class GetMatchesOnNextNMatchDaysTest {
+class GetMatchesOnNextThreeDaysTest {
     @Test
     fun testWithMultipleMatchDays() {
         val matches = listOf(
@@ -337,11 +337,12 @@ class GetMatchesOnNextNMatchDaysTest {
             Match("Team C", "flagC", "Team D", "flagD", "2", "Stadium B", OffsetDateTime.now(), 2, Round.GROUP_STAGE, State.UPCOMING),
             Match("Team E", "flagE", "Team F", "flagF", "3", "Stadium C", OffsetDateTime.now(), 2, Round.GROUP_STAGE, State.UPCOMING),
             Match("Team G", "flagG", "Team H", "flagH", "4", "Stadium D", OffsetDateTime.now(), 3, Round.GROUP_STAGE, State.UPCOMING),
+            Match("Team G", "flagG", "Team H", "flagH", "4", "Stadium D", OffsetDateTime.now(), 4, Round.GROUP_STAGE, State.UPCOMING),
         )
 
-        val filteredMatches = getMatchesOnNextNMatchDays(matches)
-        filteredMatches.size shouldBe 3
-        filteredMatches.all { it.matchDay in listOf(1, 2) } shouldBe true
+        val filteredMatches = getMatchesOnNextThreeDays(matches)
+        filteredMatches.size shouldBe 4
+        filteredMatches.all { it.matchDay in listOf(1, 2, 3) } shouldBe true
     }
 
     @Test
@@ -351,7 +352,7 @@ class GetMatchesOnNextNMatchDaysTest {
             Match("Team C", "flagC", "Team D", "flagD", "2", "Stadium B", OffsetDateTime.now(), 1, Round.GROUP_STAGE, State.UPCOMING),
         )
 
-        val filteredMatches = getMatchesOnNextNMatchDays(matches)
+        val filteredMatches = getMatchesOnNextThreeDays(matches)
         filteredMatches.size shouldBe 2
         filteredMatches.all { it.matchDay == 1 } shouldBe true
     }
@@ -360,7 +361,7 @@ class GetMatchesOnNextNMatchDaysTest {
     fun testWithNoMatches() {
         val matches = emptyList<Match>()
 
-        val filteredMatches = getMatchesOnNextNMatchDays(matches)
+        val filteredMatches = getMatchesOnNextThreeDays(matches)
         filteredMatches.size shouldBe 0
     }
 }

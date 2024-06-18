@@ -123,7 +123,7 @@ class MatchResource(
 
         if (!filterType.isNullOrBlank() && State.valueOf(filterType.uppercase()) == State.UPCOMING) {
             log.info("Filtering matches to next 2 match days")
-            return getMatchesOnNextNMatchDays(matches)
+            return getMatchesOnNextThreeDays(matches)
         }
 
         return matches
@@ -262,13 +262,12 @@ fun setScore(matchId: String, matchDay: Int, homeScore: Int, awayScore: Int, lea
         }
     }
 
-fun getMatchesOnNextNMatchDays(matches: List<Match>): List<Match> {
+fun getMatchesOnNextThreeDays(matches: List<Match>): List<Match> {
     val uniqueMatchDays = matches.map { it.matchDay }.distinct()
-    if (uniqueMatchDays.size < 2) {
-        val lowestMatchDay = uniqueMatchDays.minOrNull() ?: return emptyList()
-        return matches.filter { it.matchDay == lowestMatchDay }
+    if (uniqueMatchDays.size < 3) {
+        return matches
     }
-    val lowestMatchDays = uniqueMatchDays.sorted().take(2)
+    val lowestMatchDays = uniqueMatchDays.sorted().take(3)
     return matches.filter { it.matchDay in lowestMatchDays }
 }
 
